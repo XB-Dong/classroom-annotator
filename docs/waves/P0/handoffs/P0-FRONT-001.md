@@ -1,6 +1,6 @@
 # P0-FRONT-001 前端交接
 
-状态：实现已就绪，等待独立集成／浏览器／GLM 验收。交接时间：2026-10-13T02:08:00+08:00（工件编写时段）。工作树 D:/Project/cvte/worktrees/p0-frontend，分支 p0/frontend；仅 frontend/**、自身证据和本交接修改。
+状态：实现已就绪，等待独立集成／浏览器／GLM 验收。交接时间：2026-10-13T02:07:52+08:00（实际交接检查时间）。工作树 D:/Project/cvte/worktrees/p0-frontend，分支 p0/frontend；仅 frontend/**、自身证据和本交接修改。
 
 规格：冻结 1.0.0（API、OpenAPI、坐标、产品）。实施基线 51d05f5；基础提交 6ab8e6ac9f3e2d7266f65c75c2626692495f847b；当前实现提交 **31ccc3e386e1b6d8f62bb3fcde1f29d42dba4649**。本交接为其后文档提交，不改变该验证版本。
 
@@ -28,3 +28,4 @@ Test selectors：upload-file/upload-submit/video-select/batch-select/interval-se
 尚未由本 Worker 执行：真实公司 API 联调、后端联通的核心 E2E、云端验收、GLM 独立审查与实际浏览器体验。没有此前应用测试基线，不声称旧应用测试已通过。请求模型 gpt-6.1-sol/high，实际路由设置未独立核实，完整 null/unverified 字段在证据索引。
 
 建议下一步：Leader/Test 对最终实现 SHA 执行合成视频 upload→extract→draw/move/resize/delete→autosave→refresh/conflict→complete→export 的独立集成；GLM 以最终格式化源码和合成演示审核。此交接不代表整波次完成，不合并／推送／部署。
+
