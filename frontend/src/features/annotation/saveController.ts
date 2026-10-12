@@ -10,6 +10,7 @@ export interface SaveView {
   state: SaveState;
   error?: string;
   conflict?: Snapshot;
+  resolving: boolean;
 }
 export interface SaveDependencies {
   save: (snapshot: Snapshot) => Promise<Snapshot>;
@@ -24,6 +25,8 @@ export class SaveController {
   private inFlight = false;
   private suspended = false;
   private disposed = false;
+  private resolving = false;
+  private idleWaiters: Array<() => void> = [];
   private timer?: ReturnType<typeof setTimeout>;
   private state: SaveState = 'saved';
   constructor(
@@ -51,6 +54,7 @@ export class SaveController {
         state: this.state,
         error,
         conflict,
+        resolving: this.resolving,
       });
   }
   private persist() {
@@ -65,6 +69,7 @@ export class SaveController {
     if (!this.disposed && !this.suspended) this.timer = setTimeout(() => void this.flush(), 500);
   }
   edit(snapshot: Snapshot) {
+    if (this.disposed) return;
     this.snapshot = { ...structuredClone(snapshot), revision: this.snapshot.revision };
     this.sequence++;
     this.persist();
@@ -117,14 +122,19 @@ export class SaveController {
       }
     } finally {
       this.inFlight = false;
+      this.idleWaiters.splice(0).forEach((resolve) => resolve());
       if (this.state === 'dirty') this.schedule();
     }
   }
   async resolve(replace: boolean) {
-    if (this.inFlight || this.disposed) return;
+    if (this.inFlight || this.disposed || this.resolving || !this.suspended) return;
+    this.resolving = true;
+    const capturedSequence = this.sequence;
+    let resolutionError: string | undefined;
+    this.emit();
     try {
       const latest = await this.dependencies.load();
-      if (this.disposed) return;
+      if (this.disposed || capturedSequence !== this.sequence) return;
       this.suspended = false;
       if (replace) {
         this.snapshot = { ...this.snapshot, revision: latest.revision };
@@ -140,11 +150,28 @@ export class SaveController {
       }
       this.emit();
     } catch (error) {
-      this.emit(error instanceof Error ? error.message : '无法获取最新版本');
+      resolutionError = error instanceof Error ? error.message : '无法获取最新版本';
+    } finally {
+      this.resolving = false;
+      this.emit(resolutionError);
     }
+  }
+  async settle(): Promise<boolean> {
+    clearTimeout(this.timer);
+    while (!this.disposed) {
+      if (this.suspended || this.resolving || this.state === 'error') return false;
+      if (this.inFlight) {
+        await new Promise<void>((resolve) => this.idleWaiters.push(resolve));
+        continue;
+      }
+      if (this.sequence === this.acknowledged) return this.state === 'saved';
+      await this.flush();
+    }
+    return false;
   }
   dispose() {
     this.disposed = true;
     clearTimeout(this.timer);
+    this.idleWaiters.splice(0).forEach((resolve) => resolve());
   }
 }

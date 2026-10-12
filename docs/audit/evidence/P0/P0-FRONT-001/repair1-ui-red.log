@@ -1,0 +1,85 @@
+
+> classroom-annotator-frontend@0.1.0 test
+> vitest run src/features/annotation/Canvas.test.tsx src/app/App.test.tsx
+
+
+ RUN  v5.0.4 D:/Project/cvte/worktrees/p0-frontend/frontend
+
+ ❯ src/features/annotation/Canvas.test.tsx (2 tests | 2 failed) 23ms
+   × attaches installed Konva Transformer nodes when draw mode becomes select without reselection 20ms
+   × applies every normalized edge box to installed Konva node and model together 1ms
+ ❯ src/app/App.test.tsx (2 tests | 2 failed) 469ms
+   × flushes editing a completed frame before a fast frame switch and blocks stale export 420ms
+   × saves an explicit completion before immediately switching away 48ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/app/App.test.tsx > flushes editing a completed frame before a fast frame switch and blocks stale export
+AssertionError: expected 'frame-item ' to contain 'selected'
+
+Expected: "selected"
+Received: "frame-item "
+
+ ❯ src/app/App.test.tsx:23:56
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/app/App.test.tsx > saves an explicit completion before immediately switching away
+AssertionError: expected 'frame-item ' to contain 'selected'
+
+Expected: "selected"
+Received: "frame-item "
+
+ ❯ src/app/App.test.tsx:28:56
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/features/annotation/Canvas.test.tsx > attaches installed Konva Transformer nodes when draw mode becomes select without reselection
+AssertionError: expected [] to deeply equal [ Rect{ _id: 1, …(13) } ]
+
+- Expected
++ Received
+
+- [
+-   "{\"attrs\":{\"y\":10,\"width\":20,\"height\":20},\"className\":\"Rect\"}",
+- ]
++ []
+
+ ❯ src/features/annotation/Canvas.test.tsx:15:406
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/features/annotation/Canvas.test.tsx > applies every normalized edge box to installed Konva node and model together
+AssertionError: expected [ -5, 10, 20, 20 ] to deeply equal [ +0, 10, 15, 20 ]
+
+- Expected
++ Received
+
+  [
+-   0,
++   -5,
+    10,
+-   15,
++   20,
+    20,
+  ]
+
+ ❯ src/features/annotation/Canvas.test.tsx:16:209
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed (4)
+   Start at  02:23:48
+   Duration  2.25s (environment 64%, import 18%, tests 13%, transform 4%)
+
+
+command=npm test -- src/features/annotation/Canvas.test.tsx src/app/App.test.tsx
+start=2026-10-13T02:23:47.3343874+08:00
+end=2026-10-13T02:23:50.8497005+08:00
+exitCode=1

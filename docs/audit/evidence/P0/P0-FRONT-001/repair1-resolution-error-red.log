@@ -1,0 +1,37 @@
+
+> classroom-annotator-frontend@0.1.0 test
+> vitest run src/features/annotation/saveController.test.ts -t resolution errors
+
+
+ RUN  v5.0.4 D:/Project/cvte/worktrees/p0-frontend/frontend
+
+ ❯ src/features/annotation/saveController.test.ts (10 tests | 1 failed | 9 skipped) 7ms
+   × keeps conflict resolution errors visible after releasing the busy lock 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/annotation/saveController.test.ts > keeps conflict resolution errors visible after releasing the busy lock
+AssertionError: expected undefined to be 'resolution offline' // Object.is equality
+
+- Expected:
+"resolution offline"
+
++ Received:
+undefined
+
+ ❯ src/features/annotation/saveController.test.ts:32:249
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)
+   Start at  02:28:54
+   Duration  1.46s (environment 95%, transform 3%, import 1%, tests 1%, worker 1%)
+
+
+command=npm test -- src/features/annotation/saveController.test.ts -t 'resolution errors'
+start=2026-10-13T02:28:53.6805649+08:00
+end=2026-10-13T02:28:56.4200016+08:00
+exitCode=1

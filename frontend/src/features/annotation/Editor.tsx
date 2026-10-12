@@ -8,6 +8,8 @@ import { EditHistory } from './history';
 interface Props {
   frame: Frame;
   onSaved: (snapshot: Snapshot) => void;
+  onController?: (controller?: SaveController) => void;
+  onStateChange?: (view: SaveView) => void;
 }
 const statusLabels = {
   saved: '已保存',
@@ -16,7 +18,7 @@ const statusLabels = {
   error: '保存失败',
   conflict: '版本冲突',
 };
-export function Editor({ frame, onSaved }: Props) {
+export function Editor({ frame, onSaved, onController, onStateChange }: Props) {
   const [view, setView] = useState<SaveView>();
   const [loadError, setLoadError] = useState<string>();
   const [draftWarning, setDraftWarning] = useState<string>();
@@ -26,6 +28,8 @@ export function Editor({ frame, onSaved }: Props) {
   const history = useRef(new EditHistory());
   const savedCallback = useRef(onSaved);
   savedCallback.current = onSaved;
+  const lifecycleCallbacks = useRef({ onController, onStateChange });
+  lifecycleCallbacks.current = { onController, onStateChange };
   useEffect(() => {
     let active = true;
     setView(undefined);
@@ -44,6 +48,7 @@ export function Editor({ frame, onSaved }: Props) {
             changed: (v) => {
               if (active) {
                 setView(v);
+                lifecycleCallbacks.current.onStateChange?.(v);
                 if (v.state === 'saved') savedCallback.current(v.snapshot);
               }
             },
@@ -64,6 +69,7 @@ export function Editor({ frame, onSaved }: Props) {
           },
           readDraft(frame.id, frame.width, frame.height),
         );
+        lifecycleCallbacks.current.onController?.(controller.current);
       })
       .catch((e) => {
         if (active) setLoadError(e.message);
@@ -72,6 +78,7 @@ export function Editor({ frame, onSaved }: Props) {
       active = false;
       controller.current?.dispose();
       controller.current = undefined;
+      lifecycleCallbacks.current.onController?.(undefined);
     };
   }, [frame.id, frame.width, frame.height]);
   function edit(snapshot: Snapshot) {
@@ -198,11 +205,15 @@ export function Editor({ frame, onSaved }: Props) {
               服务器版本 {view.conflict?.revision ?? '待获取'}
               。自动保存已暂停。替换前将重新获取最新版本。
             </p>
-            <button onClick={() => void controller.current?.resolve(true)}>
+            <button
+              disabled={view.resolving}
+              onClick={() => void controller.current?.resolve(true)}
+            >
               用草稿替换服务器内容
             </button>
             <button
               data-testid="conflict-reload"
+              disabled={view.resolving}
               onClick={() => void controller.current?.resolve(false)}
             >
               丢弃草稿，使用服务器内容

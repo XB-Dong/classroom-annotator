@@ -3,6 +3,7 @@ import { Stage, Layer, Image as CanvasImage, Rect, Transformer } from 'react-kon
 import Konva from 'konva';
 import type { Annotation, Frame } from '../../shared/api/types';
 import { normalizeBox, originalPoint, type Box } from './geometry';
+import { applyNodeBox } from './nodeGeometry';
 interface Props {
   frame: Frame;
   annotations: Annotation[];
@@ -12,7 +13,7 @@ interface Props {
   select: (id?: string) => void;
   change: (annotations: Annotation[]) => void;
 }
-function HeadBox({
+export function HeadBox({
   annotation,
   selected,
   enabled,
@@ -23,7 +24,7 @@ function HeadBox({
   selected: boolean;
   enabled: boolean;
   onSelect: () => void;
-  onChange: (box: Box) => boolean;
+  onChange: (box: Box, node: Konva.Rect) => boolean;
 }) {
   const rect = useRef<Konva.Rect>(null);
   const transformer = useRef<Konva.Transformer>(null);
@@ -32,7 +33,7 @@ function HeadBox({
       transformer.current.nodes([rect.current]);
       transformer.current.getLayer()?.batchDraw();
     }
-  }, [selected]);
+  }, [selected, enabled]);
   const [x, y, width, height] = annotation.bbox;
   return (
     <>
@@ -50,7 +51,8 @@ function HeadBox({
         onClick={onSelect}
         onTap={onSelect}
         onDragEnd={(e) => {
-          if (!onChange([e.target.x(), e.target.y(), width, height])) e.target.position({ x, y });
+          if (!onChange([e.target.x(), e.target.y(), width, height], rect.current!))
+            e.target.position({ x, y });
         }}
         onTransformEnd={() => {
           const node = rect.current!;
@@ -62,7 +64,7 @@ function HeadBox({
           ];
           node.scaleX(1);
           node.scaleY(1);
-          if (!onChange(box)) node.position({ x, y });
+          if (!onChange(box, node)) node.position({ x, y });
         }}
       />
       {selected && enabled && (
@@ -193,8 +195,8 @@ export function AnnotationCanvas({
                   onSelect={() => {
                     if (mode === 'select') select(a.id);
                   }}
-                  onChange={(box) => {
-                    const normalized = normalizeBox(box, frame.width, frame.height);
+                  onChange={(box, node) => {
+                    const normalized = applyNodeBox(node, box, frame.width, frame.height);
                     if (normalized)
                       change(
                         annotations.map((item) =>

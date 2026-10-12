@@ -4,14 +4,17 @@ export function ExportButton({
   videoId,
   batchId,
   completed,
+  blocked = false,
 }: {
   videoId: string;
   batchId: string;
   completed: number;
+  blocked?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   async function download() {
+    if (blocked) return;
     setBusy(true);
     setError(undefined);
     try {
@@ -33,7 +36,7 @@ export function ExportButton({
       <button
         data-testid="export-zip"
         className="primary"
-        disabled={busy || completed === 0}
+        disabled={busy || blocked || completed === 0}
         onClick={() => void download()}
       >
         {busy ? '正在打包…' : '↓ 导出当前批次 COCO ZIP'}

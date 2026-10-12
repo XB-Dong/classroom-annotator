@@ -1,15 +1,20 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { idPath, json, request } from '../shared/api/client';
 import type { Batch, Frame, Job, Progress, Snapshot, Video } from '../shared/api/types';
 import { ImportPanel } from '../features/videos/ImportPanel';
 import { JobsPanel } from '../features/videos/JobsPanel';
 import { ExtractionForm } from '../features/videos/ExtractionForm';
 import { VideoLibrary } from '../features/videos/VideoLibrary';
+import { BatchBar } from '../features/videos/BatchBar';
+import { FramePicker } from '../features/annotation/FramePicker';
+import { ScopedRequest } from '../shared/api/scopedRequest';
+import type { SaveController, SaveState, SaveView } from '../features/annotation/saveController';
+import { draftKey } from '../features/annotation/drafts';
 const Editor = lazy(() =>
   import('../features/annotation/Editor').then((module) => ({ default: module.Editor })),
 );
 import { ExportButton } from '../features/export/ExportButton';
-const frameLabels = { not_started: '未开始', in_progress: '标注中', completed: '已完成' };
+
 export function App() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [videoId, setVideoId] = useState('');
@@ -26,8 +31,49 @@ export function App() {
   const [framesLoading, setFramesLoading] = useState(false);
   const [batchLoading, setBatchLoading] = useState(false);
   const [batchRefresh, setBatchRefresh] = useState(0);
+  const batchesVideo = useRef('');
+  const controller = useRef<SaveController>(undefined);
+  const [editorReady, setEditorReady] = useState(false);
+  const [editorState, setEditorState] = useState<SaveState>('dirty');
+  const [navigationBusy, setNavigationBusy] = useState(false);
+  const navigationLock = useRef(false);
+  const [navigationError, setNavigationError] = useState<string>();
+  const progressRequests = useRef(new ScopedRequest());
+  const scope = `${videoId}:${batchId}`;
+  progressRequests.current.setScope(scope);
+  const unresolvedDrafts = frames.filter((f) => {
+    try {
+      return localStorage.getItem(draftKey(f.id)) !== null;
+    } catch {
+      return true;
+    }
+  }).length;
   const video = videos.find((v) => v.id === videoId);
   const frame = frames.find((f) => f.id === frameId);
+  const controllerChanged = useCallback((next?: SaveController) => {
+    controller.current = next;
+    setEditorReady(!!next);
+  }, []);
+  const editorChanged = useCallback((view: SaveView) => {
+    setEditorState(view.state);
+  }, []);
+  async function navigate(action: () => void) {
+    if (navigationLock.current) return;
+    navigationLock.current = true;
+    setNavigationBusy(true);
+    try {
+      if (frame && (!controller.current || !(await controller.current.settle()))) {
+        setNavigationError('当前帧尚未保存。请先重试保存或处理草稿冲突，再切换。');
+        return;
+      }
+      setNavigationError(undefined);
+      setEditorReady(false);
+      action();
+    } finally {
+      navigationLock.current = false;
+      setNavigationBusy(false);
+    }
+  }
   const loadVideos = useCallback(async () => {
     try {
       const result = await request<{ videos: Video[] }>('/videos');
@@ -74,11 +120,14 @@ export function App() {
   }, [loadVideos]);
   useEffect(() => {
     let active = true;
-    setBatches([]);
-    setBatchId('');
-    setFrames([]);
-    setFrameId('');
-    setProgress(undefined);
+    if (batchesVideo.current !== videoId) {
+      batchesVideo.current = videoId;
+      setBatches([]);
+      setBatchId('');
+      setFrames([]);
+      setFrameId('');
+      setProgress(undefined);
+    }
     setBatchError(undefined);
     if (!videoId) return;
     setBatchLoading(true);
@@ -86,7 +135,9 @@ export function App() {
       .then((r) => {
         if (active) {
           setBatches(r.batches);
-          setBatchId(r.batches[0]?.id ?? '');
+          setBatchId((previous) =>
+            r.batches.some((b) => b.id === previous) ? previous : (r.batches[0]?.id ?? ''),
+          );
         }
       })
       .catch((e) => {
@@ -108,20 +159,25 @@ export function App() {
     if (!videoId || !batchId) return;
     setFramesLoading(true);
     const query = `?batchId=${idPath(batchId)}`;
-    void Promise.all([
-      request<{ frames: Frame[] }>(`/videos/${idPath(videoId)}/frames${query}`),
-      request<Progress>(`/videos/${idPath(videoId)}/progress${query}`),
-    ])
-      .then(([r, p]) => {
-        if (active) {
-          setFrames(r.frames);
-          setFrameId(r.frames[0]?.id ?? '');
-          setProgress(p);
-        }
-      })
-      .catch((e) => {
-        if (active) setBatchError(e.message);
-      })
+    void progressRequests.current
+      .run(
+        scope,
+        () =>
+          Promise.all([
+            request<{ frames: Frame[] }>(`/videos/${idPath(videoId)}/frames${query}`),
+            request<Progress>(`/videos/${idPath(videoId)}/progress${query}`),
+          ]),
+        ([r, p]) => {
+          if (active) {
+            setFrames(r.frames);
+            setFrameId(r.frames[0]?.id ?? '');
+            setProgress(p);
+          }
+        },
+        (e) => {
+          if (active) setBatchError((e as Error).message);
+        },
+      )
       .finally(() => {
         if (active) setFramesLoading(false);
       });
@@ -152,9 +208,12 @@ export function App() {
       );
     });
     if (videoId && batchId)
-      void request<Progress>(`/videos/${idPath(videoId)}/progress?batchId=${idPath(batchId)}`)
-        .then(setProgress)
-        .catch((e) => setBatchError(e.message));
+      void progressRequests.current.run(
+        scope,
+        () => request<Progress>(`/videos/${idPath(videoId)}/progress?batchId=${idPath(batchId)}`),
+        setProgress,
+        (e) => setBatchError((e as Error).message),
+      );
   }
   return (
     <div className="app">
@@ -174,7 +233,7 @@ export function App() {
           <ImportPanel
             onVideo={(v) => {
               setVideos((previous) => [v, ...previous.filter((x) => x.id !== v.id)]);
-              setVideoId(v.id);
+              void navigate(() => setVideoId(v.id));
             }}
             onJob={addJob}
           />
@@ -184,7 +243,9 @@ export function App() {
             loading={loading}
             error={libraryError}
             refresh={() => void loadVideos()}
-            select={setVideoId}
+            select={(id) => {
+              if (id !== videoId) void navigate(() => setVideoId(id));
+            }}
           />
           {video && <ExtractionForm key={video.id} video={video} onJob={addJob} />}
           <JobsPanel jobs={jobs} error={jobsError} cancel={(id) => void cancel(id)} />
@@ -196,50 +257,42 @@ export function App() {
               <h2>{video?.name || '准备开始标注'}</h2>
             </div>
             {videoId && batchId && progress && (
-              <ExportButton videoId={videoId} batchId={batchId} completed={progress.completed} />
+              <ExportButton
+                videoId={videoId}
+                batchId={batchId}
+                completed={progress.completed}
+                blocked={
+                  navigationBusy || !editorReady || editorState !== 'saved' || unresolvedDrafts > 0
+                }
+              />
             )}
           </div>
           {video ? (
             <>
-              <div className="batch-bar">
-                <label>
-                  抽帧批次
-                  <select
-                    aria-label="抽帧批次"
-                    data-testid="batch-select"
-                    value={batchId}
-                    onChange={(e) => setBatchId(e.target.value)}
-                    disabled={batchLoading || batches.length === 0}
-                  >
-                    <option value="">
-                      {batchLoading ? '加载中…' : batches.length ? '选择批次' : '暂无已完成批次'}
-                    </option>
-                    {batches.map((b, index) => (
-                      <option key={b.id} value={b.id}>
-                        批次 {index + 1} · {new Date(b.createdAt).toLocaleString('zh-CN')} ·{' '}
-                        {b.frameCount} 帧
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                {progress && (
-                  <div className="batch-progress">
-                    <span>
-                      完成{' '}
-                      <strong>
-                        {progress.completed} / {progress.total}
-                      </strong>
-                    </span>
-                    <progress value={progress.completed} max={progress.total || 1} />
-                    <small>
-                      未开始 {progress.notStarted} · 标注中 {progress.inProgress}
-                    </small>
-                  </div>
-                )}
-              </div>
+              <BatchBar
+                batches={batches}
+                batchId={batchId}
+                loading={batchLoading}
+                busy={navigationBusy}
+                progress={progress}
+                select={(id) => {
+                  if (id !== batchId) void navigate(() => setBatchId(id));
+                }}
+              />
               {batchError && (
                 <div className="notice error" role="alert">
                   {batchError}
+                </div>
+              )}
+              {navigationError && (
+                <div role="alert" className="notice error">
+                  {navigationError}
+                </div>
+              )}
+              {unresolvedDrafts > 0 && (
+                <div role="status" className="notice conflict">
+                  当前批次有 {unresolvedDrafts}{' '}
+                  帧草稿尚未保存或处理，导出已暂停。请打开这些帧完成保存或丢弃草稿。
                 </div>
               )}
               {framesLoading ? (
@@ -252,32 +305,23 @@ export function App() {
                 </div>
               ) : (
                 <div className="workbench">
-                  <aside className="frame-sidebar">
-                    <div className="panel-title">
-                      <h2>图片帧</h2>
-                      <span className="muted small">{frames.length} 张</span>
-                    </div>
-                    <div className="frame-list">
-                      {frames.map((f, index) => (
-                        <button
-                          data-testid={`frame-item-${f.id}`}
-                          key={f.id}
-                          className={`frame-item ${f.id === frameId ? 'selected' : ''}`}
-                          onClick={() => setFrameId(f.id)}
-                        >
-                          <img src={f.imageUrl} alt={`第 ${index + 1} 帧`} loading="lazy" />
-                          <span>
-                            <strong>帧 {String(index + 1).padStart(3, '0')}</strong>
-                            <small>采样时间 {(f.timestampMs / 1000).toFixed(3)} 秒</small>
-                            <em className={f.status}>{frameLabels[f.status]}</em>
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </aside>
+                  <FramePicker
+                    frames={frames}
+                    frameId={frameId}
+                    busy={navigationBusy}
+                    select={(id) => {
+                      if (id !== frameId) void navigate(() => setFrameId(id));
+                    }}
+                  />
                   {frame && (
                     <Suspense fallback={<div className="empty">正在加载标注工具…</div>}>
-                      <Editor key={frame.id} frame={frame} onSaved={saved} />
+                      <Editor
+                        key={frame.id}
+                        frame={frame}
+                        onSaved={saved}
+                        onController={controllerChanged}
+                        onStateChange={editorChanged}
+                      />
                     </Suspense>
                   )}
                 </div>
