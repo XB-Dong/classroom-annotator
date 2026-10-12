@@ -1,12 +1,12 @@
 # P0计划
 
-版本：0.4.0｜状态：选型已确认，待 P0 启动批示｜日期：2026-10-13
+版本：0.5.0｜状态：选型已确认，待 P0 启动批示｜日期：2026-10-13
 时区：Asia/Shanghai（UTC+08:00）
 仓库：[XB-Dong/classroom-annotator](https://github.com/XB-Dong/classroom-annotator)
 
 > For execution agents: Choices are frozen. Do not start P0 until the user explicitly authorizes execution. Then use native Codex subagents with external Git worktrees, and OpenCode for independent GLM code and browser-experience review. Convert this plan into task packets with SDD acceptance and meaningful TDD evidence. Stop at the agreed deadline or P0 delivery gate.
 
-用户已确认此前全部 14 项推荐，并确认角色模型与推理强度的推荐分工，见 [模型分配决定](docs/decisions/0002-agent-model-allocation.md)。本稿用于启动前审核，尚未实施或排程。目录和检查入口为交付要求，不是已存在的功能。
+用户已确认此前全部 14 项推荐，并确认五个核心角色、按需架构审核及关键角色的极高推理强度，见 [角色与模型决定](docs/decisions/0003-lean-agent-roles.md)。本稿用于启动前审核，尚未实施或排程。目录和检查入口为交付要求，不是已存在的功能。
 
 **目标：** 交付可迭代工程底座与人工标注闭环，具备基础测试、独立智谱审核、云端验证和监控。
 **架构：** 单仓库三模块；P0 实现 React 前端与 Go 业务后端，保留第三模块的架构边界，不实现或启动推理服务。Go 是唯一业务数据入口。
@@ -132,7 +132,7 @@ TDD 优先验证坐标、非法框、revision 冲突、导出关联、任务生�
 
 固定采用 **Codex 原生子 Agent + 外部 Git worktree + 版本化文件状态** 开发，**OpenCode + 智谱** 做独立审核；不引入自研编排平台。OpenCode 安装、配置、认证、缓存与临时验证放在仓库外。
 
-R0 在仓库外合成测试页面上验证 OpenCode/智谱认证、读取限定代码、受限工具、浏览器能力、交接、超时和脱敏；此时产品尚未实现，不要求操作产品核心流程。R6 才使用合成数据体验实际云端产品，只有这一步满足 `P0-REV-001` 的体验部分。审核模式只读产品源码，允许写分配的审核工件。只有代码文本意见而未实际操作浏览器时，体验门槛不算通过。客户端选型固定，具体可用 GLM 模型由公司 Key 实测后记录，不编造型号。
+R0 在仓库外合成测试页面上验证 OpenCode/智谱认证、读取限定代码、受限工具、浏览器能力、交接、超时和脱敏；此时产品尚未实现，不要求操作产品核心流程。R1–R5 在已完成契约/模块上分批进行智谱审核，可用的实际云端流程先行体验；R6 汇总并补齐实际云端核心闭环体验，才完整满足 `P0-REV-001` 的体验部分。审核模式只读产品源码，允许写分配的审核工件。只有代码文本意见而未实际操作浏览器时，体验门槛不算通过。客户端选型固定，具体可用 GLM 模型由公司 Key 实测后记录，不编造型号。
 
 智谱接收可分享代码、规格、脱敏日志和合成测试结果；不发送交接包中的真实课堂视频/图片或公司凭证。
 
@@ -140,14 +140,14 @@ R0 在仓库外合成测试页面上验证 OpenCode/智谱认证、读取限定�
 
 | 角色 | 工作 | 文件边界 |
 | --- | --- | --- |
-| Leader | 契约、任务排序、评审集成、发布、继续/停止 | 共享规格、依赖、CI/deploy、状态与报告 |
-| Product | 用户流程、例子、验收和范围 | 分配的产品草稿，Leader 合入 |
-| Frontend | 画布、状态、草稿恢复与流程 | 分配的 `frontend/` 文件 |
-| Backend | 视频、抽帧、持久化与导出 | 分配的 `backend/` 文件 |
-| Test | 规格驱动的独立集成/E2E | 分配的 `tests/`，不同时修改实现者的测试 |
-| Architecture Reviewer | 核心契约、架构边界、复杂跨模块问题审核 | 只读规格与代码，写分配的审核工件 |
-| Evidence Assistant | 整理已验证日志、追踪索引与报告初稿 | 分配的审计索引/草稿，不更改原始证据 |
+| Leader | 兼产品澄清；契约、调度、审核处置、集成、发布与验收 | 共享规格、依赖、状态与最终报告；CI/deploy 共享文件可单写委派准备 |
+| Frontend | 画布/状态/恢复；实现及组件/交互测试；前端部署准备 | 分配的 `frontend/`、相关测试与部署文件 |
+| Backend | 视频/抽帧/保存/导出；实现及单元/集成测试；后端部署准备 | 分配的 `backend/`、相关测试与部署文件 |
+| Test / Acceptance | 独立验收、集成/E2E、证据索引和报告草稿 | 分配的 `tests/` 与审计草稿，不覆盖实现者测试或原始证据 |
 | GLM Reviewer/Experience | 使用智谱独立审查 GPT 实现，核对用户操作与潜在盲点 | 只读授权代码/合成演示，写独立审核工件 |
+| Architecture Reviewer，按需 | 架构/核心契约、坐标/保存一致性和复杂跨模块问题审核 | 只读规格与代码，写分配的审核工件 |
+
+P0 固定五个核心职责，另有一个按需专项审核；取消独立 Product 和 Evidence Assistant。角色表示职责，不代表每个角色一直运行或每轮都启动。P1 的 AI Integration 是按任务启用的专项 Worker，P0 不运行。
 
 Leader 加最多三个 Worker，职责轮换席位；智谱客户端单独计入实际执行预算，不虚报为内置 GLM 子 Agent。工作树在仓库外，单文件同一时间只有一个写入者；共享依赖/契约由 Leader 合入。评审必须指出规格覆盖、测试与缺陷，不能只给主观评价。
 
@@ -157,26 +157,40 @@ Leader 加最多三个 Worker，职责轮换席位；智谱客户端单独计入
 
 ### P0 固定模型与推理强度
 
-以下是已确认的目标配置，不是已运行证明；以 [决策 0002](docs/decisions/0002-agent-model-allocation.md) 为模型配置唯一权威来源。
+以下是已确认的目标配置，不是已运行证明；以 [决策 0003](docs/decisions/0003-lean-agent-roles.md) 为角色/模型配置唯一权威来源，替代决策 0002。
 
 | 角色 | 模型 | 推理强度 | P0 使用重点 |
 | --- | --- | --- | --- |
-| Leader | `gpt-6.1-sol` | `high` | 持续协调、证据核对、审核处置与最终验收 |
-| Architecture Reviewer | `gpt-6-astra` | `high` | R0 底座/契约审核，R3/R4 坐标与保存一致性审核，复杂跨模块阻塞 |
-| Product | `gpt-6.1-sol` | `medium` | R0 明确交互、边界与验收例子 |
+| Leader | `gpt-6.1-sol` | `xhigh`（极高） | 兼产品澄清、契约/调度、证据核对、审核处置与最终验收 |
 | Frontend | `gpt-6.1-sol` | `high` | 画布、状态、保存恢复与流程 |
 | Backend | `gpt-6.1-sol` | `high` | 抽帧、事务/revision、导出 |
-| Test | `gpt-6.1-sol` | `high` | 独立测试设计、集成/E2E 与缺陷复现 |
-| Evidence Assistant | `gpt-6-luna` | `high` | R7 整理已有证据；Leader 核实报告 |
+| Test / Acceptance | `gpt-6.1-sol` | `high` | 独立测试/验收、证据整理与报告草稿 |
 | GLM Reviewer/Experience | 公司 Key 实测可用的智谱模型，R0 固定准确 ID | 只使用供应商实际支持的设置 | 独立代码审核和实际浏览器体验 |
+| Architecture Reviewer，按需 | `gpt-6-astra` | `xhigh`（极高） | R0 底座/契约，R3/R4 坐标与保存一致性，复杂跨模块阻塞 |
 
-Architecture Reviewer 与 Evidence Assistant 按任务使用，仍占原生 Worker 席位，不增加并发上限。P0 不启动 AI Integration Agent。复杂问题交给既定 Astra 审核角色，不自动把所有 Worker 升到更高强度，也不因失败切换模型逃避修复预算。
+Architecture Reviewer 按任务启用，占原生 Worker 席位，不增加并发上限。Leader 与专项审核使用 `xhigh`；开发/测试默认 `high`。不自动提升至 `max/ultra`，不因失败切换模型或改任务名逃避修复预算。Luna 不列入当前执行角色。
 
-R0 将确认的模型配置落地为项目专用英文 Agent 定义/启动参数，进行最小启动验证；本轮只更新文档，不创建或宣称已经生效的运行配置。Leader 主会话需单独选为 `gpt-6.1-sol` / `high`；子 Agent 设置不会替主会话切换。无法确认主会话配置时记录未确认，不能凭模型自述判断。
+R0 将确认的模型配置落地为项目专用英文 Agent 定义/启动参数，进行最小启动验证；本轮只更新文档，不创建或宣称已经生效的运行配置。Leader 主会话需单独选为 `gpt-6.1-sol` / `xhigh`；子 Agent 设置不会替主会话切换。无法确认主会话配置时记录未确认，不能凭模型自述判断。
 
 当前原生工具中，显式覆盖子 Agent 模型/推理强度使用 `fork_turns="none"`，加载自包含任务包；完整历史继承模式不支持此覆盖。启动时分别记录请求配置与可验证的实际配置，禁止把预期型号写成已验证实际型号。选定模型不可用时停止依赖该角色的任务，记录阻塞并推进独立任务，不静默替换型号或降低验收。
 
 GLM 经 OpenCode 外部调用，不伪装为 Codex 内置模型；其准确模型 ID、浏览器/工具兼容性是 R0 的实测项。P1/P2 的使用重点仅在 [后续波次前瞻](NEXT-WAVES.md) 保留，不因此启动未来任务。
+
+### 分阶段调度与负载责任
+
+以下是启动前的负载预估，不是已运行的均衡证明。Leader 每轮用任务队列、依赖、阻塞和剩余预算决定席位，不要求各角色工时相同。
+
+| 阶段 | 调度与责任 |
+| --- | --- |
+| R0 规格 | Leader 兼产品澄清；Test 提前定义独立验收；Astra 一次性审核架构/契约。前后端只推进不依赖未冻结契约的准备 |
+| R1–R4 开发 | 通常 Frontend/Backend/Test 三个 Worker 并行。实现者承担自身 TDD，Test 提前设计验收并独立验证；智谱分批审核已完成工件 |
+| R3/R4 核心一致性 | Astra 按任务核对坐标转换、保存/revision 与导出一致性，占用空闲或完成任务释放的席位，不与其他 Worker 超额并发 |
+| R5/R6 集成 | 开发者准备构建、部署和监控配置；Test 验证指定 SHA 的闭环/监控并整理证据；Leader 审核、合入和实际发布，智谱完成产品体验 |
+| R7 交付 | Test 汇总验收矩阵、证据索引和报告草稿；Leader 核实结论、最终签发报告并停止 |
+
+后端任务优先按“视频导入/抽帧”和“标注持久化/导出”拆成自包含能力包；依赖可满足且有空闲席位时可启用两个 Backend Worker，分别拥有不同路径。仍最多三个原生 Worker；不得挤掉必需的独立验收或跳过测试。共享路由、迁移序号、契约和依赖由 Leader 协调单写后集成。
+
+部署准备按任务包明确单文件 owner：Frontend 准备前端镜像/Nginx，Backend 准备后端镜像/FFmpeg；Compose、CI、Prometheus/Grafana 等共享配置由 Leader 指定一个 Worker 准备，交接后才切换 owner。Leader 保留共享契约和最终发布责任，避免包办全部实现/配置/证据整理。
 
 ### 上下文、soul、记忆与交接
 
@@ -198,14 +212,14 @@ GLM 经 OpenCode 外部调用，不伪装为 Codex 内置模型；其准确模�
 
 | 轮次 | 目标 | 分工与门槛 |
 | --- | --- | --- |
-| R0 | 落地规格、契约、任务，验证 OpenCode 智谱工具链 | Product/Test 输入，Leader 按确认选型执行，任务有 owner/依赖 |
+| R0 | 落地规格、契约、任务，验证 OpenCode 智谱工具链 | Leader 兼产品澄清，Test 输入验收，Astra 专项审核；任务有 owner/依赖 |
 | R1 | 骨架、配置、迁移、CI、合成 fixture | 前后端与独立测试并行；构建/健康通过 |
 | R2 | 上传、已知公司适配、抽帧与帧列表 | 前后端/Test 分路径；上传到帧展示通过 |
 | R3 | 四种框操作、几何和标注 API | 原图坐标与契约测试通过 |
 | R4 | 保存恢复、进度、COCO | revision、恢复、独立导出解析通过 |
-| R5 | 云端部署与基础监控 | Leader 发布；指定 SHA 的闭环/监控通过 |
-| R6 | 错误输入、故障、取消、重启及跨模型审核 | 智谱独立评审，Leader 核实处置；修复与验收 |
-| R7 | 仅补 P0 缺口并封存交付 | 完成/部分/阻塞报告后停止 |
+| R5 | 云端部署与基础监控 | 指定 Worker 准备配置，Leader 发布，Test 验证指定 SHA 的闭环/监控 |
+| R6 | 错误输入、故障、取消、重启及跨模型审核 | 汇总分批智谱审核并完成实际产品体验；Leader 核实处置，修复与验收 |
+| R7 | 仅补 P0 缺口并封存交付 | Test 整理证据/草稿，Leader 核实完成/部分/阻塞报告后停止 |
 
 执行按表中依赖顺序组织；Leader 可调整本波次内部调度并记理由，不能删除验收或跨波次。同一任务最多两次修复重派；短暂网络错误最多两次退避重试；单任务最多 45 分钟。超限记录阻塞，继续独立工作，必要时拆成带交接的新任务。
 

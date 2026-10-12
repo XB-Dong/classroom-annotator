@@ -8,7 +8,7 @@
 - [P0计划](P0-PLAN.md)
 - [后续波次前瞻：P1/P2](NEXT-WAVES.md)
 - [14项确认记录](docs/decisions/0001-confirmed-choices.md)
-- [Agent 模型与推理强度分配](docs/decisions/0002-agent-model-allocation.md)
+- [Agent 角色、极高推理与负载安排](docs/decisions/0003-lean-agent-roles.md)
 - [Agent 执行规则](AGENTS.md)
 - [时间戳报告](docs/audit/reports/)
 

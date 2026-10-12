@@ -1,6 +1,6 @@
 # 教室人员标注平台：项目宪法
 
-版本：0.4.0｜状态：选择已确认，执行待批示｜日期：2026-10-13
+版本：0.5.0｜状态：选择已确认，执行待批示｜日期：2026-10-13
 工作时区：Asia/Shanghai（UTC+08:00）
 
 ## 1. 任务与目标
@@ -19,7 +19,7 @@
 
 用户已确认全部 14 项推荐，详见 [确认记录](docs/decisions/0001-confirmed-choices.md)。当前 [P0计划](P0-PLAN.md) 等待用户启动批示，不代表产品已经实现或夜间任务已开始。
 
-用户已追加确认按角色及波次区分研发模型与推理强度，详见 [模型分配决定](docs/decisions/0002-agent-model-allocation.md)。模型配置确认不等同于 P0 启动授权。
+用户已追加确认五个核心角色、按需架构审核及关键角色极高推理强度，详见 [角色与模型决定](docs/decisions/0003-lean-agent-roles.md)。此决定替代此前角色细分；模型配置确认不等同于 P0 启动授权。
 
 ## 3. 波次与交付
 
@@ -75,13 +75,15 @@ P0 必须有关键单测、持久化/API 集成、前端交互与核心 E2E。�
 
 ## 8. 多 Agent 与持续记忆
 
-角色：Leader、Product、Frontend、Backend、Test、Architecture Reviewer、Evidence Assistant、GLM Reviewer/Experience，以及 P1 才启用的 AI Integration。当前内置会话最多 Leader 加三个 Worker，角色轮换；外部智谱客户端另记录，不虚报内置并发能力。
+P0 五个核心角色：Leader、Frontend、Backend、Test / Acceptance、GLM Reviewer/Experience；另有按需 Architecture Reviewer。产品澄清归 Leader，证据整理和报告草稿归 Test，不独立设置 Product 或 Evidence Assistant。AI Integration 仅 P1 起按任务启用。角色不等于常驻运行实例；当前内置会话最多 Leader 加三个 Worker，专项角色轮换占位；外部智谱客户端另记录，不虚报内置并发能力。
 
 每个 Worker 有独立有限上下文、允许路径、规格引用、验收、依赖、评审者和预算。并行修改使用外部 worktree 和明确所有权。Leader 负责契约、依赖、集成、部署与最终决策。
 
 所谓 soul 是可审查的职责与质量准则；持续记忆靠版本化角色说明、已验证事实和交接工件，不靠隐藏会话状态。记录实际 provider/model；GLM 执行适配器验证前不能宣称已接通。
 
-按已确认的模型分配执行：Sol 承担持续协调与核心实现/测试，Astra 负责专项架构和复杂问题审核，Luna 整理已验证证据，智谱负责跨供应商独立审核。分别记录请求与实际型号/推理强度、核实状态及依据；不可用不静默替换。主会话与子 Agent 分别配置，切换角色或型号后重读任务包、记忆与交接，不以模型自述作为型号或质量证明。
+按已确认的模型分配执行：Leader 使用 Sol `xhigh`（极高）；Frontend、Backend、Test 和未来 AI Integration 默认 Sol `high`；专项审核使用 Astra `xhigh`（极高）；智谱负责跨供应商独立审核。本版不设置 Luna 执行角色，不自动提升至 `max/ultra`。分别记录请求与实际型号/推理强度、核实状态及依据；不可用不静默替换。主会话与子 Agent 分别配置，切换角色或型号后重读任务包、记忆与交接，不以模型自述作为型号或质量证明。
+
+按依赖分阶段调度，不追求人均相同负载。后端能力包可在现有席位内分开执行，明确路径所有权和共享文件协调；实现者完成自身测试，Test 保留独立验收。Worker 准备构建/部署/监控配置与证据草稿，Leader 核实、集成、实际发布并签发最终报告，不包办全部实现。
 
 执行选型固定为 Codex 原生开发 Agent、外部 Git worktree 与 OpenCode 智谱审核客户端，不自研编排平台。Leader 在任务分支测试/审查通过后可合入，不逐轮请求用户批准；波次交付必须停止。
 

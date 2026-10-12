@@ -2,7 +2,7 @@
 
 ## Read before work
 
-Read `CONSTITUTION.md`, `P0-PLAN.md`, `docs/decisions/0001-confirmed-choices.md`, `docs/decisions/0002-agent-model-allocation.md`, and the active wave's specification, task packet, and handoff. All fourteen choices and the role-based model allocation are confirmed. P0 execution still requires the user's explicit start instruction. `NEXT-WAVES.md` is reference only and never authorizes P1/P2 work.
+Read `CONSTITUTION.md`, `P0-PLAN.md`, `docs/decisions/0001-confirmed-choices.md`, `docs/decisions/0003-lean-agent-roles.md`, and the active wave's specification, task packet, and handoff. All fourteen choices and the lean role/model policy are confirmed. Decision 0003 supersedes decision 0002. P0 execution still requires the user's explicit start instruction. `NEXT-WAVES.md` is reference only and never authorizes P1/P2 work.
 
 ## Scope and language
 
@@ -29,8 +29,9 @@ Read `CONSTITUTION.md`, `P0-PLAN.md`, `docs/decisions/0001-confirmed-choices.md`
 
 ## Model allocation and context
 
-- Treat decision 0002 as the canonical model policy. Leader, Frontend, Backend, Test, and P1 AI Integration use `gpt-6.1-sol` with `high`; Product uses the same model with `medium`.
-- Architecture Reviewer uses `gpt-6-astra` with `high` for core architecture/contracts and complex cross-module issues. Evidence Assistant uses `gpt-6-luna` with `high` only to organize verified evidence and draft reports.
+- Treat decision 0003 as the canonical role/model policy. Leader uses `gpt-6.1-sol` with `xhigh`; Frontend, Backend, Test / Acceptance, and P1 AI Integration use `gpt-6.1-sol` with `high`.
+- Activate Architecture Reviewer as needed with `gpt-6-astra` and `xhigh` for core architecture/contracts, coordinate/save consistency, and complex cross-module issues. Do not automatically escalate to `max/ultra`.
+- P0 has five core responsibilities: Leader, Frontend, Backend, Test / Acceptance, and external GLM Reviewer/Experience. Leader owns product clarification; Test organizes verified evidence and drafts reports. Do not create separate Product, Evidence Assistant, or Luna roles under this policy. Roles are responsibilities, not permanently running processes.
 - All native roles share the limit of one Leader plus three Workers. Specialist roles occupy Worker slots; they do not create extra capacity.
 - Configure the main Leader session separately. Child model settings do not change the parent session. Never infer the actual parent model from self-identification.
 - In the current native spawn interface, use `fork_turns="none"` for explicit model/effort overrides and provide a self-contained task packet. Full-history forks inherit the parent's model/effort and cannot satisfy an explicit override.
@@ -39,6 +40,16 @@ Read `CONSTITUTION.md`, `P0-PLAN.md`, `docs/decisions/0001-confirmed-choices.md`
 - Determine and freeze the exact GLM model ID through the R0 company-key and tool/browser smoke checks. Use only provider-supported reasoning controls; record unsupported controls explicitly. GLM runs through external OpenCode, not native Codex spawn.
 - Reload specifications, verified memory, and handoffs when changing roles or models. Do not assume context automatically transfers.
 - Implement and smoke-check project-specific English agent definitions or spawn parameters during R0 after explicit P0 authorization. This documentation update does not activate runtime configuration.
+
+## Scheduling and load ownership
+
+- During R0, Leader clarifies product behavior, Test designs independent acceptance, and Architecture Reviewer audits the proposed architecture/contracts. Do not implement behavior against unfrozen contracts.
+- During core development, normally allocate the three Worker slots to Frontend, Backend, and Test. Implementers own their behavior-focused tests; Test designs and executes independent integration/E2E acceptance early.
+- Split backend work into self-contained video/import/extraction and annotation/persistence/export packets. Two Backend Workers may run only when dependencies and disjoint path ownership permit and a slot is free. Keep independent acceptance and the total three-Worker limit intact.
+- Frontend prepares its image/Nginx configuration; Backend prepares its image/FFmpeg configuration. Leader assigns a single Worker to prepare each shared CI/Compose/monitoring file; ownership changes only after handoff. Leader reviews, integrates, and performs the actual release.
+- Review completed contracts/modules through GLM in batches during R1-R5; experience available cloud flows early. R6 completes the actual synthetic core browser workflow and consolidates findings. R0 tool smoke checks never count as product acceptance.
+- During delivery, Test prepares acceptance matrices, evidence indexes, and a report draft; Leader verifies all conclusions and issues the final report. Do not alter another actor's original evidence.
+- Assess task dependencies, queues, blockers, and remaining budget each round. Record reassignment reasons; do not claim measured workload balance before execution.
 
 ## Quality and delivery
 
