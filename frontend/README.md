@@ -1,12 +1,13 @@
 # Frontend
 
 React 19 / TypeScript / Vite / React Konva annotation workbench. Chinese user interface;
-all production data comes from the frozen Go API contract (`specs/contracts/api.md`, v1.0.0).
+all production data comes from the frozen Go API contract (`specs/contracts/api.md`, v1.0.1).
 
 ## Local development
 
 ```powershell
-npm ci --cache D:\Project\cvte\runtime\npm-cache
+$env:npm_config_cache = Join-Path $env:TEMP 'classroom-npm-cache'
+npm ci
 npm run dev
 ```
 
