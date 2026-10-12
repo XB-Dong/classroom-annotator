@@ -1,5 +1,57 @@
 import type { Job } from '../../shared/api/types';
-const labels={queued:'排队中',running:'执行中',cancelling:'正在取消',completed:'已完成',failed:'失败',cancelled:'已取消'};
-export function JobsPanel({jobs,error,cancel}: {jobs:Job[];error?:string;cancel:(id:string)=>void}) {
-  return <section className="jobs-panel"><div className="panel-title"><h2>任务记录</h2><span className="eyebrow">自动刷新</span></div>{error&&<p role="alert" className="notice error">{error}</p>}{jobs.length===0?<p className="muted small">暂无导入或抽帧任务。</p>:<div className="job-list">{jobs.map(j=><div className="job" key={j.id}><div><strong>{j.kind==='import'?'视频导入':'视频抽帧'}</strong><span className={`badge ${j.status}`}>{labels[j.status]}</span></div><progress max={1} value={j.progress}/><small>{Math.round(j.progress*100)}% · {new Date(j.createdAt).toLocaleTimeString('zh-CN')}</small>{j.error&&<p className="error-text">{j.error}</p>}{['queued','running','cancelling'].includes(j.status)&&<button disabled={j.status==='cancelling'} onClick={()=>cancel(j.id)}>{j.status==='cancelling'?'等待清理完成…':'取消任务'}</button>}</div>)}</div>}</section>;
+const labels = {
+  queued: '排队中',
+  running: '执行中',
+  cancelling: '正在取消',
+  completed: '已完成',
+  failed: '失败',
+  cancelled: '已取消',
+};
+export function JobsPanel({
+  jobs,
+  error,
+  cancel,
+}: {
+  jobs: Job[];
+  error?: string;
+  cancel: (id: string) => void;
+}) {
+  return (
+    <section className="jobs-panel">
+      <div className="panel-title">
+        <h2>任务记录</h2>
+        <span className="eyebrow">自动刷新</span>
+      </div>
+      {error && (
+        <p role="alert" className="notice error">
+          {error}
+        </p>
+      )}
+      {jobs.length === 0 ? (
+        <p className="muted small">暂无导入或抽帧任务。</p>
+      ) : (
+        <div className="job-list">
+          {jobs.map((j) => (
+            <div className="job" key={j.id}>
+              <div>
+                <strong>{j.kind === 'import' ? '视频导入' : '视频抽帧'}</strong>
+                <span className={`badge ${j.status}`}>{labels[j.status]}</span>
+              </div>
+              <progress max={1} value={j.progress} />
+              <small>
+                {Math.round(j.progress * 100)}% ·{' '}
+                {new Date(j.createdAt).toLocaleTimeString('zh-CN')}
+              </small>
+              {j.error && <p className="error-text">{j.error}</p>}
+              {['queued', 'running', 'cancelling'].includes(j.status) && (
+                <button disabled={j.status === 'cancelling'} onClick={() => cancel(j.id)}>
+                  {j.status === 'cancelling' ? '等待清理完成…' : '取消任务'}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
 }

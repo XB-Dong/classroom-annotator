@@ -1,23 +1,298 @@
-import { useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { idPath, json, request } from '../shared/api/client';
 import type { Batch, Frame, Job, Progress, Snapshot, Video } from '../shared/api/types';
 import { ImportPanel } from '../features/videos/ImportPanel';
 import { JobsPanel } from '../features/videos/JobsPanel';
 import { ExtractionForm } from '../features/videos/ExtractionForm';
-import { Editor } from '../features/annotation/Editor';
+import { VideoLibrary } from '../features/videos/VideoLibrary';
+const Editor = lazy(() =>
+  import('../features/annotation/Editor').then((module) => ({ default: module.Editor })),
+);
 import { ExportButton } from '../features/export/ExportButton';
-const frameLabels={not_started:'未开始',in_progress:'标注中',completed:'已完成'};
+const frameLabels = { not_started: '未开始', in_progress: '标注中', completed: '已完成' };
 export function App() {
-  const [videos,setVideos]=useState<Video[]>([]);const [videoId,setVideoId]=useState('');const [jobs,setJobs]=useState<Job[]>([]);const [libraryError,setLibraryError]=useState<string>();const [jobsError,setJobsError]=useState<string>();const [loading,setLoading]=useState(true);
-  const [batches,setBatches]=useState<Batch[]>([]);const [batchId,setBatchId]=useState('');const [frames,setFrames]=useState<Frame[]>([]);const [frameId,setFrameId]=useState('');const [progress,setProgress]=useState<Progress>();const [batchError,setBatchError]=useState<string>();const [framesLoading,setFramesLoading]=useState(false);const [batchLoading,setBatchLoading]=useState(false);const [batchRefresh,setBatchRefresh]=useState(0);
-  const video=videos.find(v=>v.id===videoId);const frame=frames.find(f=>f.id===frameId);
-  const loadVideos=useCallback(async()=>{try{const result=await request<{videos:Video[]}>('/videos');setVideos(result.videos);setLibraryError(undefined);}catch(e){setLibraryError((e as Error).message);}finally{setLoading(false);}},[]);
-  useEffect(()=>{void loadVideos();let active=true;async function poll(){try{const result=await request<{jobs:Job[]}>('/jobs');if(active){setJobs(previous=>{if(result.jobs.some(j=>j.status==='completed'&&previous.find(p=>p.id===j.id)?.status!=='completed')){void loadVideos();setBatchRefresh(n=>n+1);}return result.jobs;});setJobsError(undefined);}}catch(e){if(active)setJobsError((e as Error).message);}}void poll();const timer=setInterval(()=>void poll(),2000);return()=>{active=false;clearInterval(timer);};},[loadVideos]);
-  useEffect(()=>{let active=true;setBatches([]);setBatchId('');setFrames([]);setFrameId('');setProgress(undefined);setBatchError(undefined);if(!videoId)return;setBatchLoading(true);void request<{batches:Batch[]}>(`/videos/${idPath(videoId)}/batches`).then(r=>{if(active){setBatches(r.batches);setBatchId(r.batches[0]?.id??'');}}).catch(e=>{if(active)setBatchError(e.message);}).finally(()=>{if(active)setBatchLoading(false);});return()=>{active=false;};},[videoId,batchRefresh]);
-  useEffect(()=>{let active=true;setFrames([]);setFrameId('');setProgress(undefined);setBatchError(undefined);if(!videoId||!batchId)return;setFramesLoading(true);const query=`?batchId=${idPath(batchId)}`;
-    void Promise.all([request<{frames:Frame[]}>(`/videos/${idPath(videoId)}/frames${query}`),request<Progress>(`/videos/${idPath(videoId)}/progress${query}`)]).then(([r,p])=>{if(active){setFrames(r.frames);setFrameId(r.frames[0]?.id??'');setProgress(p);}}).catch(e=>{if(active)setBatchError(e.message);}).finally(()=>{if(active)setFramesLoading(false);});return()=>{active=false;};},[videoId,batchId]);
-  function addJob(job:Job){setJobs(previous=>[job,...previous.filter(j=>j.id!==job.id)]);}
-  async function cancel(id:string){try{addJob(await request<Job>(`/jobs/${idPath(id)}/cancel`,json({})));setJobsError(undefined);}catch(e){setJobsError((e as Error).message);}}
-  function saved(snapshot:Snapshot){setFrames(previous=>{const target=previous.find(f=>f.id===snapshot.frameId);if(!target||target.revision===snapshot.revision&&target.status===snapshot.status)return previous;return previous.map(f=>f.id===snapshot.frameId?{...f,status:snapshot.status,revision:snapshot.revision}:f);});if(videoId&&batchId)void request<Progress>(`/videos/${idPath(videoId)}/progress?batchId=${idPath(batchId)}`).then(setProgress).catch(e=>setBatchError(e.message));}
-  return <div className="app"><header className="app-header"><div className="brand-mark">▦</div><div><h1>课堂人头标注</h1><p>Classroom Annotation Workspace</p></div><div className="header-note"><span className="dot"/>人工标注工作台 <span className="version">P0</span></div></header><div className="app-layout"><aside className="video-sidebar"><ImportPanel onVideo={v=>{setVideos(previous=>[v,...previous.filter(x=>x.id!==v.id)]);setVideoId(v.id);}} onJob={addJob}/><section className="library"><div className="panel-title"><h2>视频库</h2><button className="text-button" onClick={()=>void loadVideos()}>刷新</button></div>{loading?<p className="muted">正在加载视频…</p>:libraryError?<p className="notice error" role="alert">{libraryError}</p>:videos.length===0?<p className="muted small">还没有视频，先上传或导入。</p>:<label>当前视频<select data-testid="video-select" value={videoId} onChange={e=>setVideoId(e.target.value)}><option value="">选择视频</option>{videos.map(v=><option key={v.id} value={v.id}>{v.name}</option>)}</select></label>}</section>{video&&<ExtractionForm key={video.id} video={video} onJob={addJob}/>}<JobsPanel jobs={jobs} error={jobsError} cancel={id=>void cancel(id)}/></aside><main className="workspace"><div className="workspace-header"><div><span className="eyebrow">03 / 标注工作台</span><h2>{video?.name||'准备开始标注'}</h2></div>{videoId&&batchId&&progress&&<ExportButton videoId={videoId} batchId={batchId} completed={progress.completed}/>}</div>{video?<><div className="batch-bar"><label>抽帧批次<select aria-label="抽帧批次" data-testid="batch-select" value={batchId} onChange={e=>setBatchId(e.target.value)} disabled={batchLoading||batches.length===0}><option value="">{batchLoading?'加载中…':batches.length?'选择批次':'暂无已完成批次'}</option>{batches.map((b,index)=><option key={b.id} value={b.id}>批次 {index+1} · {new Date(b.createdAt).toLocaleString('zh-CN')} · {b.frameCount} 帧</option>)}</select></label>{progress&&<div className="batch-progress"><span>完成 <strong>{progress.completed} / {progress.total}</strong></span><progress value={progress.completed} max={progress.total||1}/><small>未开始 {progress.notStarted} · 标注中 {progress.inProgress}</small></div>}</div>{batchError&&<div className="notice error" role="alert">{batchError}</div>}{framesLoading?<div className="empty">正在加载批次图片…</div>:frames.length===0?<div className="empty"><div className="empty-icon">▧</div><h3>还没有可标注的帧</h3><p>创建抽帧批次，任务完成后会在这里显示。</p></div>:<div className="workbench"><aside className="frame-sidebar"><div className="panel-title"><h2>图片帧</h2><span className="muted small">{frames.length} 张</span></div><div className="frame-list">{frames.map((f,index)=><button data-testid={`frame-item-${f.id}`} key={f.id} className={`frame-item ${f.id===frameId?'selected':''}`} onClick={()=>setFrameId(f.id)}><img src={f.imageUrl} alt={`第 ${index+1} 帧`} loading="lazy"/><span><strong>帧 {String(index+1).padStart(3,'0')}</strong><small>采样时间 {(f.timestampMs/1000).toFixed(3)} 秒</small><em className={f.status}>{frameLabels[f.status]}</em></span></button>)}</div></aside>{frame&&<Editor key={frame.id} frame={frame} onSaved={saved}/>}</div>}</>:<div className="empty intro"><div className="empty-icon">▧</div><h3>从一段课堂视频开始</h3><p>导入视频 → 按间隔抽帧 → 标注学生人头 → 导出训练数据</p><p className="muted">仅已完成帧会进入 COCO 图片包，零人头帧也需显式完成。</p></div>}</main></div></div>;
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [videoId, setVideoId] = useState('');
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [libraryError, setLibraryError] = useState<string>();
+  const [jobsError, setJobsError] = useState<string>();
+  const [loading, setLoading] = useState(true);
+  const [batches, setBatches] = useState<Batch[]>([]);
+  const [batchId, setBatchId] = useState('');
+  const [frames, setFrames] = useState<Frame[]>([]);
+  const [frameId, setFrameId] = useState('');
+  const [progress, setProgress] = useState<Progress>();
+  const [batchError, setBatchError] = useState<string>();
+  const [framesLoading, setFramesLoading] = useState(false);
+  const [batchLoading, setBatchLoading] = useState(false);
+  const [batchRefresh, setBatchRefresh] = useState(0);
+  const video = videos.find((v) => v.id === videoId);
+  const frame = frames.find((f) => f.id === frameId);
+  const loadVideos = useCallback(async () => {
+    try {
+      const result = await request<{ videos: Video[] }>('/videos');
+      setVideos(result.videos);
+      setLibraryError(undefined);
+    } catch (e) {
+      setLibraryError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  useEffect(() => {
+    void loadVideos();
+    let active = true;
+    async function poll() {
+      try {
+        const result = await request<{ jobs: Job[] }>('/jobs');
+        if (active) {
+          setJobs((previous) => {
+            if (
+              result.jobs.some(
+                (j) =>
+                  j.status === 'completed' &&
+                  previous.find((p) => p.id === j.id)?.status !== 'completed',
+              )
+            ) {
+              void loadVideos();
+              setBatchRefresh((n) => n + 1);
+            }
+            return result.jobs;
+          });
+          setJobsError(undefined);
+        }
+      } catch (e) {
+        if (active) setJobsError((e as Error).message);
+      }
+    }
+    void poll();
+    const timer = setInterval(() => void poll(), 2000);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, [loadVideos]);
+  useEffect(() => {
+    let active = true;
+    setBatches([]);
+    setBatchId('');
+    setFrames([]);
+    setFrameId('');
+    setProgress(undefined);
+    setBatchError(undefined);
+    if (!videoId) return;
+    setBatchLoading(true);
+    void request<{ batches: Batch[] }>(`/videos/${idPath(videoId)}/batches`)
+      .then((r) => {
+        if (active) {
+          setBatches(r.batches);
+          setBatchId(r.batches[0]?.id ?? '');
+        }
+      })
+      .catch((e) => {
+        if (active) setBatchError(e.message);
+      })
+      .finally(() => {
+        if (active) setBatchLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [videoId, batchRefresh]);
+  useEffect(() => {
+    let active = true;
+    setFrames([]);
+    setFrameId('');
+    setProgress(undefined);
+    setBatchError(undefined);
+    if (!videoId || !batchId) return;
+    setFramesLoading(true);
+    const query = `?batchId=${idPath(batchId)}`;
+    void Promise.all([
+      request<{ frames: Frame[] }>(`/videos/${idPath(videoId)}/frames${query}`),
+      request<Progress>(`/videos/${idPath(videoId)}/progress${query}`),
+    ])
+      .then(([r, p]) => {
+        if (active) {
+          setFrames(r.frames);
+          setFrameId(r.frames[0]?.id ?? '');
+          setProgress(p);
+        }
+      })
+      .catch((e) => {
+        if (active) setBatchError(e.message);
+      })
+      .finally(() => {
+        if (active) setFramesLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [videoId, batchId]);
+  function addJob(job: Job) {
+    setJobs((previous) => [job, ...previous.filter((j) => j.id !== job.id)]);
+  }
+  async function cancel(id: string) {
+    try {
+      addJob(await request<Job>(`/jobs/${idPath(id)}/cancel`, json({})));
+      setJobsError(undefined);
+    } catch (e) {
+      setJobsError((e as Error).message);
+    }
+  }
+  function saved(snapshot: Snapshot) {
+    setFrames((previous) => {
+      const target = previous.find((f) => f.id === snapshot.frameId);
+      if (!target || (target.revision === snapshot.revision && target.status === snapshot.status))
+        return previous;
+      return previous.map((f) =>
+        f.id === snapshot.frameId
+          ? { ...f, status: snapshot.status, revision: snapshot.revision }
+          : f,
+      );
+    });
+    if (videoId && batchId)
+      void request<Progress>(`/videos/${idPath(videoId)}/progress?batchId=${idPath(batchId)}`)
+        .then(setProgress)
+        .catch((e) => setBatchError(e.message));
+  }
+  return (
+    <div className="app">
+      <header className="app-header">
+        <div className="brand-mark">▦</div>
+        <div>
+          <h1>课堂人头标注</h1>
+          <p>Classroom Annotation Workspace</p>
+        </div>
+        <div className="header-note">
+          <span className="dot" />
+          人工标注工作台 <span className="version">P0</span>
+        </div>
+      </header>
+      <div className="app-layout">
+        <aside className="video-sidebar">
+          <ImportPanel
+            onVideo={(v) => {
+              setVideos((previous) => [v, ...previous.filter((x) => x.id !== v.id)]);
+              setVideoId(v.id);
+            }}
+            onJob={addJob}
+          />
+          <VideoLibrary
+            videos={videos}
+            videoId={videoId}
+            loading={loading}
+            error={libraryError}
+            refresh={() => void loadVideos()}
+            select={setVideoId}
+          />
+          {video && <ExtractionForm key={video.id} video={video} onJob={addJob} />}
+          <JobsPanel jobs={jobs} error={jobsError} cancel={(id) => void cancel(id)} />
+        </aside>
+        <main className="workspace">
+          <div className="workspace-header">
+            <div>
+              <span className="eyebrow">03 / 标注工作台</span>
+              <h2>{video?.name || '准备开始标注'}</h2>
+            </div>
+            {videoId && batchId && progress && (
+              <ExportButton videoId={videoId} batchId={batchId} completed={progress.completed} />
+            )}
+          </div>
+          {video ? (
+            <>
+              <div className="batch-bar">
+                <label>
+                  抽帧批次
+                  <select
+                    aria-label="抽帧批次"
+                    data-testid="batch-select"
+                    value={batchId}
+                    onChange={(e) => setBatchId(e.target.value)}
+                    disabled={batchLoading || batches.length === 0}
+                  >
+                    <option value="">
+                      {batchLoading ? '加载中…' : batches.length ? '选择批次' : '暂无已完成批次'}
+                    </option>
+                    {batches.map((b, index) => (
+                      <option key={b.id} value={b.id}>
+                        批次 {index + 1} · {new Date(b.createdAt).toLocaleString('zh-CN')} ·{' '}
+                        {b.frameCount} 帧
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {progress && (
+                  <div className="batch-progress">
+                    <span>
+                      完成{' '}
+                      <strong>
+                        {progress.completed} / {progress.total}
+                      </strong>
+                    </span>
+                    <progress value={progress.completed} max={progress.total || 1} />
+                    <small>
+                      未开始 {progress.notStarted} · 标注中 {progress.inProgress}
+                    </small>
+                  </div>
+                )}
+              </div>
+              {batchError && (
+                <div className="notice error" role="alert">
+                  {batchError}
+                </div>
+              )}
+              {framesLoading ? (
+                <div className="empty">正在加载批次图片…</div>
+              ) : frames.length === 0 ? (
+                <div className="empty">
+                  <div className="empty-icon">▧</div>
+                  <h3>还没有可标注的帧</h3>
+                  <p>创建抽帧批次，任务完成后会在这里显示。</p>
+                </div>
+              ) : (
+                <div className="workbench">
+                  <aside className="frame-sidebar">
+                    <div className="panel-title">
+                      <h2>图片帧</h2>
+                      <span className="muted small">{frames.length} 张</span>
+                    </div>
+                    <div className="frame-list">
+                      {frames.map((f, index) => (
+                        <button
+                          data-testid={`frame-item-${f.id}`}
+                          key={f.id}
+                          className={`frame-item ${f.id === frameId ? 'selected' : ''}`}
+                          onClick={() => setFrameId(f.id)}
+                        >
+                          <img src={f.imageUrl} alt={`第 ${index + 1} 帧`} loading="lazy" />
+                          <span>
+                            <strong>帧 {String(index + 1).padStart(3, '0')}</strong>
+                            <small>采样时间 {(f.timestampMs / 1000).toFixed(3)} 秒</small>
+                            <em className={f.status}>{frameLabels[f.status]}</em>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </aside>
+                  {frame && (
+                    <Suspense fallback={<div className="empty">正在加载标注工具…</div>}>
+                      <Editor key={frame.id} frame={frame} onSaved={saved} />
+                    </Suspense>
+                  )}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="empty intro">
+              <div className="empty-icon">▧</div>
+              <h3>从一段课堂视频开始</h3>
+              <p>导入视频 → 按间隔抽帧 → 标注学生人头 → 导出训练数据</p>
+              <p className="muted">仅已完成帧会进入 COCO 图片包，零人头帧也需显式完成。</p>
+            </div>
+          )}
+        </main>
+      </div>
+    </div>
+  );
 }

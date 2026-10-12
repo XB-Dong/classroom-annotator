@@ -1,0 +1,40 @@
+
+> classroom-annotator-frontend@0.1.0 test
+> vitest run src/features/annotation/saveController.test.ts -t disposed conflict
+
+
+ RUN  v5.0.4 D:/Project/cvte/worktrees/p0-frontend/frontend
+
+ ❯ src/features/annotation/saveController.test.ts (6 tests | 1 failed | 5 skipped) 8ms
+   ❯ captured snapshot saving and draft recovery (6)
+     × does not allow disposed conflict resolution to overwrite a reopened draft 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/annotation/saveController.test.ts > captured snapshot saving and draft recovery > does not allow disposed conflict resolution to overwrite a reopened draft
+AssertionError: expected 'in_progress' to be 'completed' // Object.is equality
+
+Expected: "completed"
+Received: "in_progress"
+
+ ❯ src/features/annotation/saveController.test.ts:136:43
+    134|     const reopened=new SaveController(snapshot(),state.controller.depe…
+    135|     reopened.edit(snapshot(0,'completed'));resolve(snapshot(7));await …
+    136|     expect(state.stored?.snapshot.status).toBe('completed');expect(sta…
+       |                                           ^
+    137|   });
+    138| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 skipped (6)
+   Start at  02:05:17
+   Duration  1.47s (environment 95%, transform 3%, import 1%, tests 1%)
+
+
+command=npm test -- src/features/annotation/saveController.test.ts -t 'disposed conflict'
+start=2026-10-13T02:05:15.8112601+08:00
+end=2026-10-13T02:05:18.5835852+08:00
+exitCode=1
