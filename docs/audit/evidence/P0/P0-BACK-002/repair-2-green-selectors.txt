@@ -1,0 +1,76 @@
+timestamp=2026-10-13T02:48:21.9472235+08:00
+command=go test ./internal/exports -run TestExportHTTPStatusMatrix -v -count=1
+=== RUN   TestExportHTTPStatusMatrix
+=== RUN   TestExportHTTPStatusMatrix/missingSelector
+    http_test.go:269: POST /api/v1/exports {} -> 400
+=== RUN   TestExportHTTPStatusMatrix/emptyFrameList
+    http_test.go:269: POST /api/v1/exports {"frameIds":[]} -> 400
+=== RUN   TestExportHTTPStatusMatrix/mixedVideoAndFrames
+    http_test.go:269: POST /api/v1/exports {"videoId":"v","frameIds":["f1"]} -> 400
+=== RUN   TestExportHTTPStatusMatrix/batchWithoutVideo
+    http_test.go:269: POST /api/v1/exports {"batchId":"b"} -> 400
+=== RUN   TestExportHTTPStatusMatrix/mixedBatchAndFrames
+    http_test.go:269: POST /api/v1/exports {"frameIds":["f1"],"batchId":"b"} -> 400
+=== RUN   TestExportHTTPStatusMatrix/duplicateFrameIDs
+    http_test.go:269: POST /api/v1/exports {"frameIds":["f1","f1"]} -> 400
+=== RUN   TestExportHTTPStatusMatrix/emptyFrameID
+    http_test.go:269: POST /api/v1/exports {"frameIds":[""]} -> 400
+=== RUN   TestExportHTTPStatusMatrix/nullFrameList
+    http_test.go:269: POST /api/v1/exports {"frameIds":null} -> 400
+=== RUN   TestExportHTTPStatusMatrix/wrongFrameListType
+    http_test.go:269: POST /api/v1/exports {"frameIds":"f1"} -> 400
+=== RUN   TestExportHTTPStatusMatrix/wrongFrameElementType
+    http_test.go:269: POST /api/v1/exports {"frameIds":[1]} -> 400
+=== RUN   TestExportHTTPStatusMatrix/nullFrameElement
+    http_test.go:269: POST /api/v1/exports {"frameIds":[null]} -> 400
+=== RUN   TestExportHTTPStatusMatrix/wrongVideoType
+    http_test.go:269: POST /api/v1/exports {"videoId":1} -> 400
+=== RUN   TestExportHTTPStatusMatrix/emptyVideoID
+    http_test.go:269: POST /api/v1/exports {"videoId":""} -> 400
+=== RUN   TestExportHTTPStatusMatrix/nullVideoID
+    http_test.go:269: POST /api/v1/exports {"videoId":null} -> 400
+=== RUN   TestExportHTTPStatusMatrix/emptyBatchID
+    http_test.go:269: POST /api/v1/exports {"videoId":"v","batchId":""} -> 400
+=== RUN   TestExportHTTPStatusMatrix/wrongBatchType
+    http_test.go:269: POST /api/v1/exports {"videoId":"v","batchId":1} -> 400
+=== RUN   TestExportHTTPStatusMatrix/noCompletedFrames
+    http_test.go:269: POST /api/v1/exports {"frameIds":["unfinished"]} -> 422
+=== RUN   TestExportHTTPStatusMatrix/unknownVideo
+    http_test.go:269: POST /api/v1/exports {"videoId":"missing"} -> 404
+=== RUN   TestExportHTTPStatusMatrix/unknownFrame
+    http_test.go:269: POST /api/v1/exports {"frameIds":["missing"]} -> 404
+=== RUN   TestExportHTTPStatusMatrix/batchOwnership
+    http_test.go:269: POST /api/v1/exports {"videoId":"v","batchId":"foreign"} -> 404
+=== RUN   TestExportHTTPStatusMatrix/validFrameSelection
+    http_test.go:269: POST /api/v1/exports {"frameIds":["f1"]} -> 200
+=== RUN   TestExportHTTPStatusMatrix/validVideoSelection
+    http_test.go:269: POST /api/v1/exports {"videoId":"v"} -> 200
+=== RUN   TestExportHTTPStatusMatrix/validBatchSelection
+    http_test.go:269: POST /api/v1/exports {"videoId":"v","batchId":"b"} -> 200
+--- PASS: TestExportHTTPStatusMatrix (0.12s)
+    --- PASS: TestExportHTTPStatusMatrix/missingSelector (0.00s)
+    --- PASS: TestExportHTTPStatusMatrix/emptyFrameList (0.00s)
+    --- PASS: TestExportHTTPStatusMatrix/mixedVideoAndFrames (0.00s)
+    --- PASS: TestExportHTTPStatusMatrix/batchWithoutVideo (0.00s)
+    --- PASS: TestExportHTTPStatusMatrix/mixedBatchAndFrames (0.00s)
+    --- PASS: TestExportHTTPStatusMatrix/duplicateFrameIDs (0.00s)
+    --- PASS: TestExportHTTPStatusMatrix/emptyFrameID (0.00s)
+    --- PASS: TestExportHTTPStatusMatrix/nullFrameList (0.00s)
+    --- PASS: TestExportHTTPStatusMatrix/wrongFrameListType (0.00s)
+    --- PASS: TestExportHTTPStatusMatrix/wrongFrameElementType (0.00s)
+    --- PASS: TestExportHTTPStatusMatrix/nullFrameElement (0.00s)
+    --- PASS: TestExportHTTPStatusMatrix/wrongVideoType (0.00s)
+    --- PASS: TestExportHTTPStatusMatrix/emptyVideoID (0.00s)
+    --- PASS: TestExportHTTPStatusMatrix/nullVideoID (0.00s)
+    --- PASS: TestExportHTTPStatusMatrix/emptyBatchID (0.00s)
+    --- PASS: TestExportHTTPStatusMatrix/wrongBatchType (0.00s)
+    --- PASS: TestExportHTTPStatusMatrix/noCompletedFrames (0.00s)
+    --- PASS: TestExportHTTPStatusMatrix/unknownVideo (0.00s)
+    --- PASS: TestExportHTTPStatusMatrix/unknownFrame (0.00s)
+    --- PASS: TestExportHTTPStatusMatrix/batchOwnership (0.00s)
+    --- PASS: TestExportHTTPStatusMatrix/validFrameSelection (0.02s)
+    --- PASS: TestExportHTTPStatusMatrix/validVideoSelection (0.03s)
+    --- PASS: TestExportHTTPStatusMatrix/validBatchSelection (0.02s)
+PASS
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/exports	1.610s
+exitCode=0

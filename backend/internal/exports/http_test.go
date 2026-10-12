@@ -203,8 +203,8 @@ func TestExportSelectorsAndMissingImagesFailBeforeZIPHeaders(t *testing.T) {
 		body string
 		code int
 	}{
-		{`{}`, 422}, {`{"videoId":"v","frameIds":["f1"]}`, 422}, {`{"batchId":"b","frameIds":["f1"]}`, 422},
-		{`{"frameIds":[]}`, 422}, {`{"frameIds":["f1","f1"]}`, 422}, {`{"videoId":""}`, 422},
+		{`{}`, 400}, {`{"videoId":"v","frameIds":["f1"]}`, 400}, {`{"batchId":"b","frameIds":["f1"]}`, 400},
+		{`{"frameIds":[]}`, 400}, {`{"frameIds":["f1","f1"]}`, 400}, {`{"videoId":""}`, 400},
 		{`{"videoId":"absent"}`, 404}, {`{"videoId":"v","batchId":"foreign"}`, 404}, {`{"frameIds":["f1","absent"]}`, 404},
 		{`{"frameIds":["unfinished"]}`, 422}, {`{"videoId":"v","batchId":"missing"}`, 404},
 		{`{"videoId":"v","unknown":true}`, 400},

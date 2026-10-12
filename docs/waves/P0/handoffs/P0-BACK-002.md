@@ -52,3 +52,28 @@
 
 下一步：Leader 审查实际 diff、安排 GLM 独立审核与独立验收，将前后端集成并执行授权的部署门槛。本 Worker 到此停止，不进入 P1/P2。
 
+## 独立验收发现后的修复 2/2
+
+Leader 正式派发本轮修复：独立 Test 在集成提交 `24096c0` 发现五类非法 selector 返回 422，与冻结 OpenAPI 的 malformed request 400 不符。本轮基于 `192b14729544b7c6069e8d74ce516c27d8024cd7`，仅修改 exports、对应测试及本包审计/交接；未修改 main、platform、router 或共享契约。API 1.0.1 的业务规则不变。
+
+根因是 `ErrInvalid` 在 HTTP 响应层被映射成 422。修复只将该分支改成 400 `INVALID_REQUEST`；保持无已完成帧 422 `NO_EXPORTABLE_FRAMES`、资源缺失/批次归属错误 404、合法导出 200。旧测试的错误期望同步改正；新增独立文件 `http_status_test.go` 覆盖 23 个实际 HTTP 请求状态，包含五个反馈案例以及重复/空/null/错误类型等输入。
+
+| HTTP 输入类型 | Red 实测 | Green 实测 |
+| --- | --- | --- |
+| `{}`、`frameIds:[]`、video 与 frameIds 混用、只有 batchId、batch 与 frameIds 混用 | 422，测试断言失败 | 400 |
+| 重复/空/null/错误类型 frameIds，空/null/错误类型 videoId，空/错误类型 batchId | 422，测试断言失败 | 400 |
+| 正确选择但无 completed 帧 | 422 | 422 |
+| 未知 video/frame 或不属于 video 的 batch | 404 | 404 |
+| 合法 frame/video/batch 导出 | 200 | 200 |
+
+真实证据仍位于 `docs/audit/evidence/P0/P0-BACK-002/`，未覆盖原始日志：
+
+- `repair-2-red-selectors.txt`：`go test ./internal/exports -run TestExportHTTPStatusMatrix -v -count=1`，退出 1；逐项记录实际返回。
+- `repair-2-green-selectors.txt`：相同命令，退出 0；23 个子案例全部通过。
+- `repair-2-full-tests.txt`：`go test ./... -count=1`，退出 0。
+- `repair-2-vet.txt`：`go vet ./...`，退出 0。
+- `repair-2-build.txt`：`go build ./...`，退出 0。
+- `repair-2-source-diff-check.txt`：源码 staged diff whitespace 检查，退出 0。
+
+累计修复预算已用 **2/2**，包含首次临时 ZIP 清理修复；没有重置预算。准确新提交 SHA 由提交后交接消息提供，Leader 只需 cherry-pick 本轮新增提交。尚未由本 Worker 执行集成后的独立验收、GLM、浏览器或云端检查。
+

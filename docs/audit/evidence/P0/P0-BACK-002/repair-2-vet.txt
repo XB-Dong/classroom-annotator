@@ -1,0 +1,3 @@
+timestamp=2026-10-13T02:48:50.5653471+08:00
+command=go vet ./...
+exitCode=0

@@ -84,7 +84,7 @@ func respondError(c *gin.Context, err error) {
 	case errors.Is(err, sql.ErrNoRows):
 		httpapi.Error(c, 404, "NOT_FOUND", "Selected resource not found")
 	case errors.Is(err, ErrInvalid):
-		httpapi.Error(c, 422, "INVALID_EXPORT_SELECTION", "Select a video scope or a unique nonempty frame list")
+		httpapi.Error(c, 400, "INVALID_REQUEST", "Select a video scope or a unique nonempty frame list")
 	case errors.Is(err, ErrEmpty):
 		httpapi.Error(c, 422, "NO_EXPORTABLE_FRAMES", "Selected scope has no completed frames")
 	case errors.Is(err, ErrLimit):
