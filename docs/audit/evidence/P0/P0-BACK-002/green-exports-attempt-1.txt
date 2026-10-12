@@ -1,0 +1,8 @@
+timestamp=2026-10-13T02:18:23.3811657+08:00
+command=go test ./internal/exports -count=1
+--- FAIL: TestExportSelectorsAndMissingImagesFailBeforeZIPHeaders (0.05s)
+    http_test.go:233: [- export-1683292303.zip] <nil>
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/exports	1.915s
+FAIL
+exitCode=1

@@ -2,13 +2,16 @@ package main
 
 import (
 	"context"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/annotations"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/dataset"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/exports"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/extraction"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/httpapi"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/jobs"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/media"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/config"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/store"
+	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"os"
@@ -40,7 +43,10 @@ func main() {
 	x := &extraction.Service{Store: s, Runner: process}
 	m := jobs.New(s, cfg.QueueSize, cfg.JobTimeout)
 	defer m.Close()
-	r := httpapi.New(cfg, s, m, v, x, dataset.New(cfg))
+	r := httpapi.New(cfg, s, m, v, x, dataset.New(cfg), func(g *gin.RouterGroup, s *store.Store) {
+		annotations.Register(g, s, m.Metrics.Registry)
+		exports.Register(g, s, m.Metrics.Registry, cfg.MaxFrames)
+	})
 	server := &http.Server{Addr: cfg.Addr, Handler: r, ReadHeaderTimeout: 10 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 1024 * 1024}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

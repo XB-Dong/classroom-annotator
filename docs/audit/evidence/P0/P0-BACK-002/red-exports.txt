@@ -1,0 +1,12 @@
+timestamp=2026-10-13T02:16:42.9080524+08:00
+command=go test ./internal/exports -count=1
+--- FAIL: TestExportCompletedFramesAndZeroHeadWithIndependentReader (0.05s)
+    http_test.go:186: export status 501: 
+--- FAIL: TestExportSelectorsAndMissingImagesFailBeforeZIPHeaders (0.04s)
+    http_test.go:214: {} status 501 want 422: 
+--- FAIL: TestConcurrentExportsAndSavesNeverMixSnapshots (0.04s)
+    http_test.go:255: export status 501: 
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/exports	1.283s
+FAIL
+exitCode=1

@@ -1,0 +1,3 @@
+timestamp=2026-10-13T02:20:41.4175354+08:00
+command=go build ./...
+exitCode=0
