@@ -1,0 +1,8 @@
+{
+  "label": "Verify repaired media behavior on cloud FFmpeg4 and container FFmpeg5",
+  "ssh_host_key": "pinned",
+  "action": "exec",
+  "exit_code": 1,
+  "stdout": "3e39eecf53c2977ab8e685b0eed9439a8bc26442e895af957d2d5a97e40ce750  /opt/classroom-annotator/releases/verification/media-repair1.test\n=== RUN   TestFFmpegAccurateSeekTailAndRotation\n    integration_test.go:75: fixture lacks rotation metadata:  exit status 1\n--- FAIL: TestFFmpegAccurateSeekTailAndRotation (0.47s)\nFAIL\n",
+  "stderr": ""
+}

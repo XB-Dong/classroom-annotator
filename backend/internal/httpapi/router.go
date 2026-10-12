@@ -43,8 +43,9 @@ func New(cfg config.Config, s *store.Store, m *jobs.Manager, v *media.Service, x
 			if path == "" {
 				path = "unmatched"
 			}
-			m.Metrics.Requests.WithLabelValues(c.Request.Method, path, strconv.Itoa(c.Writer.Status())).Inc()
-			m.Metrics.RequestDuration.WithLabelValues(c.Request.Method, path).Observe(time.Since(start).Seconds())
+			method := metricMethod(c.Request.Method)
+			m.Metrics.Requests.WithLabelValues(method, path, strconv.Itoa(c.Writer.Status())).Inc()
+			m.Metrics.RequestDuration.WithLabelValues(method, path).Observe(time.Since(start).Seconds())
 		}()
 		c.Next()
 	})
@@ -87,4 +88,12 @@ func New(cfg config.Config, s *store.Store, m *jobs.Manager, v *media.Service, x
 	}
 	r.NoRoute(func(c *gin.Context) { Error(c, 404, "NOT_FOUND", "Resource not found") })
 	return r
+}
+func metricMethod(method string) string {
+	switch method {
+	case http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete, http.MethodHead, http.MethodOptions, http.MethodConnect, http.MethodTrace:
+		return method
+	default:
+		return "other"
+	}
 }

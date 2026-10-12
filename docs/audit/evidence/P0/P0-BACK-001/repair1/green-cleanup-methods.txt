@@ -1,0 +1,6 @@
+time=2026-10-13T02:37:51.9297997+08:00
+command=go test -count=1 ./internal/httpapi ./internal/extraction ./internal/platform/store -run TestCustomMethods|TestWindowsLocked|TestCleanupFailure|TestCancellation
+exit=0
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/httpapi	2.357s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/extraction	1.637s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/platform/store	1.144s

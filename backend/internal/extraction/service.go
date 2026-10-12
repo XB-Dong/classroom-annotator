@@ -15,7 +15,7 @@ type Service struct {
 	Runner media.Runner
 }
 
-func (s *Service) Run(ctx context.Context, j domain.Job, v domain.Video, targets []int64) error {
+func (s *Service) Run(ctx context.Context, j domain.Job, v domain.Video, targets []int64) (result error) {
 	if len(targets) == 0 {
 		return errors.New("no sampling targets")
 	}
@@ -23,7 +23,11 @@ func (s *Service) Run(ctx context.Context, j domain.Job, v domain.Video, targets
 	if e := os.Mkdir(stage, 0700); e != nil {
 		return e
 	}
-	defer os.RemoveAll(stage)
+	defer func() {
+		if e := os.RemoveAll(stage); e != nil {
+			result = errors.Join(media.ErrCleanup, result)
+		}
+	}()
 	frames := make([]domain.Frame, 0, len(targets))
 	for i, ms := range targets {
 		if e := ctx.Err(); e != nil {
@@ -51,7 +55,9 @@ func (s *Service) Run(ctx context.Context, j domain.Job, v domain.Video, targets
 		return e
 	}
 	if e := s.Store.PublishBatch(j, frames); e != nil {
-		os.RemoveAll(final)
+		if cleanupErr := os.RemoveAll(final); cleanupErr != nil {
+			return errors.Join(media.ErrCleanup, e)
+		}
 		return e
 	}
 	return nil

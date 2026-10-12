@@ -48,6 +48,26 @@ func TestCancelWinsPublicationAndRestartInterrupts(t *testing.T) {
 		t.Fatal(frames, e)
 	}
 }
+func TestCleanupFailureDuringCancellationPersistsFailed(t *testing.T) {
+	s, e := Open(t.TempDir())
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer s.DB.Close()
+	j := domain.Job{ID: "j", Kind: "import", Status: "queued", CreatedAt: domain.Now()}
+	if e = s.AddJob(j); e != nil {
+		t.Fatal(e)
+	}
+	s.StartJob(j.ID)
+	s.CancelJob(j.ID)
+	if e = s.FinishJob(j.ID, "failed", "CLEANUP_FAILED"); e != nil {
+		t.Fatal(e)
+	}
+	got, e := s.Job(j.ID)
+	if e != nil || got.Status != "failed" || got.Error != "CLEANUP_FAILED" {
+		t.Fatal(got, e)
+	}
+}
 func TestRestartReconcilesOnlyUnpublishedMedia(t *testing.T) {
 	s, e := Open(t.TempDir())
 	if e != nil {

@@ -51,7 +51,7 @@ func (s *Store) CancelJob(id string) (domain.Job, error) {
 	return s.Job(id)
 }
 func (s *Store) FinishJob(id, status, code string) error {
-	_, e := s.DB.Exec(`UPDATE jobs SET status=CASE WHEN status='cancelling' THEN 'cancelled' ELSE ? END,error=CASE WHEN status='cancelling' THEN '' ELSE ? END WHERE id=? AND status IN ('running','cancelling')`, status, code, id)
+	_, e := s.DB.Exec(`UPDATE jobs SET status=CASE WHEN status='cancelling' AND ?<>'CLEANUP_FAILED' THEN 'cancelled' ELSE ? END,error=CASE WHEN status='cancelling' AND ?<>'CLEANUP_FAILED' THEN '' ELSE ? END WHERE id=? AND status IN ('running','cancelling')`, code, status, code, code, id)
 	return e
 }
 func (s *Store) SetProgress(id string, p float64) error {

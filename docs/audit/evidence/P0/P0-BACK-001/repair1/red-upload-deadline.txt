@@ -1,0 +1,14 @@
+time=2026-10-13T02:39:41.9908503+08:00
+command=go test -count=1 -v ./internal/httpapi -run TestUploadDeadline
+exit=1
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/25
+    upload_timeout_test.go:46: handler remained blocked beyond upload deadline 700.3341ms read tcp 127.0.0.1:61669->127.0.0.1:61668: i/o timeout
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/111
+    upload_timeout_test.go:46: handler remained blocked beyond upload deadline 700.198ms read tcp 127.0.0.1:61671->127.0.0.1:61670: i/o timeout
+--- FAIL: TestUploadDeadlineCoversMultipartHeaderAndStalledFile (1.47s)
+    --- FAIL: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/25 (0.74s)
+    --- FAIL: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/111 (0.73s)
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/httpapi	2.992s
+FAIL

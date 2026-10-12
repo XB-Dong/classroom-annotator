@@ -1,11 +1,14 @@
 package media
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"image/jpeg"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -60,7 +63,40 @@ func TestFFmpegAccurateSeekTailAndRotation(t *testing.T) {
 		t.Fatal("unavailable tail unexpectedly produced frame")
 	}
 	rotated := filepath.Join(root, "rotated.mp4")
-	run("-i", input, "-c", "copy", "-metadata:s:v:0", "rotate=90", "-y", rotated)
+	help, e := exec.CommandContext(ctx, ffmpeg, "-hide_banner", "-h", "full").Output()
+	if e != nil {
+		t.Fatal(e)
+	}
+	if bytes.Contains(help, []byte("-display_rotation")) {
+		run("-display_rotation:v:0", "90", "-i", input, "-c", "copy", "-y", rotated)
+	} else {
+		run("-i", input, "-c", "copy", "-metadata:s:v:0", "rotate=90", "-y", rotated)
+	}
+	rotation, e := exec.CommandContext(ctx, ffprobe, "-v", "error", "-show_streams", "-of", "json", rotated).Output()
+	var rotationDTO struct {
+		Streams []struct {
+			SideData []struct {
+				Rotation float64 `json:"rotation"`
+			} `json:"side_data_list"`
+			Tags map[string]string `json:"tags"`
+		} `json:"streams"`
+	}
+	hasRotation := false
+	if e == nil && json.Unmarshal(rotation, &rotationDTO) == nil {
+		for _, stream := range rotationDTO.Streams {
+			for _, side := range stream.SideData {
+				if side.Rotation == 90 {
+					hasRotation = true
+				}
+			}
+			if angle, err := strconv.ParseFloat(stream.Tags["rotate"], 64); err == nil && angle == 90 {
+				hasRotation = true
+			}
+		}
+	}
+	if e != nil || !hasRotation {
+		t.Fatalf("fixture lacks rotation metadata: %s %v", rotation, e)
+	}
 	rotOut := filepath.Join(root, "rotated.jpg")
 	if e = p.Extract(ctx, rotated, 0, rotOut); e != nil {
 		t.Fatal(e)

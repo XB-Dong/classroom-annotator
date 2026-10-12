@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/domain"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/media"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/observability"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/store"
 	"sync"
@@ -92,7 +93,9 @@ func (m *Manager) run(t task) {
 	e = t.work(ctx, t.job)
 	code := "JOB_FAILED"
 	if e != nil {
-		if ctx.Err() == context.DeadlineExceeded {
+		if errors.Is(e, media.ErrCleanup) {
+			code = "CLEANUP_FAILED"
+		} else if ctx.Err() == context.DeadlineExceeded {
 			code = "TIMEOUT"
 		} else if e.Error() == "FRAME_UNAVAILABLE" {
 			code = "FRAME_UNAVAILABLE"

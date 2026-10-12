@@ -1,0 +1,9 @@
+time=2026-10-13T02:34:31.5939220+08:00
+command=PATH=<ffmpeg9.0.2>; go test -count=1 -v ./internal/media -run TestFFmpegAccurateSeekTailAndRotation
+exit=1
+=== RUN   TestFFmpegAccurateSeekTailAndRotation
+    integration_test.go:57: EXTRACTION_FAILED
+--- FAIL: TestFFmpegAccurateSeekTailAndRotation (0.33s)
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/media	0.895s
+FAIL

@@ -1,0 +1,16 @@
+time=2026-10-13T02:36:54.4965908+08:00
+command=go test -count=1 ./internal/httpapi ./internal/extraction ./internal/platform/store -run TestCustomMethods|TestWindowsLocked|TestCleanupFailure
+exit=1
+--- FAIL: TestCustomMethodsShareBoundedMetricLabel (0.05s)
+    router_test.go:61: classroom_http_request_duration_seconds contains 100 series for custom verbs
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/httpapi	2.423s
+--- FAIL: TestWindowsLockedJPEGCleanupFailureIsNotCancelled (0.03s)
+    cleanup_test.go:76: cleanup falsely acknowledged {db25a93d-4ea4-4089-a41e-128cb89e2f10 extraction v batch cancelled 0  2026-10-12T18:36:59.0724142Z}
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/extraction	1.497s
+--- FAIL: TestCleanupFailureDuringCancellationPersistsFailed (0.03s)
+    store_test.go:68: {j import   cancelled 0  2026-10-12T18:36:58.6067389Z} <nil>
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/platform/store	1.024s
+FAIL

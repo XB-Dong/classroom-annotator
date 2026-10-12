@@ -23,9 +23,14 @@ func (a *API) videos(c *gin.Context) {
 	c.JSON(200, gin.H{"videos": v})
 }
 func (a *API) upload(c *gin.Context) {
+	guard := startUploadDeadline(c, a.Cfg.JobTimeout)
+	defer guard.close()
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, a.Cfg.MaxUploadBytes+1024*1024)
 	reader, e := c.Request.MultipartReader()
 	if e != nil {
+		if guard.report(e) {
+			return
+		}
 		Error(c, 400, "INVALID_UPLOAD", "Expected multipart file")
 		return
 	}
@@ -37,6 +42,9 @@ func (a *API) upload(c *gin.Context) {
 			break
 		}
 		if e != nil {
+			if guard.report(e) {
+				return
+			}
 			var limit *http.MaxBytesError
 			if errors.As(e, &limit) {
 				failure(c, e)
@@ -53,18 +61,35 @@ func (a *API) upload(c *gin.Context) {
 		part.Close()
 	}
 	if body == nil {
+		if guard.report(guard.ctx.Err()) {
+			return
+		}
 		Error(c, 400, "INVALID_UPLOAD", "Missing file field")
 		return
 	}
-	ctx, cancel := context.WithTimeout(c.Request.Context(), a.Cfg.JobTimeout)
-	defer cancel()
-	v, e := a.Media.Prepare(ctx, body, name)
+	v, e := a.Media.Prepare(guard.ctx, body, name)
 	if e != nil {
+		if guard.report(e) {
+			return
+		}
 		failure(c, e)
 		return
 	}
+	if e = guard.ctx.Err(); e != nil {
+		if cleanupErr := a.Media.Remove(v); cleanupErr != nil {
+			failure(c, cleanupErr)
+			return
+		}
+		if !guard.report(e) {
+			failure(c, e)
+		}
+		return
+	}
 	if e = a.Store.AddVideo(v); e != nil {
-		a.Media.Remove(v)
+		if cleanupErr := a.Media.Remove(v); cleanupErr != nil {
+			failure(c, cleanupErr)
+			return
+		}
 		failure(c, e)
 		return
 	}

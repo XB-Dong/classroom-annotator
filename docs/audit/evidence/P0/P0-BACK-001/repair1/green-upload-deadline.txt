@@ -1,0 +1,15 @@
+time=2026-10-13T02:41:02.3451914+08:00
+command=go test -count=1 -v ./internal/httpapi -run TestUploadDeadline|TestSyntheticHTTP|TestMalformedMultipart
+exit=0
+=== RUN   TestSyntheticHTTPUploadExtractionAndCompanyImport
+--- PASS: TestSyntheticHTTPUploadExtractionAndCompanyImport (0.06s)
+=== RUN   TestMalformedMultipartReturnsClientError
+--- PASS: TestMalformedMultipartReturnsClientError (0.02s)
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/25
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/111
+--- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile (0.36s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/25 (0.18s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/111 (0.18s)
+PASS
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/httpapi	2.276s

@@ -1,0 +1,9 @@
+time=2026-10-13T02:34:51.5912491+08:00
+command=PATH=<ffmpeg9.0.2>; go test -count=1 -v ./internal/media -run TestFFmpegAccurateSeekTailAndRotation
+exit=1
+=== RUN   TestFFmpegAccurateSeekTailAndRotation
+    integration_test.go:70: rotation dimensions=32x24 err=<nil>
+--- FAIL: TestFFmpegAccurateSeekTailAndRotation (0.44s)
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/media	1.017s
+FAIL

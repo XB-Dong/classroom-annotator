@@ -1,0 +1,8 @@
+{
+  "label": "Verify portable repaired media on cloud FFmpeg4 and container FFmpeg5",
+  "ssh_host_key": "pinned",
+  "action": "exec",
+  "exit_code": 0,
+  "stdout": "d9ff24bd4a2e849006535580f3de7d5f1b9c423b410dac4f58b6aad915cf3ca5  /opt/classroom-annotator/releases/verification/media-repair1.test\n=== RUN   TestFFmpegAccurateSeekTailAndRotation\n--- PASS: TestFFmpegAccurateSeekTailAndRotation (0.42s)\nPASS\n=== RUN   TestFFmpegAccurateSeekTailAndRotation\n--- PASS: TestFFmpegAccurateSeekTailAndRotation (0.69s)\nPASS\n",
+  "stderr": ""
+}

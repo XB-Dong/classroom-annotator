@@ -17,6 +17,8 @@ func Error(c *gin.Context, status int, code, message string) {
 }
 func failure(c *gin.Context, e error) {
 	switch {
+	case errors.Is(e, media.ErrCleanup):
+		Error(c, 500, "CLEANUP_FAILED", "Media cleanup failed")
 	case errors.Is(e, sql.ErrNoRows):
 		Error(c, 404, "NOT_FOUND", "Resource not found")
 	case errors.Is(e, jobs.ErrQueue):

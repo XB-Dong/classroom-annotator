@@ -1,0 +1,13 @@
+time=2026-10-13T02:47:07.6386727+08:00
+command=PATH=<ffmpeg9.0.2>; go test -race -count=1 ./...
+exit=0
+?   	github.com/XB-Dong/classroom-annotator/backend/cmd/server	[no test files]
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/dataset	2.153s
+?   	github.com/XB-Dong/classroom-annotator/backend/internal/domain	[no test files]
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/extraction	3.127s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/httpapi	6.120s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/jobs	2.206s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/media	2.025s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/platform/config	1.399s
+?   	github.com/XB-Dong/classroom-annotator/backend/internal/platform/observability	[no test files]
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/platform/store	2.317s

@@ -1,0 +1,145 @@
+time=2026-10-13T02:46:04.6885923+08:00
+command=go test -count=10 -v ./internal/httpapi -run TestUploadDeadline
+exit=0
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-25
+    upload_timeout_test.go:69: configured timeout=150ms, observed response=151.2725ms
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-111
+    upload_timeout_test.go:69: configured timeout=150ms, observed response=151.6235ms
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-25
+    upload_timeout_test.go:69: configured timeout=1s, observed response=1.0003989s
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-111
+    upload_timeout_test.go:69: configured timeout=1s, observed response=1.0015408s
+--- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile (2.45s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-25 (0.18s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-111 (0.18s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-25 (1.05s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-111 (1.05s)
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-25
+    upload_timeout_test.go:69: configured timeout=150ms, observed response=150.8223ms
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-111
+    upload_timeout_test.go:69: configured timeout=150ms, observed response=151.3639ms
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-25
+    upload_timeout_test.go:69: configured timeout=1s, observed response=1.0004342s
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-111
+    upload_timeout_test.go:69: configured timeout=1s, observed response=1.0028079s
+--- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile (2.45s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-25 (0.18s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-111 (0.18s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-25 (1.05s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-111 (1.05s)
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-25
+    upload_timeout_test.go:69: configured timeout=150ms, observed response=150.7462ms
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-111
+    upload_timeout_test.go:69: configured timeout=150ms, observed response=151.7769ms
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-25
+    upload_timeout_test.go:69: configured timeout=1s, observed response=1.0015359s
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-111
+    upload_timeout_test.go:69: configured timeout=1s, observed response=1.0011497s
+--- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile (2.45s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-25 (0.17s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-111 (0.18s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-25 (1.05s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-111 (1.04s)
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-25
+    upload_timeout_test.go:69: configured timeout=150ms, observed response=150.6234ms
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-111
+    upload_timeout_test.go:69: configured timeout=150ms, observed response=151.2998ms
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-25
+    upload_timeout_test.go:69: configured timeout=1s, observed response=1.0004104s
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-111
+    upload_timeout_test.go:69: configured timeout=1s, observed response=1.0013567s
+--- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile (2.45s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-25 (0.18s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-111 (0.18s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-25 (1.05s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-111 (1.04s)
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-25
+    upload_timeout_test.go:69: configured timeout=150ms, observed response=150.7906ms
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-111
+    upload_timeout_test.go:69: configured timeout=150ms, observed response=151.1386ms
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-25
+    upload_timeout_test.go:69: configured timeout=1s, observed response=1.0002552s
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-111
+    upload_timeout_test.go:69: configured timeout=1s, observed response=1.0012902s
+--- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile (2.44s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-25 (0.18s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-111 (0.18s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-25 (1.04s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-111 (1.05s)
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-25
+    upload_timeout_test.go:69: configured timeout=150ms, observed response=150.4163ms
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-111
+    upload_timeout_test.go:69: configured timeout=150ms, observed response=151.74ms
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-25
+    upload_timeout_test.go:69: configured timeout=1s, observed response=1.0009684s
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-111
+    upload_timeout_test.go:69: configured timeout=1s, observed response=1.0016969s
+--- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile (2.45s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-25 (0.18s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-111 (0.18s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-25 (1.05s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-111 (1.04s)
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-25
+    upload_timeout_test.go:69: configured timeout=150ms, observed response=150.6758ms
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-111
+    upload_timeout_test.go:69: configured timeout=150ms, observed response=150.8158ms
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-25
+    upload_timeout_test.go:69: configured timeout=1s, observed response=1.0005055s
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-111
+    upload_timeout_test.go:69: configured timeout=1s, observed response=1.0006199s
+--- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile (2.45s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-25 (0.18s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-111 (0.18s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-25 (1.04s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-111 (1.05s)
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-25
+    upload_timeout_test.go:69: configured timeout=150ms, observed response=151.0458ms
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-111
+    upload_timeout_test.go:69: configured timeout=150ms, observed response=152.1796ms
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-25
+    upload_timeout_test.go:69: configured timeout=1s, observed response=1.0002458s
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-111
+    upload_timeout_test.go:69: configured timeout=1s, observed response=1.0020743s
+--- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile (2.46s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-25 (0.18s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-111 (0.18s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-25 (1.04s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-111 (1.06s)
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-25
+    upload_timeout_test.go:69: configured timeout=150ms, observed response=150.7634ms
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-111
+    upload_timeout_test.go:69: configured timeout=150ms, observed response=151.6118ms
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-25
+    upload_timeout_test.go:69: configured timeout=1s, observed response=1.0010077s
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-111
+    upload_timeout_test.go:69: configured timeout=1s, observed response=1.0024209s
+--- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile (2.44s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-25 (0.18s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-111 (0.18s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-25 (1.04s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-111 (1.04s)
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-25
+    upload_timeout_test.go:69: configured timeout=150ms, observed response=151.3837ms
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-111
+    upload_timeout_test.go:69: configured timeout=150ms, observed response=152.0909ms
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-25
+    upload_timeout_test.go:69: configured timeout=1s, observed response=1.0018184s
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-111
+    upload_timeout_test.go:69: configured timeout=1s, observed response=1.000687s
+--- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile (2.46s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-25 (0.18s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-111 (0.18s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-25 (1.05s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-111 (1.05s)
+PASS
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/httpapi	26.010s

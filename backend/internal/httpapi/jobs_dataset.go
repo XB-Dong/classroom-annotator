@@ -83,7 +83,9 @@ func (a *API) importVideo(c *gin.Context) {
 			return e
 		}
 		if e = a.Store.PublishImport(j, v); e != nil {
-			a.Media.Remove(v)
+			if cleanupErr := a.Media.Remove(v); cleanupErr != nil {
+				return cleanupErr
+			}
 			return e
 		}
 		return nil

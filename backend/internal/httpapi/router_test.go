@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"fmt"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/dataset"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/extraction"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/jobs"
@@ -33,6 +34,37 @@ func TestHealthAndUnconfiguredDatasetReturnContract(t *testing.T) {
 		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, tc.path, nil))
 		if w.Code != tc.code || !strings.Contains(w.Body.String(), tc.fragment) {
 			t.Fatalf("%s: %d %s", tc.path, w.Code, w.Body.String())
+		}
+	}
+}
+func TestCustomMethodsShareBoundedMetricLabel(t *testing.T) {
+	s, e := store.Open(t.TempDir())
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer s.DB.Close()
+	m := jobs.New(s, 1, time.Second)
+	defer m.Close()
+	cfg := config.Config{}
+	r := New(cfg, s, m, &media.Service{}, &extraction.Service{}, dataset.New(cfg))
+	for i := 0; i < 100; i++ {
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, httptest.NewRequest(fmt.Sprintf("CUSTOM%d", i), "/missing", nil))
+	}
+	families, e := m.Metrics.Registry.Gather()
+	if e != nil {
+		t.Fatal(e)
+	}
+	for _, family := range families {
+		if family.GetName() == "classroom_http_requests_total" || family.GetName() == "classroom_http_request_duration_seconds" {
+			if len(family.Metric) != 1 {
+				t.Fatalf("%s contains %d series for custom verbs", family.GetName(), len(family.Metric))
+			}
+			for _, label := range family.Metric[0].Label {
+				if label.GetName() == "method" && label.GetValue() != "other" {
+					t.Fatal(label)
+				}
+			}
 		}
 	}
 }

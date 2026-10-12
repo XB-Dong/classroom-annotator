@@ -1,0 +1,20 @@
+time=2026-10-13T02:45:18.0504292+08:00
+command=go test -count=1 -v ./internal/httpapi -run TestUploadDeadline
+exit=1
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-25
+    upload_timeout_test.go:69: configured timeout=150ms, observed response=151.2674ms
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-111
+    upload_timeout_test.go:69: configured timeout=150ms, observed response=152.5008ms
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-25
+    upload_timeout_test.go:69: configured timeout=1s, observed response=1.0009003s
+=== RUN   TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-111
+    upload_timeout_test.go:67: timeout not reported safely 500
+--- FAIL: TestUploadDeadlineCoversMultipartHeaderAndStalledFile (2.46s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-25 (0.18s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/150ms-111 (0.18s)
+    --- PASS: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-25 (1.05s)
+    --- FAIL: TestUploadDeadlineCoversMultipartHeaderAndStalledFile/1000ms-111 (1.05s)
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/httpapi	4.266s
+FAIL
