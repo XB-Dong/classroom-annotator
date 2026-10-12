@@ -5,7 +5,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg ca-certi
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --gid 10001 app && useradd --uid 10001 --gid 10001 --no-create-home app \
     && mkdir /data && chown app:app /data
-COPY --chmod=0555 deploy/artifacts/backend-server /usr/local/bin/backend-server
+COPY deploy/artifacts/backend-server /usr/local/bin/backend-server
+RUN chmod 0555 /usr/local/bin/backend-server
 USER 10001:10001
 EXPOSE 8080
 ENTRYPOINT ["/usr/local/bin/backend-server"]
