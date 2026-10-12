@@ -1,0 +1,7 @@
+Started 2026-10-13T03:05:20.3608849+08:00 DeployedSHA=64b65df305daebf09cf0b1563cf87750a714222b
+
+> monitoring
+> node scripts/monitoring-check.mjs
+
+P0-OPS/OBS: deployed SHA, three healthy scrape targets, observed app/job/host samples and provisioned read-only Grafana passed.
+ExitCode=0 Time=2026-10-13T03:05:21.8986495+08:00

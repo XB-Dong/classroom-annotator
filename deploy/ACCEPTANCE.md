@@ -11,8 +11,9 @@
 
 1. 经 API 保存一个带框 completed 帧和一个显式零头 completed 帧。记录两份 GET annotations（含 revision/status/box），scoped progress，下载 ZIP 的 SHA-256，以及独立 ZIP reader 验证结果。保留 videoId/batchId/frameIds，但不记录数据物理路径或凭证。
 2. Leader 停止后端，按照 `deploy/README.md` 从实际 `APP_DATA_VOLUME` 生成仓库外备份并计算 SHA-256，然后启动原后端。备份期间禁止其他写入，不复制仍在写的 SQLite/WAL。
-3. 创建另一个新的外部卷，将备份恢复到新卷；保留原卷。Leader 修改外部环境 `APP_DATA_VOLUME` 指向恢复卷并重建后端。先检查 health 精确 SHA，再重读相同 frameIds 的 annotations/progress，与基准 JSON 深度比较。
+3. 创建另一个新的外部卷，将备份恢复到新卷；保留原卷。Leader 修改外部环境 `APP_DATA_VOLUME` 指向恢复卷；Windows 生成的环境文件先规范为 LF，不能依赖 `sed ...$` 匹配 CRLF 行尾。先检查 `docker compose --env-file <external-env> config` 解析出的实际卷，再使用 `up -d --no-build --force-recreate backend`。必须用 `docker inspect` 明确核对新容器 `/data` 的 Mounts.Name 是新卷，不能把仍连接原卷的健康/数据检查当作恢复通过。确认实际挂载后才检查 health 精确 SHA，重读相同 frameIds 的 annotations/progress，与基准 JSON 深度比较。
 4. 再次导出同一范围并运行独立 ZIP reader，验证每张 JPEG 字节、尺寸、COCO 关联和 bbox/area 与基准一致。ZIP 整包时间戳可能不同，应以 JSON 和图片内容比较，不能仅凭两个 ZIP 哈希不同判定恢复失败。
+   可使用已通过浏览器主流程生成的仓库外 `restore-baseline.json`：设置 `P0_RESTORE_BASELINE/P0_BASE_URL/P0_EXPECTED_SHA`，执行 `npm run restore`。此脚本只观察健康/snapshot/progress/media 并请求导出，不执行停止、重启或切换卷；分别保存备份前和恢复后的命令/时间/退出码。
 5. Leader 记录备份 SHA、源/恢复卷的脱敏标识、发布 SHA、检查命令/时间/退出码及回滚决定；若失败，回到保留的原卷，保留失败证据。验收结束只由 Leader 决定清理临时卷。
 
 Test 不直接对任意部署执行重启。`npm run restart` 只管理自行启动的唯一本地后端子进程，使用全新的仓库外目录和临时 loopback 端口；它已经验证了本地 24096c0 的保存持久化与 interrupted 状态，但不替代以上云端备份/恢复门槛。

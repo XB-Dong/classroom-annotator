@@ -1,0 +1,26 @@
+Started 2026-10-13T03:06:46.7318032+08:00
+
+> check
+> node scripts/check.mjs
+
+Acceptance JavaScript syntax checked.
+ExitCode=0 Time=2026-10-13T03:06:49.0263757+08:00
+
+> test
+> node --test unit/*.test.mjs
+
+✔ independent reader accepts consistent JPEG/COCO and zero-head frames (32.4519ms)
+✔ independent reader rejects false dimensions (10.52ms)
+✔ independent reader rejects dangling annotation (10.106ms)
+✔ independent reader rejects wrong area (4.4922ms)
+✔ independent reader rejects out of bounds box (7.1299ms)
+✔ frozen contract rejects malformed annotation and mixed export selectors (4.1905ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 363.408
+ExitCode=0 Time=2026-10-13T03:06:50.1670715+08:00

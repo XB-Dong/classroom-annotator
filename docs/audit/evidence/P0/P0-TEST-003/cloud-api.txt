@@ -1,0 +1,23 @@
+Started 2026-10-13T03:01:30.4027071+08:00 DeployedSHA=64b65df305daebf09cf0b1563cf87750a714222b
+
+> contract
+> playwright test --project=api
+
+
+Running 10 tests using 1 worker
+
+(node:34496) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 [api] › integration\api.spec.mjs:5:1 › P0-BASE-001 readiness and safe missing resources (207ms)
+  ok  2 [api] › integration\api.spec.mjs:17:1 › P0-VID/FRM/SAVE/PROG/EXP independent full API acceptance (2.7s)
+  ok  3 [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects missing selector (127ms)
+  ok  4 [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects empty explicit frames (121ms)
+  ok  5 [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects mixed video and frames (102ms)
+  ok  6 [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects batch without video (99ms)
+  ok  7 [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects mixed batch and frames (104ms)
+  ok  8 [api] › integration\api.spec.mjs:83:1 › P0-VID-001 corrupt upload and invalid extraction do not publish (619ms)
+  ok  9 [api] › integration\api.spec.mjs:95:1 › P0-JOB-001 cancellation leaves no published batch; terminal cancellation is stable (477ms)
+  ok 10 [api] › integration\api.spec.mjs:109:1 › P0-FRM-001 unavailable tail fails rather than silently dropping targets (499ms)
+
+  10 passed (6.1s)
+ExitCode=0 Time=2026-10-13T03:01:37.7996125+08:00

@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
-import { fixture, snapshot, upload, extract, save } from '../helpers/api.mjs';
+import { createHash } from 'node:crypto';
+import { fixture, snapshot, upload, extract, save, terminalJob } from '../helpers/api.mjs';
 import { inspectExport } from '../helpers/zip.mjs';
 
 async function drag(page, start, end) {
@@ -19,7 +20,7 @@ async function persisted(request, id, predicate) {
   return result;
 }
 
-test('P0-E2E-001 browser upload/extract/draw/move/resize/delete/autosave/refresh/complete/export', async ({ page, request }) => {
+test('P0-E2E-001 browser upload/extract/draw/move/resize/delete/autosave/refresh/complete/export', async ({ page, request }, testInfo) => {
   await page.goto('/');
   await page.getByTestId('upload-file').setInputFiles(fixture());
   const uploaded = page.waitForResponse(response => response.url().endsWith('/api/v1/videos') && response.request().method() === 'POST');
@@ -36,9 +37,12 @@ test('P0-E2E-001 browser upload/extract/draw/move/resize/delete/autosave/refresh
   const extractionResponse = await extracted;
   expect(extractionResponse.status()).toBe(202);
   const job = await extractionResponse.json();
+  expect((await terminalJob(request, job.id)).status).toBe('completed');
   let frames;
   await expect.poll(async () => {
-    const body = await (await request.get(`/api/v1/videos/${video.id}/frames?batchId=${job.batchId}`)).json();
+    const response = await request.get(`/api/v1/videos/${video.id}/frames?batchId=${job.batchId}`);
+    expect(response.status()).toBe(200);
+    const body = await response.json();
     frames = body.frames;
     return frames.length;
   }, { timeout: 90_000 }).toBe(3);
@@ -93,7 +97,26 @@ test('P0-E2E-001 browser upload/extract/draw/move/resize/delete/autosave/refresh
     expect(media.status()).toBe(200);
     expected.push({ ...item, annotations: state.annotations, imageBytes: await media.body() });
   }
-  inspectExport(fs.readFileSync(file), expected);
+  const exportBytes = fs.readFileSync(file);
+  const coco = inspectExport(exportBytes, expected);
+  const progressResponse = await request.get(`/api/v1/videos/${video.id}/progress?batchId=${job.batchId}`);
+  expect(progressResponse.status()).toBe(200);
+  const progress = await progressResponse.json();
+  expect(progress).toEqual({ total: 3, notStarted: 1, inProgress: 0, completed: 2 });
+  const baseline = {
+    observedAt: new Date().toISOString(), deployedSHA: process.env.P0_EXPECTED_SHA,
+    videoId: video.id, batchId: job.batchId, progress, coco,
+    zipSHA256: createHash('sha256').update(exportBytes).digest('hex'),
+    frames: await Promise.all(expected.map(async item => ({
+      id: item.id, width: item.width, height: item.height,
+      snapshot: await snapshot(request, item.id),
+      imageSHA256: createHash('sha256').update(item.imageBytes).digest('hex'),
+    }))),
+  };
+  fs.writeFileSync(testInfo.outputPath('restore-baseline.json'), JSON.stringify(baseline, null, 2));
+  await page.getByTestId(`frame-item-${frame.id}`).click();
+  await expect(page.getByTestId(`annotation-item-${one.annotations[0].id}`)).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('core-workflow.png'), fullPage: true });
 });
 
 async function openPreparedFrame(page, request) {

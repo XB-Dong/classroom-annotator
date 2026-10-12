@@ -1,0 +1,49 @@
+Started 2026-10-13T03:03:21.6926567+08:00 DeployedSHA=64b65df305daebf09cf0b1563cf87750a714222b
+
+> e2e
+> playwright test --project=chromium
+
+
+Running 3 tests using 1 worker
+
+(node:34884) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › e2e\workflow.spec.mjs:23:1 › P0-E2E-001 browser upload/extract/draw/move/resize/delete/autosave/refresh/complete/export (1.4s)
+(node:600) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 2 [chromium] › e2e\workflow.spec.mjs:132:1 › P0-SAVE-001 real server acknowledgement cannot discard a newer canvas edit (5.6s)
+  ok 3 [chromium] › e2e\workflow.spec.mjs:159:1 › P0-SAVE-001 stale browser revision shows conflict and preserves server snapshot (3.5s)
+
+
+  1) [chromium] › e2e\workflow.spec.mjs:23:1 › P0-E2E-001 browser upload/extract/draw/move/resize/delete/autosave/refresh/complete/export 
+
+    TypeError: Cannot read properties of undefined (reading 'length')
+
+      42 |     const body = await (await request.get(`/api/v1/videos/${video.id}/frames?batchId=${job.batchId}`)).json();
+      43 |     frames = body.frames;
+    > 44 |     return frames.length;
+         |                   ^
+      45 |   }, { timeout: 90_000 }).toBe(3);
+      46 |   const frame = frames[0];
+      47 |   await page.getByTestId(`frame-item-${frame.id}`).click();
+        at expect.poll.timeout (D:\Project\cvte\worktrees\p0-test\tests\e2e\workflow.spec.mjs:44:19)
+        at D:\Project\cvte\worktrees\p0-test\tests\e2e\workflow.spec.mjs:41:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\..\runtime\acceptance-r3\e2e-matching-browser-results\e2e-workflow-P0-E2E-001-br-ac19c-ave-refresh-complete-export-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\..\runtime\acceptance-r3\e2e-matching-browser-results\e2e-workflow-P0-E2E-001-br-ac19c-ave-refresh-complete-export-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\runtime\acceptance-r3\e2e-matching-browser-results\e2e-workflow-P0-E2E-001-br-ac19c-ave-refresh-complete-export-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\..\..\runtime\acceptance-r3\e2e-matching-browser-results\e2e-workflow-P0-E2E-001-br-ac19c-ave-refresh-complete-export-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\workflow.spec.mjs:23:1 › P0-E2E-001 browser upload/extract/draw/move/resize/delete/autosave/refresh/complete/export 
+  2 passed (13.7s)
+ExitCode=1 Time=2026-10-13T03:03:36.8218561+08:00

@@ -1,0 +1,58 @@
+{
+  "taskId": "P0-TEST-003",
+  "rootTaskId": "P0-TEST-001",
+  "deployedSHA": "64b65df305daebf09cf0b1563cf87750a714222b",
+  "specVersions": ["API 1.0.1", "acceptance 1.0.0"],
+  "requestedModel": "gpt-6.1-sol",
+  "requestedReasoningEffort": "high",
+  "actualProvider": null,
+  "actualModel": null,
+  "actualReasoningEffort": null,
+  "modelVerificationStatus": "requested_settings_only",
+  "contextMode": "continued worker with reloaded integrated specifications",
+  "environment": {
+    "executor": "Windows Node24.16.0 Playwright1.64.0",
+    "browser": "Chrome Headless Shell156.0.8078.4 revision1248",
+    "product": "actual cloud deployment accessed through existing loopback SSH forwards; no local backend substituted",
+    "data": "external synthetic 320x240/25fps/4s classroom.mp4 and corrupt.mp4",
+    "workers": 1,
+    "retries": 0
+  },
+  "checks": [
+    { "command": "npm run contract", "exitCode": 0, "passed": 10, "evidence": "cloud-api.txt" },
+    { "command": "npm run e2e (initial cache)", "exitCode": 1, "classification": "tooling-only: required Chromium1248 missing; no browser/product execution", "evidence": "cloud-e2e.txt" },
+    { "command": "npx playwright install chromium --only-shell", "exitCode": 0, "classification": "installed matching revision1248 and FFmpeg1013 into configured external cache" },
+    { "command": "npm run e2e (matching browser)", "exitCode": 1, "passed": 2, "failed": 1, "classification": "harness queried frames while job queued; actual network404, then undefined.length; no product defect", "evidence": "cloud-e2e-matching-browser.txt" },
+    { "command": "npm run e2e (job completion wait)", "exitCode": 0, "passed": 3, "evidence": "cloud-e2e-job-wait.txt" },
+    { "command": "npm run monitoring", "exitCode": 0, "evidence": "cloud-monitoring.txt" },
+    { "command": "npm run restore (before Leader backup)", "exitCode": 0, "evidence": "restore-before-backup.txt" },
+    { "command": "npm run restore (after Leader confirmed actual new restored volume mount)", "exitCode": 0, "evidence": "restore-after-new-volume.txt" },
+    { "command": "observe GET ready and Prometheus activeTargets after actual restore", "exitCode": 0, "evidence": "post-restore-readiness.txt" },
+    { "command": "npm run check; npm test", "exitCodes": [0,0], "passedValidatorTests": 6, "evidence": "harness-checks.txt" }
+  ],
+  "harnessRepair": "wait for GET jobs terminal completed before checking published frames; all drawing/editing/save/export assertions retained",
+  "leaderControlledRestore": {
+    "result": "passed observe-only after Leader verified actual restored volume mount",
+    "originalVolumeRetained": "classroom-p0-app",
+    "restoredVolume": "classroom-p0-app-restored-20261013t0308",
+    "backupSHA256": "880a0042528fb549277e7ddaa9c38e0c43b19c581cd05884738f1507d61dd5ba",
+    "operatorEvidence": "Leader external backup-restore*.json, not rewritten by Test",
+    "operatorInitialAttempts": "two attempts did not switch volume due to CRLF/sed match; excluded from restore PASS. Leader normalized LF, asserted Compose config, force-recreated and verified new Mounts.Name before this Test observation.",
+    "testAuthority": "Test never stopped/restarted/switched cloud backend and made no post-restore annotation writes"
+  },
+  "baseline": {
+    "videoId": "911c61fa-e29b-4778-83e9-cd42e769690d",
+    "batchId": "dfbeff94-6a86-4603-8135-16c6ae582b59",
+    "frameIds": ["f37593aa-1bec-4c00-8204-ac9aac01d148", "d18a290d-b2dd-4446-880c-deabd9fc047a"],
+    "revisions": [6,1],
+    "statuses": ["completed","completed"],
+    "annotationCounts": [1,0],
+    "progress": {"total":3,"notStarted":1,"inProgress":0,"completed":2},
+    "externalArtifactIndex": "artifact-index.json"
+  },
+  "separateGates": {
+    "glmReviewAndExperience": "not performed by this task; mandatory separate gate",
+    "realApiVerificationStatus": "not_run",
+    "fullCommonVerify": "Leader reported ee2c927 passed; not rerun or claimed as this task evidence"
+  }
+}

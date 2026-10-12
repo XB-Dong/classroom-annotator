@@ -1,0 +1,90 @@
+Started 2026-10-13T03:01:48.1668014+08:00 DeployedSHA=64b65df305daebf09cf0b1563cf87750a714222b
+
+> e2e
+> playwright test --project=chromium
+
+
+Running 3 tests using 1 worker
+
+(node:37244) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › e2e\workflow.spec.mjs:23:1 › P0-E2E-001 browser upload/extract/draw/move/resize/delete/autosave/refresh/complete/export (1ms)
+(node:27640) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  2 [chromium] › e2e\workflow.spec.mjs:132:1 › P0-SAVE-001 real server acknowledgement cannot discard a newer canvas edit (1ms)
+(node:13492) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  3 [chromium] › e2e\workflow.spec.mjs:159:1 › P0-SAVE-001 stale browser revision shows conflict and preserves server snapshot (1ms)
+
+
+  1) [chromium] › e2e\workflow.spec.mjs:23:1 › P0-E2E-001 browser upload/extract/draw/move/resize/delete/autosave/refresh/complete/export 
+
+    Error: browserType.launch: Executable doesn't exist at D:\Project\cvte\runtime\glm\browsers\chromium_headless_shell-1248\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: ..\..\..\runtime\acceptance-r3\e2e-results\e2e-workflow-P0-E2E-001-br-ac19c-ave-refresh-complete-export-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\runtime\acceptance-r3\e2e-results\e2e-workflow-P0-E2E-001-br-ac19c-ave-refresh-complete-export-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\..\..\runtime\acceptance-r3\e2e-results\e2e-workflow-P0-E2E-001-br-ac19c-ave-refresh-complete-export-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e\workflow.spec.mjs:132:1 › P0-SAVE-001 real server acknowledgement cannot discard a newer canvas edit 
+
+    Error: browserType.launch: Executable doesn't exist at D:\Project\cvte\runtime\glm\browsers\chromium_headless_shell-1248\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: ..\..\..\runtime\acceptance-r3\e2e-results\e2e-workflow-P0-SAVE-001-r-98d6b-discard-a-newer-canvas-edit-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\runtime\acceptance-r3\e2e-results\e2e-workflow-P0-SAVE-001-r-98d6b-discard-a-newer-canvas-edit-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\..\..\runtime\acceptance-r3\e2e-results\e2e-workflow-P0-SAVE-001-r-98d6b-discard-a-newer-canvas-edit-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium] › e2e\workflow.spec.mjs:159:1 › P0-SAVE-001 stale browser revision shows conflict and preserves server snapshot 
+
+    Error: browserType.launch: Executable doesn't exist at D:\Project\cvte\runtime\glm\browsers\chromium_headless_shell-1248\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: ..\..\..\runtime\acceptance-r3\e2e-results\e2e-workflow-P0-SAVE-001-s-20f19-d-preserves-server-snapshot-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\runtime\acceptance-r3\e2e-results\e2e-workflow-P0-SAVE-001-s-20f19-d-preserves-server-snapshot-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\..\..\runtime\acceptance-r3\e2e-results\e2e-workflow-P0-SAVE-001-s-20f19-d-preserves-server-snapshot-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    [chromium] › e2e\workflow.spec.mjs:23:1 › P0-E2E-001 browser upload/extract/draw/move/resize/delete/autosave/refresh/complete/export 
+    [chromium] › e2e\workflow.spec.mjs:132:1 › P0-SAVE-001 real server acknowledgement cannot discard a newer canvas edit 
+    [chromium] › e2e\workflow.spec.mjs:159:1 › P0-SAVE-001 stale browser revision shows conflict and preserves server snapshot 
+ExitCode=1 Time=2026-10-13T03:01:52.0183517+08:00

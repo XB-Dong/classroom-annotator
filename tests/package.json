@@ -10,6 +10,7 @@
     "dataset": "node scripts/dataset-check.mjs",
     "monitoring": "node scripts/monitoring-check.mjs",
     "storage": "node scripts/storage-check.mjs",
+    "restore": "node scripts/restore-check.mjs",
     "contract": "playwright test --project=api",
     "local-api": "node scripts/run-api.mjs",
     "e2e": "playwright test --project=chromium",

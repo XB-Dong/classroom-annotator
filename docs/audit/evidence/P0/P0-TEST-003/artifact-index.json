@@ -1,0 +1,19 @@
+{
+  "generatedAt": "2026-10-13T03:06:50.1740607+08:00",
+  "artifacts": [
+    {
+      "bytes": 2157,
+      "path": "D:\\Project\\cvte\\runtime\\acceptance-r3\\e2e-job-wait-results\\e2e-workflow-P0-E2E-001-br-ac19c-ave-refresh-complete-export-chromium\\restore-baseline.json",
+      "kind": "restore-baseline",
+      "sha256": "576b8389eda64953efe05da997da523b3fe1b34c782793c74c79f58bd29d065e"
+    },
+    {
+      "bytes": 95358,
+      "path": "D:\\Project\\cvte\\runtime\\acceptance-r3\\e2e-job-wait-results\\e2e-workflow-P0-E2E-001-br-ac19c-ave-refresh-complete-export-chromium\\core-workflow.png",
+      "kind": "core-workflow-screenshot",
+      "sha256": "6e1dfdd24c2d71714adb970b13940cff3c85b18f157ca6a5e3c530309dc5e959"
+    }
+  ],
+  "deployedSHA": "64b65df305daebf09cf0b1563cf87750a714222b",
+  "browser": "Chrome Headless Shell 156.0.8078.4 revision1248"
+}
