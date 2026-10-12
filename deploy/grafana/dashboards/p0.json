@@ -1,0 +1,61 @@
+{
+  "uid": "classroom-p0",
+  "title": "Classroom Annotator P0",
+  "schemaVersion": 40,
+  "version": 1,
+  "editable": false,
+  "tags": ["p0"],
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1, "title": "Scrape availability", "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "p0-prometheus" },
+      "targets": [{ "refId": "A", "expr": "up", "legendFormat": "{{job}}" }]
+    },
+    {
+      "id": 2, "title": "Host memory used (bytes)", "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "p0-prometheus" },
+      "targets": [{ "refId": "A", "expr": "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes" }]
+    },
+    {
+      "id": 3, "title": "Host CPU busy fraction", "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "p0-prometheus" },
+      "targets": [{ "refId": "A", "expr": "1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m]))" }]
+    },
+    {
+      "id": 4, "title": "Host filesystem available (bytes)", "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "p0-prometheus" },
+      "targets": [{ "refId": "A", "expr": "node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay\"}", "legendFormat": "{{mountpoint}}" }]
+    },
+    {
+      "id": 5, "title": "API request rate", "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "p0-prometheus" },
+      "targets": [{ "refId": "A", "expr": "sum by (method,path,status) (rate(classroom_http_requests_total[5m]))", "legendFormat": "{{method}} {{path}} {{status}}" }]
+    },
+    {
+      "id": 6, "title": "API p95 duration (seconds)", "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "p0-prometheus" },
+      "targets": [{ "refId": "A", "expr": "histogram_quantile(0.95, sum by (le,path) (rate(classroom_http_request_duration_seconds_bucket[5m])))", "legendFormat": "{{path}}" }]
+    },
+    {
+      "id": 7, "title": "Job queue depth", "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "p0-prometheus" },
+      "targets": [{ "refId": "A", "expr": "classroom_job_queue_depth" }]
+    },
+    {
+      "id": 8, "title": "Jobs by kind/status", "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "p0-prometheus" },
+      "targets": [{ "refId": "A", "expr": "classroom_jobs_total", "legendFormat": "{{kind}} {{status}}" }]
+    }
+  ]
+}

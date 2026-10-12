@@ -1,0 +1,6 @@
+**
+!deploy/
+!deploy/nginx.conf
+!frontend/
+!frontend/dist/
+!frontend/dist/**

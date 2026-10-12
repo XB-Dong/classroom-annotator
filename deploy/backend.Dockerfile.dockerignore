@@ -1,0 +1,4 @@
+**
+!deploy/
+!deploy/artifacts/
+!deploy/artifacts/backend-server

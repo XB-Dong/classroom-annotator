@@ -1,0 +1,121 @@
+name: classroom-annotator
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "3" }
+x-service: &service
+  restart: unless-stopped
+  logging: *logging
+  security_opt: ["no-new-privileges:true"]
+services:
+  backend:
+    <<: *service
+    image: ${BACKEND_IMAGE:?set immutable release image tag}
+    pull_policy: never
+    build:
+      context: .
+      dockerfile: deploy/backend.Dockerfile
+      args:
+        RUNTIME_IMAGE: ${RUNTIME_IMAGE:-debian:bookworm-slim@sha256:a4672c0cb26fbdde88e38fa2dfb6c681942306680e41e4378b28770b6e79ee91}
+    environment:
+      APP_ADDR: ":8080"
+      APP_DATA_DIR: /data
+      APP_VERSION: ${APP_VERSION:?set deployed full Git SHA}
+      APP_FFMPEG: /usr/bin/ffmpeg
+      APP_FFPROBE: /usr/bin/ffprobe
+      APP_MAX_UPLOAD_BYTES: ${APP_MAX_UPLOAD_BYTES:-1073741824}
+      APP_QUEUE_SIZE: ${APP_QUEUE_SIZE:-8}
+      APP_JOB_TIMEOUT_SECONDS: ${APP_JOB_TIMEOUT_SECONDS:-600}
+      APP_MAX_FRAMES: ${APP_MAX_FRAMES:-1000}
+      APP_HTTP_TIMEOUT_SECONDS: ${APP_HTTP_TIMEOUT_SECONDS:-30}
+      APP_DATASET_API_URL: ${APP_DATASET_API_URL:-}
+      APP_DATASET_ID: ${APP_DATASET_ID:-}
+      APP_DATASET_API_KEY: ${APP_DATASET_API_KEY:-}
+      APP_ALLOWED_PRIVATE_ORIGINS: ${APP_ALLOWED_PRIVATE_ORIGINS:-}
+      APP_ALLOWED_MEDIA_ORIGINS: ${APP_ALLOWED_MEDIA_ORIGINS:-}
+    volumes: ["app-data:/data"]
+    expose: ["8080"]
+    mem_limit: 768m
+    cpus: "1.50"
+    pids_limit: 128
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8080/health/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+  frontend:
+    <<: *service
+    image: ${FRONTEND_IMAGE:?set immutable release image tag}
+    pull_policy: never
+    build:
+      context: .
+      dockerfile: deploy/frontend.Dockerfile
+      args:
+        NGINX_IMAGE: ${NGINX_IMAGE:-nginx:1.28.0@sha256:3b03dfd827515a07ccf4946000f0bbdd2a4fb6aca7499249fcb6b1f9726823d6}
+    depends_on:
+      backend: { condition: service_healthy }
+    ports: ["127.0.0.1:${APP_PORT:-8180}:80"]
+    mem_limit: 64m
+    cpus: "0.25"
+    pids_limit: 32
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1/health/live"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  prometheus:
+    <<: *service
+    image: ${PROMETHEUS_IMAGE:-prom/prometheus:v3.2.1@sha256:5d34817348f69ddb956be509cafa4d4c2b5ecbbb5b786dd99d5a62e686b2ece4}
+    pull_policy: never
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.path=/prometheus", "--storage.tsdb.retention.time=3d", "--storage.tsdb.retention.size=512MB"]
+    volumes: ["./deploy/prometheus.yml:/etc/prometheus/prometheus.yml:ro", "prometheus-data:/prometheus"]
+    ports: ["127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"]
+    mem_limit: 512m
+    cpus: "0.35"
+    pids_limit: 64
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:9090/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  grafana:
+    <<: *service
+    image: ${GRAFANA_IMAGE:-grafana/grafana:11.6.0@sha256:b739cda4b61ba3b90707578b643a22cd851fecf4498e6c6ec2d8f9d622a5d0b2}
+    pull_policy: never
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set external Grafana password}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes: ["grafana-data:/var/lib/grafana", "./deploy/grafana/provisioning:/etc/grafana/provisioning:ro", "./deploy/grafana/dashboards:/var/lib/grafana/dashboards:ro"]
+    ports: ["127.0.0.1:${GRAFANA_PORT:-3000}:3000"]
+    mem_limit: 768m
+    cpus: "0.35"
+    pids_limit: 128
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  node-exporter:
+    <<: *service
+    image: ${NODE_EXPORTER_IMAGE:-prom/node-exporter:v1.9.1@sha256:863b62ff9f392b6f472e22b4b670ad1cabb66b3042502ebd4b2cd192733e1bce}
+    pull_policy: never
+    command: ["--path.rootfs=/host", "--collector.filesystem.mount-points-exclude=^/(dev|proc|sys|var/lib/docker/.+)($|/)"]
+    pid: host
+    volumes: ["/:/host:ro,rslave"]
+    expose: ["9100"]
+    mem_limit: 64m
+    cpus: "0.15"
+    pids_limit: 32
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:9100/metrics"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+volumes:
+  app-data: { external: true, name: "${APP_DATA_VOLUME:?create external app volume}" }
+  prometheus-data: { external: true, name: "${PROMETHEUS_DATA_VOLUME:?create external Prometheus volume}" }
+  grafana-data: { external: true, name: "${GRAFANA_DATA_VOLUME:?create external Grafana volume}" }

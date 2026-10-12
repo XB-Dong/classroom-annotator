@@ -1,0 +1,39 @@
+{
+  "taskId": "P0-TEST-001",
+  "round": "R1-preparation",
+  "baseline": "db1f5c5",
+  "specVersion": "1.0.0",
+  "requestedModel": "gpt-6.1-sol",
+  "requestedReasoningEffort": "high",
+  "actualProvider": null,
+  "actualModel": null,
+  "actualReasoningEffort": null,
+  "modelVerificationStatus": "requested_settings_only",
+  "modelEvidenceRef": "Leader native dispatch packet",
+  "contextMode": "fresh",
+  "repairCount": 0,
+  "checks": {
+    "acceptanceSyntax": "passed",
+    "independentValidatorUnitTests": "6 passed",
+    "playwrightDiscovery": "8 tests discovered, not executed",
+    "dependencyAudit": "0 vulnerabilities",
+    "composeConfig": "passed without daemon",
+    "deploymentJson": "passed",
+    "powershellParse": "passed",
+    "fullVerify": "not_run: product frontend/backend absent in this worktree",
+    "apiProductAcceptance": "not_run",
+    "dedicatedRestartIntegration": "not_run",
+    "dedicatedDatasetIntegration": "not_run",
+    "cloudBrowserE2E": "not_run",
+    "dockerImageBuild": "not_run",
+    "imageHealthcheckCommands": "not_run: requires loaded image execution by Leader",
+    "glmReview": "not_run_by_this_task",
+    "realApiVerificationStatus": "not_run"
+  },
+  "externalSyntheticFixture": {
+    "bytes": 22696,
+    "sha256": "d1b205eda41d68f1f140c307256dd925cd73967f1ad9f7c176772eaf0ed56270",
+    "provenance": "Leader generated with installed cloud FFmpeg and transferred to external fixture directory; Test independently checked file hash/size. Leader reported 320x240, 25fps, 4.000s; Test has not independently ffprobed.",
+    "localGeneratorAttempt": "failed: Playwright packaged FFmpeg lacks lavfi; tool limitation, not TDD Red"
+  }
+}
