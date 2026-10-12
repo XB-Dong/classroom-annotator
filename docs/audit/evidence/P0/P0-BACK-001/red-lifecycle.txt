@@ -1,0 +1,8 @@
+time=2026-10-13T01:53:49.0994889+08:00
+command=go test ./internal/platform/store
+exit=1
+--- FAIL: TestCancelWinsPublicationAndRestartInterrupts (0.00s)
+    store_test.go:9: cancelled job published
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/platform/store	1.065s
+FAIL

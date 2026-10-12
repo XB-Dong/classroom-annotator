@@ -1,0 +1,14 @@
+time=2026-10-13T01:56:58.1857050+08:00
+command=go test ./internal/media ./internal/dataset
+exit=1
+--- FAIL: TestInvalidAndOversizeUploadLeavesNoMedia (0.00s)
+    service_test.go:8: invalid input accepted
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/media	0.613s
+--- FAIL: TestObservedDTOAndMediaNeverReceivesAPIKey (0.00s)
+    adapter_test.go:7: {[]} <nil>
+--- FAIL: TestRejectUnsafeNumericIDsAndCrossOriginAPIRedirect (0.00s)
+    adapter_test.go:14: unsafe response/redirect accepted
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/dataset	0.800s
+FAIL

@@ -1,0 +1,5 @@
+time=2026-10-13T01:59:21.5284429+08:00
+command=go test ./internal/media ./internal/dataset
+exit=0
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/media	0.473s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/dataset	0.923s

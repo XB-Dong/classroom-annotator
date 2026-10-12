@@ -1,0 +1,12 @@
+time=2026-10-13T01:52:04.0931107+08:00
+command=go test ./internal/platform/config ./internal/extraction
+exit=1
+--- FAIL: TestConfigRequiresExternalDataAndPositiveLimits (0.00s)
+    config_test.go:9: missing DATA_DIR accepted
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/platform/config	0.770s
+--- FAIL: TestPlanUsesIntegerMillisecondsAndExclusiveEnd (0.00s)
+    plan_test.go:4: targets=[]
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/extraction	0.597s
+FAIL

@@ -1,0 +1,5 @@
+time=2026-10-13T02:04:23.5090444+08:00
+command=go test ./internal/extraction ./internal/httpapi
+exit=0
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/extraction	1.102s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/httpapi	1.548s

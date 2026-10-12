@@ -1,0 +1,5 @@
+time=2026-10-13T01:53:13.1327753+08:00
+command=go test ./internal/platform/config ./internal/extraction
+exit=0
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/platform/config	0.644s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/extraction	0.453s

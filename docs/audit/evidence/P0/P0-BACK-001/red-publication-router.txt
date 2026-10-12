@@ -1,0 +1,17 @@
+time=2026-10-13T02:02:30.2897474+08:00
+command=go test ./internal/extraction ./internal/httpapi
+exit=1
+--- FAIL: TestBatchPublishesActualJPEGDimensionsAndUnavailableTailFails (1.57s)
+    service_test.go:9: [] sql: no rows in result set
+    testing.go:1369: TempDir RemoveAll cleanup: unlinkat C:\Users\dongx\AppData\Local\Temp\TestBatchPublishesActualJPEGDimensionsAndUnavailableTailFails1571230809\001\app.sqlite: The process cannot access the file because it is being used by another process.
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/extraction	2.843s
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+--- FAIL: TestHealthAndUnconfiguredDatasetReturnContract (0.03s)
+    router_test.go:4: /health/ready: 404 404 page not found
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/httpapi	2.014s
+FAIL

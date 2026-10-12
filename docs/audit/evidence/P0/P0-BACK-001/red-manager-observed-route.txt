@@ -1,0 +1,13 @@
+time=2026-10-13T02:00:14.7474749+08:00
+command=go test ./internal/jobs ./internal/dataset
+exit=1
+--- FAIL: TestCancellationWaitsForWorkCleanupAndQueueIsBounded (1.03s)
+    manager_test.go:7: work not started
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/jobs	2.265s
+--- FAIL: TestObservedDTOAndMediaNeverReceivesAPIKey (0.00s)
+    adapter_test.go:5: wrong path /api/v1/lessons
+    adapter_test.go:7: { [] 0 map[]} DATASET_INVALID_RESPONSE
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/dataset	0.883s
+FAIL

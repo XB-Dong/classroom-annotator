@@ -1,0 +1,4 @@
+time=2026-10-13T01:56:18.0591142+08:00
+command=go test ./internal/platform/store
+exit=0
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/platform/store	0.873s
