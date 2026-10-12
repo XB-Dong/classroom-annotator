@@ -1,0 +1,14 @@
+timestamp=2026-10-13T02:13:38.0837764+08:00
+command=go test ./internal/annotations -count=1
+--- FAIL: TestSaveRevisionGeometryAndZeroCompletion (0.03s)
+    http_test.go:57: GET status 501: 
+--- FAIL: TestInvalidWritesAreAtomic (0.03s)
+    http_test.go:75: 501
+--- FAIL: TestSQLFailureRollsBackReplacement (0.03s)
+    http_test.go:103: 501
+--- FAIL: TestConcurrentSameRevisionHasOneWinner (0.03s)
+    http_test.go:120: map[501:2]
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/annotations	1.278s
+FAIL
+exitCode=1

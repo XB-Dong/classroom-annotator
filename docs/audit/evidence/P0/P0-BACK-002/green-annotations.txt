@@ -1,0 +1,4 @@
+timestamp=2026-10-13T02:14:45.7825650+08:00
+command=go test ./internal/annotations -count=1
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/annotations	1.337s
+exitCode=0
