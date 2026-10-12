@@ -1,0 +1,5 @@
+
+> monitoring
+> node scripts/monitoring-check.mjs
+
+P0-OPS/OBS: deployed SHA, three healthy scrape targets, observed app/job/host samples and provisioned read-only Grafana passed.

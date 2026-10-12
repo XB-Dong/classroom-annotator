@@ -1,0 +1,5 @@
+
+> restore
+> node scripts/restore-check.mjs
+
+P0-OPS/SAVE restore observation passed: 2 completed frames, saved revisions, progress, image hashes and independent COCO semantics unchanged; deployed SHA=f2d6d083efc0a7e8d3668f2593b0b22c3614c99b.

@@ -1,0 +1,8 @@
+{
+  "label": "Verify application release rollback without changing restored data volume",
+  "ssh_host_key": "pinned",
+  "action": "exec",
+  "exit_code": 0,
+  "stdout": "{\"status\":\"ok\",\"version\":\"64b65df305daebf09cf0b1563cf87750a714222b\"}\nROLLBACK_CONFIGURATION_VERIFIED\n",
+  "stderr": " Container classroom-annotator-backend-1 Recreate \n Container classroom-annotator-backend-1 Recreated \n Container classroom-annotator-frontend-1 Recreate \n Container classroom-annotator-frontend-1 Recreated \n Container classroom-annotator-backend-1 Starting \n Container classroom-annotator-backend-1 Started \n Container classroom-annotator-backend-1 Waiting \n Container classroom-annotator-backend-1 Healthy \n Container classroom-annotator-frontend-1 Starting \n Container classroom-annotator-frontend-1 Started \n"
+}

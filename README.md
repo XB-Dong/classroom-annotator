@@ -2,7 +2,7 @@
 
 教室人员标注平台：视频导入、抽帧、人头标注、人工审核与数据导出。
 
-P0 已实现人工标注闭环，当前完成云端候选版本验收并进行交付核验。实际完成状态见 [P0 执行状态](docs/waves/P0/state.json) 和 [时间戳报告](docs/audit/reports/)。真实公司 API 尚未联调；材料驱动的合成 API 导入已验证。
+P0 已交付人工标注闭环，并完成当前本地/合成材料范围的 14 项门槛。查看 [P0 交付报告](docs/audit/reports/report-20261013T032912+0800.md)、[执行状态](docs/waves/P0/state.json) 与 [验收清单](docs/waves/P0/acceptance.json)。模型配置偏差和 GLM 在核心操作结束后超时均如实记录。真实公司 API 尚未联调；材料驱动的合成 API 导入已验证。
 
 - [项目宪法](CONSTITUTION.md)
 - [P0计划](P0-PLAN.md)

@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-10-13T03:29:12.6194937+08:00",
+  "ciConclusion": "success",
+  "ciStatus": "completed",
+  "ciId": 38297222050,
+  "testedDeployedSha": "f2d6d083efc0a7e8d3668f2593b0b22c3614c99b",
+  "acceptanceRange": "synthetic_cloud_and_authorized_Windows_sample",
+  "onlyTestAuditAndOperatorDocsChanged": true,
+  "ciUrl": "https://github.com/XB-Dong/classroom-annotator/actions/runs/38297222050",
+  "sourceCodeChangedSinceFullBrowserAcceptance": false
+}

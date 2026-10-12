@@ -1,0 +1,8 @@
+{
+  "label": "Return to final release after verified rollback",
+  "ssh_host_key": "pinned",
+  "action": "exec",
+  "exit_code": 0,
+  "stdout": "{\"status\":\"ok\",\"version\":\"f2d6d083efc0a7e8d3668f2593b0b22c3614c99b\"}\nFINAL_RELEASE_RESTORED\n",
+  "stderr": " Container classroom-annotator-backend-1 Recreate \n Container classroom-annotator-backend-1 Recreated \n Container classroom-annotator-frontend-1 Recreate \n Container classroom-annotator-frontend-1 Recreated \n Container classroom-annotator-backend-1 Starting \n Container classroom-annotator-backend-1 Started \n Container classroom-annotator-backend-1 Waiting \n Container classroom-annotator-backend-1 Healthy \n Container classroom-annotator-frontend-1 Starting \n Container classroom-annotator-frontend-1 Started \n"
+}

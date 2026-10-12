@@ -1,0 +1,80 @@
+{
+  "gates": [
+    {
+      "status": "passed",
+      "evidenceIndex": "docs/audit/reports/report-20261013T032912+0800.md",
+      "id": "P0-BASE-001"
+    },
+    {
+      "status": "passed",
+      "evidenceIndex": "docs/audit/reports/report-20261013T032912+0800.md",
+      "id": "P0-VID-001"
+    },
+    {
+      "status": "passed",
+      "evidenceIndex": "docs/audit/reports/report-20261013T032912+0800.md",
+      "id": "P0-VID-002A"
+    },
+    {
+      "status": "passed",
+      "evidenceIndex": "docs/audit/reports/report-20261013T032912+0800.md",
+      "id": "P0-FRM-001"
+    },
+    {
+      "status": "passed",
+      "evidenceIndex": "docs/audit/reports/report-20261013T032912+0800.md",
+      "id": "P0-JOB-001"
+    },
+    {
+      "status": "passed",
+      "evidenceIndex": "docs/audit/reports/report-20261013T032912+0800.md",
+      "id": "P0-ANN-001"
+    },
+    {
+      "status": "passed",
+      "evidenceIndex": "docs/audit/reports/report-20261013T032912+0800.md",
+      "id": "P0-SAVE-001"
+    },
+    {
+      "status": "passed",
+      "evidenceIndex": "docs/audit/reports/report-20261013T032912+0800.md",
+      "id": "P0-PROG-001"
+    },
+    {
+      "status": "passed",
+      "evidenceIndex": "docs/audit/reports/report-20261013T032912+0800.md",
+      "id": "P0-EXP-001"
+    },
+    {
+      "status": "passed",
+      "evidenceIndex": "docs/audit/reports/report-20261013T032912+0800.md",
+      "id": "P0-OPS-001"
+    },
+    {
+      "status": "passed",
+      "evidenceIndex": "docs/audit/reports/report-20261013T032912+0800.md",
+      "id": "P0-OBS-001"
+    },
+    {
+      "status": "passed",
+      "evidenceIndex": "docs/audit/reports/report-20261013T032912+0800.md",
+      "id": "P0-E2E-001"
+    },
+    {
+      "status": "passed",
+      "evidenceIndex": "docs/audit/reports/report-20261013T032912+0800.md",
+      "id": "P0-AUD-001"
+    },
+    {
+      "status": "passed",
+      "evidenceIndex": "docs/audit/reports/report-20261013T032912+0800.md",
+      "id": "P0-REV-001"
+    }
+  ],
+  "glmFinalRun": "timeout_after_core_steps_verified_from_actual_tools",
+  "realApiVerificationStatus": "not_run",
+  "modelPolicyDeviation": "Leader_actual_Sol_high_requested_xhigh_pending_user_review",
+  "timestamp": "2026-10-13T03:31:55.9256451+08:00",
+  "deployedSha": "f2d6d083efc0a7e8d3668f2593b0b22c3614c99b",
+  "acceptanceRange": "synthetic_cloud_and_authorized_Windows_sample"
+}

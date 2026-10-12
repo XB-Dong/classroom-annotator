@@ -1,0 +1,10 @@
+{
+  "startedAt": "2026-10-12T19:10:08.910835+00:00",
+  "finishedAt": "2026-10-12T19:20:09.306925+00:00",
+  "sourceSha": "64b65df305daebf09cf0b1563cf87750a714222b",
+  "model": "company-glm/glm-4.7-flash",
+  "exitCode": 1,
+  "timeout": true,
+  "keyPersisted": false,
+  "evidenceDirectory": "D:\\Project\\cvte\\runtime\\glm\\evidence\\P0-PRODUCT-GLM-002"
+}

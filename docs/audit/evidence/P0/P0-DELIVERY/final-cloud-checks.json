@@ -1,0 +1,10 @@
+{
+  "apiExitCode": 0,
+  "testSourceSha": "f2d6d083efc0a7e8d3668f2593b0b22c3614c99b",
+  "monitoringExitCode": 0,
+  "finishedAt": "2026-10-13T03:26:33.1917180+08:00",
+  "startedAt": "2026-10-13T03:25:53.2369154+08:00",
+  "restoreExitCode": 0,
+  "deployedSha": "f2d6d083efc0a7e8d3668f2593b0b22c3614c99b",
+  "operator": "Leader"
+}
