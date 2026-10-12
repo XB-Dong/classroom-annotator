@@ -50,6 +50,8 @@ export function App() {
   }).length;
   const video = videos.find((v) => v.id === videoId);
   const frame = frames.find((f) => f.id === frameId);
+  const activeFrame = useRef<Frame>(undefined);
+  activeFrame.current = frame;
   const controllerChanged = useCallback((next?: SaveController) => {
     controller.current = next;
     setEditorReady(!!next);
@@ -62,7 +64,7 @@ export function App() {
     navigationLock.current = true;
     setNavigationBusy(true);
     try {
-      if (frame && (!controller.current || !(await controller.current.settle()))) {
+      if (activeFrame.current && (!controller.current || !(await controller.current.settle()))) {
         setNavigationError('当前帧尚未保存。请先重试保存或处理草稿冲突，再切换。');
         return;
       }
