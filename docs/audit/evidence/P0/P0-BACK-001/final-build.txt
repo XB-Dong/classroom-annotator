@@ -1,0 +1,3 @@
+time=2026-10-13T02:15:13.6517411+08:00
+command=go build -o <external-runtime>/backend-server.exe ./cmd/server
+exit=0

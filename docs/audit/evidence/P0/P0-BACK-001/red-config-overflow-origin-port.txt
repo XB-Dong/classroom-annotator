@@ -1,0 +1,12 @@
+time=2026-10-13T02:11:07.9525053+08:00
+command=go test ./internal/platform/config ./internal/dataset
+exit=1
+--- FAIL: TestRejectInvalidAddressAndOverflowingUploadLimit (0.02s)
+    config_test.go:42: invalid config accepted: map[APP_ADDR:bad APP_DATA_DIR:C:\Users\dongx\AppData\Local\Temp\TestRejectInvalidAddressAndOverflowingUploadLimit4138569382\001]
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/platform/config	0.533s
+--- FAIL: TestPrivateOriginExceptionCannotCrossSchemeViaDefaultPort (0.00s)
+    adapter_test.go:41: default-port host spelling crossed scheme
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/dataset	0.931s
+FAIL

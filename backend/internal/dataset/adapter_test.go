@@ -7,8 +7,44 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 )
+
+func TestMediaRedirectValidatesEveryDestination(t *testing.T) {
+	reached := false
+	destination := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { reached = true }))
+	defer destination.Close()
+	media := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { http.Redirect(w, r, destination.URL, 302) }))
+	defer media.Close()
+	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { fmt.Fprintf(w, `{"url":%q}`, media.URL) }))
+	defer api.Close()
+	a := New(config.Config{DatasetAPIURL: api.URL, DatasetID: "fixture", AllowedPrivateOrigins: []string{api.URL, media.URL}})
+	if r, e := a.Download(context.Background(), "9"); e == nil {
+		r.Close()
+		t.Fatal("redirect to unapproved private destination accepted")
+	}
+	if reached {
+		t.Fatal("unapproved destination reached")
+	}
+}
+func TestPrivateOriginExceptionDoesNotAllowAnotherScheme(t *testing.T) {
+	u, e := url.Parse("https://127.0.0.1:12345")
+	if e != nil {
+		t.Fatal(e)
+	}
+	p := Policy{PrivateOrigins: []string{"http://127.0.0.1:12345"}}
+	if e = p.Validate(u, true); e == nil {
+		t.Fatal("private origin exception crossed scheme")
+	}
+}
+func TestPrivateOriginExceptionCannotCrossSchemeViaDefaultPort(t *testing.T) {
+	u, _ := url.Parse("https://127.0.0.1:80")
+	p := Policy{PrivateOrigins: []string{"http://127.0.0.1"}}
+	if e := p.Validate(u, true); e == nil {
+		t.Fatal("default-port host spelling crossed scheme")
+	}
+}
 
 func TestObservedDTOAndMediaNeverReceivesAPIKey(t *testing.T) {
 	media := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

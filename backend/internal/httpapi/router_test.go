@@ -36,3 +36,21 @@ func TestHealthAndUnconfiguredDatasetReturnContract(t *testing.T) {
 		}
 	}
 }
+func TestMalformedMultipartReturnsClientError(t *testing.T) {
+	s, e := store.Open(t.TempDir())
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer s.DB.Close()
+	m := jobs.New(s, 1, time.Second)
+	defer m.Close()
+	cfg := config.Config{MaxUploadBytes: 100, JobTimeout: time.Second}
+	r := New(cfg, s, m, &media.Service{}, &extraction.Service{}, dataset.New(cfg))
+	req := httptest.NewRequest("POST", "/api/v1/videos", strings.NewReader("--x\r\nBROKEN HEADER\r\n\r\nvideo\r\n--x--\r\n"))
+	req.Header.Set("Content-Type", "multipart/form-data; boundary=x")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if w.Code != 400 {
+		t.Fatal(w.Code, w.Body.String())
+	}
+}

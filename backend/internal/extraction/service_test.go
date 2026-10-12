@@ -16,6 +16,48 @@ type jpegRunner struct {
 	targets []int64
 	missing bool
 }
+type cancellingRunner struct {
+	jpegRunner
+	s     *store.Store
+	jobID string
+}
+
+func (r *cancellingRunner) Extract(ctx context.Context, in string, ms int64, out string) error {
+	e := r.jpegRunner.Extract(ctx, in, ms, out)
+	if e != nil {
+		return e
+	}
+	_, e = r.s.CancelJob(r.jobID)
+	return e
+}
+func TestCancellationBeforePublicationCleansRenamedBatch(t *testing.T) {
+	s, e := store.Open(t.TempDir())
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer s.DB.Close()
+	v := domain.Video{ID: "v", Name: "test", Width: 2, Height: 3, DurationSeconds: 1, Status: "ready", CreatedAt: domain.Now(), StorageKey: "videos/v"}
+	if e = s.AddVideo(v); e != nil {
+		t.Fatal(e)
+	}
+	j := domain.Job{ID: "j", Kind: "extraction", VideoID: "v", BatchID: "b", Status: "queued", CreatedAt: domain.Now()}
+	s.AddJob(j)
+	s.StartJob(j.ID)
+	svc := Service{Store: s, Runner: &cancellingRunner{s: s, jobID: j.ID}}
+	if e = svc.Run(context.Background(), j, v, []int64{0}); e != store.ErrState {
+		t.Fatal(e)
+	}
+	for _, dir := range []string{"staging", "frames"} {
+		entries, e := os.ReadDir(filepath.Join(s.Root, dir))
+		if e != nil || len(entries) > 0 {
+			t.Fatal(dir, entries, e)
+		}
+	}
+	frames, e := s.Frames("v", "")
+	if e != nil || len(frames) > 0 {
+		t.Fatal(frames, e)
+	}
+}
 
 func (r *jpegRunner) Probe(context.Context, string) (media.Metadata, error) {
 	return media.Metadata{}, nil

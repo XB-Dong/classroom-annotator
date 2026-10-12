@@ -2,7 +2,10 @@ package config
 
 import (
 	"errors"
+	"math"
+	"net"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -20,6 +23,11 @@ type Config struct {
 func Load(get func(string) string) (Config, error) {
 	c := Config{DataDir: get("APP_DATA_DIR"), Addr: value(get, "APP_ADDR", ":8080"), Version: value(get, "APP_VERSION", "dev"), FFmpeg: value(get, "APP_FFMPEG", "ffmpeg"), FFprobe: value(get, "APP_FFPROBE", "ffprobe"), DatasetAPIURL: get("APP_DATASET_API_URL"), DatasetAPIKey: get("APP_DATASET_API_KEY")}
 	c.DatasetID = get("APP_DATASET_ID")
+	_, port, addrErr := net.SplitHostPort(c.Addr)
+	portNumber, portErr := strconv.ParseUint(port, 10, 16)
+	if addrErr != nil || portErr != nil || portNumber == 0 {
+		return c, errors.New("APP_ADDR must include a valid port")
+	}
 	if len(c.DatasetID) > 128 || strings.ContainsAny(c.DatasetID, "/\\?#") {
 		return c, errors.New("invalid dataset ID")
 	}
@@ -30,8 +38,14 @@ func Load(get func(string) string) (Config, error) {
 		return c, errors.New("APP_DATA_DIR must be absolute")
 	}
 	c.DataDir = filepath.Clean(c.DataDir)
+	if insideCheckout(c.DataDir) {
+		return c, errors.New("APP_DATA_DIR must be outside a source checkout")
+	}
 	n, err := positive(get, "APP_MAX_UPLOAD_BYTES", "MAX_UPLOAD_BYTES", 1073741824)
-	if err != nil {
+	if err != nil || n > math.MaxInt64-1024*1024-1 {
+		if err == nil {
+			err = errors.New("APP_MAX_UPLOAD_BYTES exceeds supported range")
+		}
 		return c, err
 	}
 	c.MaxUploadBytes = n
@@ -71,11 +85,32 @@ func Load(get func(string) string) (Config, error) {
 	}
 	if c.DatasetAPIURL != "" {
 		u, e := url.Parse(c.DatasetAPIURL)
-		if e != nil || u.Host == "" || u.User != nil || (u.Scheme != "http" && u.Scheme != "https") || u.RawQuery != "" || u.Fragment != "" {
+		if e != nil || u.Host == "" || u.User != nil || (u.Scheme != "http" && u.Scheme != "https") || u.RawQuery != "" || u.Fragment != "" || (u.Path != "" && u.Path != "/") {
 			return c, errors.New("invalid dataset API URL")
 		}
 	}
 	return c, nil
+}
+func insideCheckout(path string) bool {
+	for candidate := path; ; candidate = filepath.Dir(candidate) {
+		resolved, e := filepath.EvalSymlinks(candidate)
+		if e == nil {
+			for p := resolved; ; p = filepath.Dir(p) {
+				if _, e := os.Stat(filepath.Join(p, ".git")); e == nil {
+					return true
+				}
+				if filepath.Dir(p) == p {
+					break
+				}
+			}
+		}
+		if _, e := os.Stat(filepath.Join(candidate, ".git")); e == nil {
+			return true
+		}
+		if filepath.Dir(candidate) == candidate {
+			return false
+		}
+	}
 }
 func value(get func(string) string, key, def string) string {
 	if v := get(key); v != "" {

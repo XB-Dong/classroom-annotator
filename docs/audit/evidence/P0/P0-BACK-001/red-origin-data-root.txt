@@ -1,0 +1,12 @@
+time=2026-10-13T02:06:38.1448433+08:00
+command=go test ./internal/platform/config ./internal/dataset
+exit=1
+--- FAIL: TestDataDirectoryCannotBeInsideCheckout (0.00s)
+    config_test.go:28: repository data directory accepted
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/platform/config	0.449s
+--- FAIL: TestPrivateOriginExceptionDoesNotAllowAnotherScheme (0.00s)
+    adapter_test.go:19: private origin exception crossed scheme
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/dataset	0.879s
+FAIL

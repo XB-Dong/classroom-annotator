@@ -1,0 +1,4 @@
+time=2026-10-13T02:14:32.6876088+08:00
+command=go test ./internal/httpapi -run TestMalformedMultipartReturnsClientError
+exit=0
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/httpapi	1.473s

@@ -1,0 +1,13 @@
+time=2026-10-13T02:12:30.6989308+08:00
+command=go test ./...
+exit=0
+?   	github.com/XB-Dong/classroom-annotator/backend/cmd/server	[no test files]
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/dataset	(cached)
+?   	github.com/XB-Dong/classroom-annotator/backend/internal/domain	[no test files]
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/extraction	1.156s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/httpapi	2.294s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/jobs	1.037s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/media	0.619s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/platform/config	(cached)
+?   	github.com/XB-Dong/classroom-annotator/backend/internal/platform/observability	[no test files]
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/platform/store	1.565s

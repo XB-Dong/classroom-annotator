@@ -1,0 +1,9 @@
+time=2026-10-13T02:09:54.8365876+08:00
+command=go test -v ./internal/httpapi
+exit=0
+=== RUN   TestSyntheticHTTPUploadExtractionAndCompanyImport
+--- PASS: TestSyntheticHTTPUploadExtractionAndCompanyImport (0.07s)
+=== RUN   TestHealthAndUnconfiguredDatasetReturnContract
+--- PASS: TestHealthAndUnconfiguredDatasetReturnContract (0.03s)
+PASS
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/httpapi	1.636s

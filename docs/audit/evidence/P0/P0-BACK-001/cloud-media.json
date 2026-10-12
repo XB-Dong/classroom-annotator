@@ -1,0 +1,8 @@
+{
+  "label": "Run real FFmpeg seek tail and rotation verification",
+  "ssh_host_key": "pinned",
+  "action": "exec",
+  "exit_code": 0,
+  "stdout": "=== RUN   TestFFmpegAccurateSeekTailAndRotation\n--- PASS: TestFFmpegAccurateSeekTailAndRotation (0.33s)\nPASS\n",
+  "stderr": ""
+}

@@ -1,0 +1,8 @@
+time=2026-10-13T02:13:54.3512546+08:00
+command=go test ./internal/httpapi -run TestMalformedMultipartReturnsClientError
+exit=1
+--- FAIL: TestMalformedMultipartReturnsClientError (0.03s)
+    router_test.go:39: 500 {"code":"INTERNAL_ERROR","message":"Request failed","requestId":"386bc02c-eb41-47fd-b73f-6c00cae6b7a1"}
+FAIL
+FAIL	github.com/XB-Dong/classroom-annotator/backend/internal/httpapi	1.538s
+FAIL

@@ -28,7 +28,25 @@ func (p *Policy) Validate(u *url.URL, media bool) error {
 	if media && len(p.MediaOrigins) > 0 && !contains(p.MediaOrigins, Origin(u)) {
 		return ErrUpstream
 	}
+	// A private-address exception is for one complete origin, including scheme.
+	if !contains(p.PrivateOrigins, Origin(u)) {
+		for _, origin := range p.PrivateOrigins {
+			allowed, e := url.Parse(origin)
+			if e == nil && strings.EqualFold(allowed.Hostname(), u.Hostname()) && effectivePort(allowed) == effectivePort(u) {
+				return ErrUpstream
+			}
+		}
+	}
 	return nil
+}
+func effectivePort(u *url.URL) string {
+	if p := u.Port(); p != "" {
+		return p
+	}
+	if u.Scheme == "https" {
+		return "443"
+	}
+	return "80"
 }
 func publicIP(ip net.IP) bool {
 	if ip == nil || !ip.IsGlobalUnicast() || ip.IsPrivate() || ip.IsLoopback() || ip.IsLinkLocalUnicast() {

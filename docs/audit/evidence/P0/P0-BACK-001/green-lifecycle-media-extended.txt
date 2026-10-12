@@ -1,0 +1,24 @@
+time=2026-10-13T02:07:50.1304344+08:00
+command=go test -v ./internal/jobs ./internal/platform/store ./internal/media
+exit=0
+=== RUN   TestCancellationWaitsForWorkCleanupAndQueueIsBounded
+--- PASS: TestCancellationWaitsForWorkCleanupAndQueueIsBounded (0.03s)
+=== RUN   TestTimeoutPersistsFailureAfterCleanup
+--- PASS: TestTimeoutPersistsFailureAfterCleanup (0.04s)
+PASS
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/jobs	1.530s
+=== RUN   TestCancelWinsPublicationAndRestartInterrupts
+--- PASS: TestCancelWinsPublicationAndRestartInterrupts (0.03s)
+=== RUN   TestCompletedPublicationWinsLateCancelAndPersists
+--- PASS: TestCompletedPublicationWinsLateCancelAndPersists (0.03s)
+=== RUN   TestJobDiscoveryReturnsNewest100AndImportFieldsAreConditional
+--- PASS: TestJobDiscoveryReturnsNewest100AndImportFieldsAreConditional (0.08s)
+PASS
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/platform/store	1.155s
+=== RUN   TestFFmpegAccurateSeekTailAndRotation
+    integration_test.go:16: FFmpeg unavailable; execute this synthetic test on the cloud host
+--- SKIP: TestFFmpegAccurateSeekTailAndRotation (0.06s)
+=== RUN   TestInvalidAndOversizeUploadLeavesNoMedia
+--- PASS: TestInvalidAndOversizeUploadLeavesNoMedia (0.01s)
+PASS
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/media	0.585s

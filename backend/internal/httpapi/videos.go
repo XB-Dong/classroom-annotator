@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"context"
+	"errors"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/domain"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/extraction"
 	"github.com/gin-gonic/gin"
@@ -36,7 +37,12 @@ func (a *API) upload(c *gin.Context) {
 			break
 		}
 		if e != nil {
-			failure(c, e)
+			var limit *http.MaxBytesError
+			if errors.As(e, &limit) {
+				failure(c, e)
+			} else {
+				Error(c, 400, "INVALID_UPLOAD", "Malformed multipart upload")
+			}
 			return
 		}
 		if part.FormName() == "file" && part.FileName() != "" {

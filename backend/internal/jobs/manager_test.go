@@ -64,3 +64,31 @@ func TestCancellationWaitsForWorkCleanupAndQueueIsBounded(t *testing.T) {
 	}
 	t.Fatal(got)
 }
+func TestTimeoutPersistsFailureAfterCleanup(t *testing.T) {
+	s, e := store.Open(t.TempDir())
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer s.DB.Close()
+	m := New(s, 1, 10*time.Millisecond)
+	defer m.Close()
+	j, e := m.Submit("import", "", "", func(ctx context.Context, j domain.Job) error { <-ctx.Done(); return ctx.Err() })
+	if e != nil {
+		t.Fatal(e)
+	}
+	deadline := time.Now().Add(time.Second)
+	for time.Now().Before(deadline) {
+		got, e := s.Job(j.ID)
+		if e != nil {
+			t.Fatal(e)
+		}
+		if got.Status == "failed" {
+			if got.Error != "TIMEOUT" {
+				t.Fatal(got)
+			}
+			return
+		}
+		time.Sleep(time.Millisecond)
+	}
+	t.Fatal("timeout did not finish")
+}
