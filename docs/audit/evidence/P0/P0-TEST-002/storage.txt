@@ -1,0 +1,36 @@
+Started 2026-10-13T02:41:01.6093444+08:00
+DedicatedDirectoryKind=api
+
+> storage
+> node scripts/storage-check.mjs
+
+Read-only SQLite integrity/media reconciliation passed: 4 videos, 2 batches, 5 decoded JPEGs, no staging/orphans.
+ExitCode=0 Time=2026-10-13T02:41:02.6619917+08:00
+DedicatedDirectoryKind=api
+
+> storage
+> node scripts/storage-check.mjs
+
+Read-only SQLite integrity/media reconciliation passed: 0 videos, 0 batches, 0 decoded JPEGs, no staging/orphans.
+ExitCode=0 Time=2026-10-13T02:41:03.7506480+08:00
+DedicatedDirectoryKind=api
+
+> storage
+> node scripts/storage-check.mjs
+
+Read-only SQLite integrity/media reconciliation passed: 1 videos, 2 batches, 5 decoded JPEGs, no staging/orphans.
+ExitCode=0 Time=2026-10-13T02:41:04.6765506+08:00
+DedicatedDirectoryKind=dataset
+
+> storage
+> node scripts/storage-check.mjs
+
+Read-only SQLite integrity/media reconciliation passed: 1 videos, 0 batches, 0 decoded JPEGs, no staging/orphans.
+ExitCode=0 Time=2026-10-13T02:41:05.4774204+08:00
+DedicatedDirectoryKind=restart
+
+> storage
+> node scripts/storage-check.mjs
+
+Read-only SQLite integrity/media reconciliation passed: 1 videos, 1 batches, 1 decoded JPEGs, no staging/orphans.
+ExitCode=0 Time=2026-10-13T02:41:06.2887190+08:00

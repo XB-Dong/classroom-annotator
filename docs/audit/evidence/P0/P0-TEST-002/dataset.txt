@@ -1,0 +1,7 @@
+Started 2026-10-13T02:36:27.2801298+08:00 BackendSHA=24096c0
+
+> dataset
+> node scripts/dataset-check.mjs
+
+P0-VID-002A: observed pagination/path/schema, import/play URL, media key isolation, unsafe ID rejection, upstream failure passed.
+ExitCode=0 Time=2026-10-13T02:36:28.5958572+08:00

@@ -1,0 +1,68 @@
+Started 2026-10-13T02:42:29.6731596+08:00
+
+> check
+> node scripts/check.mjs
+
+Acceptance JavaScript syntax checked.
+ExitCode=0 Time=2026-10-13T02:42:31.9031671+08:00
+
+> test
+> node --test unit/*.test.mjs
+
+✔ independent reader accepts consistent JPEG/COCO and zero-head frames (31.4146ms)
+✔ independent reader rejects false dimensions (10.479ms)
+✔ independent reader rejects dangling annotation (10.5955ms)
+✔ independent reader rejects wrong area (4.6408ms)
+✔ independent reader rejects out of bounds box (6.9732ms)
+✔ frozen contract rejects malformed annotation and mixed export selectors (4.291ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 358.7125
+ExitCode=0 Time=2026-10-13T02:42:33.0301452+08:00
+
+> list
+> playwright test --list
+
+Listing tests:
+  [api] › integration\api.spec.mjs:5:1 › P0-BASE-001 readiness and safe missing resources
+  [api] › integration\api.spec.mjs:17:1 › P0-VID/FRM/SAVE/PROG/EXP independent full API acceptance
+  [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects missing selector
+  [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects empty explicit frames
+  [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects mixed video and frames
+  [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects batch without video
+  [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects mixed batch and frames
+  [api] › integration\api.spec.mjs:83:1 › P0-VID-001 corrupt upload and invalid extraction do not publish
+  [api] › integration\api.spec.mjs:95:1 › P0-JOB-001 cancellation leaves no published batch; terminal cancellation is stable
+  [api] › integration\api.spec.mjs:109:1 › P0-FRM-001 unavailable tail fails rather than silently dropping targets
+  [chromium] › e2e\workflow.spec.mjs:22:1 › P0-E2E-001 browser upload/extract/draw/move/resize/delete/autosave/refresh/complete/export
+  [chromium] › e2e\workflow.spec.mjs:112:1 › P0-SAVE-001 real server acknowledgement cannot discard a newer canvas edit
+  [chromium] › e2e\workflow.spec.mjs:139:1 › P0-SAVE-001 stale browser revision shows conflict and preserves server snapshot
+Total: 13 tests in 2 files
+ExitCode=0 Time=2026-10-13T02:42:34.5298443+08:00
+found 0 vulnerabilities
+ExitCode=0 Time=2026-10-13T02:42:37.1614796+08:00
+ffmpeg version 9.0.2-essentials_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers
+{
+    "programs": [
+
+    ],
+    "stream_groups": [
+
+    ],
+    "streams": [
+        {
+            "width": 320,
+            "height": 240,
+            "r_frame_rate": "25/1"
+        }
+    ],
+    "format": {
+        "duration": "4.000000"
+    }
+}
+BackendProcessCount=0

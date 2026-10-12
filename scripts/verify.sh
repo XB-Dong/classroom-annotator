@@ -15,10 +15,13 @@ command -v npm >/dev/null
 command -v go >/dev/null
 command -v "${FFMPEG_PATH:-ffmpeg}" >/dev/null
 command -v "${FFPROBE_PATH:-ffprobe}" >/dev/null
+if [[ -n "${FFMPEG_PATH:-}" ]]; then export PATH="$(dirname "$FFMPEG_PATH"):$PATH"; fi
+if [[ -n "${FFPROBE_PATH:-}" ]]; then export PATH="$(dirname "$FFPROBE_PATH"):$PATH"; fi
 test_runtime="$(mktemp -d "${TMPDIR:-/tmp}/classroom-acceptance.XXXXXXXX")"
 export P0_BACKEND_BINARY="$test_runtime/backend-server"
 export P0_RESTART_DATA_DIR="$test_runtime/restart-data"
 export P0_DATASET_DATA_DIR="$test_runtime/dataset-data"
+export P0_API_DATA_DIR="$test_runtime/api-data"
 export P0_FIXTURE_DIR="${P0_FIXTURE_DIR:-$test_runtime/fixtures}"
 test -f frontend/package-lock.json
 test -f backend/go.mod
@@ -53,6 +56,7 @@ test -f backend/go.mod
   npm run fixtures
   npm run dataset
   npm run restart
+  npm run local-api
   if [[ "$integration" == 1 ]]; then
     : "${P0_FIXTURE_DIR:?external fixture directory required}"
     npm run contract

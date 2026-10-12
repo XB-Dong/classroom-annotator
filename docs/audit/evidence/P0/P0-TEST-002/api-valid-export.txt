@@ -1,0 +1,14 @@
+Started 2026-10-13T02:37:04.8589855+08:00 BackendSHA=24096c0
+
+> local-api
+> node scripts/run-api.mjs --grep independent full API acceptance
+
+
+Running 1 test using 1 worker
+
+(node:14496) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [api] › integration\api.spec.mjs:17:1 › P0-VID/FRM/SAVE/PROG/EXP independent full API acceptance (1.1s)
+
+  1 passed (2.0s)
+ExitCode=0 Time=2026-10-13T02:37:08.5689409+08:00

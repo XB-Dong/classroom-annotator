@@ -4,6 +4,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
+import { unusedLoopbackPort } from '../helpers/runtime.mjs';
 
 // Dedicated process only. Never restart an arbitrary existing/cloud deployment.
 const root = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
@@ -15,7 +16,7 @@ const resolved = path.resolve(dataDir);
 const relative = path.relative(root, resolved);
 assert.ok(relative.startsWith('..') || path.isAbsolute(relative), 'Restart data must be outside repository');
 assert.ok(!fs.existsSync(resolved), 'Restart check requires a new dedicated external data directory');
-const port = process.env.P0_RESTART_PORT || '18181';
+const port = process.env.P0_RESTART_PORT || await unusedLoopbackPort();
 const origin = `http://127.0.0.1:${port}`;
 let child;
 const environment = {
@@ -56,7 +57,7 @@ try {
   const finished = await json(`/videos/${video.id}/extractions`, post({ intervalSeconds: 1, endSeconds: 1 }));
   await waitFor(async () => (await json(`/jobs/${finished.id}`)).status === 'completed');
   const { frames } = await json(`/videos/${video.id}/frames?batchId=${finished.batchId}`);
-  const annotation = { id: 'restart-head', bbox: [1, 2, 30, 40], source: 'manual' };
+  const annotation = { id: crypto.randomUUID(), bbox: [1, 2, 30, 40], source: 'manual' };
   const saved = await json(`/frames/${frames[0].id}/annotations`, {
     ...post({ expectedRevision: 0, status: 'completed', annotations: [annotation] }), method: 'PUT',
   });

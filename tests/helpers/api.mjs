@@ -57,8 +57,8 @@ export async function save(request, frame, annotations, status = 'in_progress') 
 }
 
 export async function safeError(response, status) {
-  expect(response.status()).toBe(status);
   const body = validateSchema('Error', await response.json());
   expect(JSON.stringify(body)).not.toMatch(/(?:[A-Z]:\\|\/var\/|\/tmp\/|SQLITE_|Authorization|api[_-]?key\s*[:=])/i);
+  expect(response.status(), `error code=${body.code}`).toBe(status);
   return body;
 }

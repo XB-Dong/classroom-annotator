@@ -8,7 +8,10 @@
     "fixtures": "node scripts/generate-fixtures.mjs",
     "restart": "node scripts/restart-check.mjs",
     "dataset": "node scripts/dataset-check.mjs",
+    "monitoring": "node scripts/monitoring-check.mjs",
+    "storage": "node scripts/storage-check.mjs",
     "contract": "playwright test --project=api",
+    "local-api": "node scripts/run-api.mjs",
     "e2e": "playwright test --project=chromium",
     "list": "playwright test --list"
   },

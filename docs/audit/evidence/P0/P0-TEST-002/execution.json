@@ -1,0 +1,41 @@
+{
+  "taskId": "P0-TEST-002",
+  "rootTaskId": "P0-TEST-001",
+  "backendSourceSHA": "24096c099fdb7116ef968b4409ec710805e1634a",
+  "backendBinarySHA256": "49cf99248dd9f29b658aba96a3695f6c43794002aa54c1eb90435aef7552f6b1",
+  "specVersions": ["1.0.0", "Leader api.md 1.0.1 upstream routing amendment read-only"],
+  "requestedModel": "gpt-6.1-sol",
+  "requestedReasoningEffort": "high",
+  "actualProvider": null,
+  "actualModel": null,
+  "actualReasoningEffort": null,
+  "modelVerificationStatus": "requested_settings_only",
+  "contextMode": "continued_existing_worker_with_reloaded_specs",
+  "repairBudget": "inherited P0-TEST-001, max 2; Leader owns accounting; no backend implementation modified",
+  "environment": {
+    "os": "Windows",
+    "node": "24.16.0",
+    "go": "1.25.5",
+    "ffmpeg": "9.0.2 essentials",
+    "fixture": "synthetic 320x240,25fps,4.000s independently ffprobed",
+    "backendConcurrency": "one dedicated process maximum, temporary loopback port and fresh external data per run; stopped after runs"
+  },
+  "checks": [
+    { "command": "go build -o external/backend-24096c0.exe ./cmd/server", "exitCode": 0 },
+    { "command": "npm run local-api (original 5 tests)", "exitCode": 1, "passed": 3, "failed": 2, "evidence": "local-api.txt" },
+    { "command": "npm run dataset", "exitCode": 0, "evidence": "dataset.txt" },
+    { "command": "npm run restart", "exitCode": 0, "evidence": "restart.txt" },
+    { "command": "npm run local-api -- --grep 'independent full API acceptance'", "exitCode": 0, "passed": 1, "evidence": "api-valid-export.txt" },
+    { "command": "npm run local-api -- --grep 'P0-EXP-001 rejects'", "exitCode": 1, "failed": 5, "evidence": "api-selectors.txt" },
+    { "command": "npm run storage for 5 stopped dedicated directories", "exitCodes": [0,0,0,0,0], "evidence": "storage.txt" },
+    { "command": "npm run check; npm test; npm run list; npm audit --omit=optional", "exitCodes": [0,0,0,0], "result": "6 unit tests passed, 13 Playwright tests discovered only, 0 vulnerabilities", "evidence": "harness-and-tools.txt" }
+  ],
+  "observedFailures": [
+    { "requirement": "P0-EXP-001", "expected": 400, "actual": 422, "code": "INVALID_EXPORT_SELECTION", "shapes": [{}, {"frameIds":[]}, {"videoId":"synthetic-video","frameIds":["synthetic-frame"]}, {"batchId":"synthetic-batch"}, {"frameIds":["synthetic-frame"],"batchId":"synthetic-batch"}], "leaderDisposition": "confirmed, owner repair pending" },
+    { "requirement": "P0-FRM-001", "expected": "failed/FRAME_UNAVAILABLE", "actual": "failed/JOB_FAILED", "context": "FFmpeg9 unavailable tail known owner issue; not repeated" }
+  ],
+  "notRun": ["full verify/frontend absent", "race by this task", "cloud API/E2E", "monitoring script actual run", "cloud backup/restore", "GLM by this task", "real company environment"],
+  "realApiVerificationStatus": "not_run",
+  "backendProcessCountAfterChecks": 0,
+  "status": "partial"
+}

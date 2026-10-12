@@ -1,0 +1,79 @@
+Started 2026-10-13T02:35:46.0060120+08:00 BackendSHA=24096c0
+
+> local-api
+> node scripts/run-api.mjs
+
+
+Running 5 tests using 1 worker
+
+(node:27612) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [api] › integration\api.spec.mjs:5:1 › P0-BASE-001 readiness and safe missing resources (49ms)
+  x  2 [api] › integration\api.spec.mjs:17:1 › P0-VID/FRM/SAVE/PROG/EXP independent full API acceptance (1.1s)
+(node:33152) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 3 [api] › integration\api.spec.mjs:76:1 › P0-VID-001 corrupt upload and invalid extraction do not publish (244ms)
+  ok 4 [api] › integration\api.spec.mjs:88:1 › P0-JOB-001 cancellation leaves no published batch; terminal cancellation is stable (224ms)
+  x  5 [api] › integration\api.spec.mjs:102:1 › P0-FRM-001 unavailable tail fails rather than silently dropping targets (227ms)
+
+
+  1) [api] › integration\api.spec.mjs:17:1 › P0-VID/FRM/SAVE/PROG/EXP independent full API acceptance 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 422
+
+       at helpers\api.mjs:60
+
+      58 |
+      59 | export async function safeError(response, status) {
+    > 60 |   expect(response.status()).toBe(status);
+         |                             ^
+      61 |   const body = validateSchema('Error', await response.json());
+      62 |   expect(JSON.stringify(body)).not.toMatch(/(?:[A-Z]:\\|\/var\/|\/tmp\/|SQLITE_|Authorization|api[_-]?key\s*[:=])/i);
+      63 |   return body;
+        at safeError (D:\Project\cvte\worktrees\p0-test\tests\helpers\api.mjs:60:29)
+        at D:\Project\cvte\worktrees\p0-test\tests\integration\api.spec.mjs:56:11
+
+    Error Context: ..\..\..\runtime\acceptance-r2\playwright-results\integration-api-P0-VID-FRM-4d4a4-pendent-full-API-acceptance-api\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\runtime\acceptance-r2\playwright-results\integration-api-P0-VID-FRM-4d4a4-pendent-full-API-acceptance-api\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\..\..\runtime\acceptance-r2\playwright-results\integration-api-P0-VID-FRM-4d4a4-pendent-full-API-acceptance-api\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [api] › integration\api.spec.mjs:102:1 › P0-FRM-001 unavailable tail fails rather than silently dropping targets 
+
+    Error: expect(received).toContain(expected) // indexOf
+
+    Expected substring: "FRAME_UNAVAILABLE"
+    Received string:    "JOB_FAILED"
+
+      107 |   const final = await terminalJob(request, job.id);
+      108 |   expect(final.status).toBe('failed');
+    > 109 |   expect(final.error).toContain('FRAME_UNAVAILABLE');
+          |                       ^
+      110 |   const batches = await (await request.get(`/api/v1/videos/${video.id}/batches`)).json();
+      111 |   expect(batches.batches.some(batch => batch.id === job.batchId)).toBe(false);
+      112 | });
+        at D:\Project\cvte\worktrees\p0-test\tests\integration\api.spec.mjs:109:23
+
+    Error Context: ..\..\..\runtime\acceptance-r2\playwright-results\integration-api-P0-FRM-001-b4667-n-silently-dropping-targets-api\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\runtime\acceptance-r2\playwright-results\integration-api-P0-FRM-001-b4667-n-silently-dropping-targets-api\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\..\..\runtime\acceptance-r2\playwright-results\integration-api-P0-FRM-001-b4667-n-silently-dropping-targets-api\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [api] › integration\api.spec.mjs:17:1 › P0-VID/FRM/SAVE/PROG/EXP independent full API acceptance 
+    [api] › integration\api.spec.mjs:102:1 › P0-FRM-001 unavailable tail fails rather than silently dropping targets 
+  3 passed (3.6s)
+ExitCode=1 Time=2026-10-13T02:35:52.1671030+08:00

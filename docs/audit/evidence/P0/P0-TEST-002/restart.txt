@@ -1,0 +1,7 @@
+Started 2026-10-13T02:36:28.6067575+08:00 BackendSHA=24096c0
+
+> restart
+> node scripts/restart-check.mjs
+
+P0-SAVE/JOB restart: saved snapshot persisted, running job failed INTERRUPTED, partial batch absent.
+ExitCode=0 Time=2026-10-13T02:36:29.9226662+08:00

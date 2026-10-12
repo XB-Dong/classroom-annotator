@@ -138,12 +138,13 @@ test('P0-SAVE-001 real server acknowledgement cannot discard a newer canvas edit
 
 test('P0-SAVE-001 stale browser revision shows conflict and preserves server snapshot', async ({ page, request }) => {
   const { frame, point } = await openPreparedFrame(page, request);
-  const remote = await save(request, frame, [{ id: 'other-writer', bbox: [10, 10, 20, 20], source: 'manual' }]);
+  const otherWriterId = crypto.randomUUID();
+  const remote = await save(request, frame, [{ id: otherWriterId, bbox: [10, 10, 20, 20], source: 'manual' }]);
   await page.getByTestId('draw-mode').click();
   await drag(page, point(0.6, 0.1), point(0.8, 0.3));
   await expect(page.getByTestId('save-state')).toContainText('冲突');
   expect(await snapshot(request, frame.id)).toEqual(remote);
   await page.getByTestId('conflict-reload').click();
-  await expect(page.getByTestId('annotation-item-other-writer')).toBeVisible();
+  await expect(page.getByTestId(`annotation-item-${otherWriterId}`)).toBeVisible();
   expect(await snapshot(request, frame.id)).toEqual(remote);
 });

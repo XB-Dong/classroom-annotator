@@ -22,7 +22,7 @@ test('P0-VID/FRM/SAVE/PROG/EXP independent full API acceptance', async ({ reques
   expect(first.frames.map(frame => frame.timestampMs)).toEqual([0, 1000, 2000]);
   expect(first.frames.every(frame => frame.width === 320 && frame.height === 240)).toBe(true);
   const frame = first.frames[0];
-  const annotation = { id: 'independent-head-1', bbox: [60, 40, 30, 30], source: 'manual' };
+  const annotation = { id: crypto.randomUUID(), bbox: [60, 40, 30, 30], source: 'manual' };
   const saved = await save(request, frame, [annotation]);
   expect(saved.revision).toBe(1);
   await safeError(await request.put(`/api/v1/frames/${frame.id}/annotations`, {
@@ -52,9 +52,6 @@ test('P0-VID/FRM/SAVE/PROG/EXP independent full API acceptance', async ({ reques
   expect(batches.batches.map(item => item.id)).toEqual([second.job.batchId, first.job.batchId]);
   const progress = await (await request.get(`/api/v1/videos/${video.id}/progress?batchId=${first.job.batchId}`)).json();
   expect(progress).toEqual({ total: 3, notStarted: 1, inProgress: 0, completed: 2 });
-  for (const selectors of [{}, { frameIds: [] }, { videoId: video.id, frameIds: [frame.id] }, { batchId: first.job.batchId }, { frameIds: [frame.id], batchId: first.job.batchId }]) {
-    await safeError(await request.post('/api/v1/exports', { data: selectors }), 400);
-  }
   await safeError(await request.post('/api/v1/exports', { data: { frameIds: ['missing'] } }), 404);
   await safeError(await request.post('/api/v1/exports', { data: { videoId: video.id, batchId: 'missing' } }), 404);
   const response = await request.post('/api/v1/exports', { data: { videoId: video.id, batchId: first.job.batchId } });
@@ -71,6 +68,16 @@ test('P0-VID/FRM/SAVE/PROG/EXP independent full API acceptance', async ({ reques
   await save(request, frame, [annotation], 'in_progress');
   const revoked = await (await request.get(`/api/v1/videos/${video.id}/progress?batchId=${first.job.batchId}`)).json();
   expect(revoked.completed).toBe(1);
+});
+
+for (const [name, selectors] of [
+  ['missing selector', {}],
+  ['empty explicit frames', { frameIds: [] }],
+  ['mixed video and frames', { videoId: 'synthetic-video', frameIds: ['synthetic-frame'] }],
+  ['batch without video', { batchId: 'synthetic-batch' }],
+  ['mixed batch and frames', { frameIds: ['synthetic-frame'], batchId: 'synthetic-batch' }],
+]) test(`P0-EXP-001 rejects ${name}`, async ({ request }) => {
+  await safeError(await request.post('/api/v1/exports', { data: selectors }), 400);
 });
 
 test('P0-VID-001 corrupt upload and invalid extraction do not publish', async ({ request }) => {

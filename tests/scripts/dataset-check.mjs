@@ -5,6 +5,7 @@ import http from 'node:http';
 import { spawn } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
+import { unusedLoopbackPort } from '../helpers/runtime.mjs';
 
 const root = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const binary = process.env.P0_BACKEND_BINARY;
@@ -44,7 +45,7 @@ const upstream = http.createServer((request, response) => {
   } else { response.statusCode = 404; response.end('{}'); }
 });
 const apiOrigin = await listen(upstream);
-const origin = `http://127.0.0.1:${process.env.P0_DATASET_PORT || '18182'}`;
+const origin = `http://127.0.0.1:${process.env.P0_DATASET_PORT || await unusedLoopbackPort()}`;
 async function waitFor(predicate, timeout = 30_000) {
   const deadline = Date.now() + timeout;
   while (Date.now() < deadline) {

@@ -1,0 +1,187 @@
+Started 2026-10-13T02:37:43.8658344+08:00 BackendSHA=24096c0
+
+> local-api
+> node scripts/run-api.mjs --grep P0-EXP-001 rejects
+
+
+Running 5 tests using 1 worker
+
+(node:30344) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects missing selector (63ms)
+(node:28828) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  2 [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects empty explicit frames (54ms)
+(node:12096) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  3 [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects mixed video and frames (52ms)
+(node:14844) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  4 [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects batch without video (55ms)
+(node:32296) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  5 [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects mixed batch and frames (59ms)
+
+
+  1) [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects missing selector ───────────────────
+
+    Error: error code=INVALID_EXPORT_SELECTION
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 422
+
+       at helpers\api.mjs:62
+
+      60 |   const body = validateSchema('Error', await response.json());
+      61 |   expect(JSON.stringify(body)).not.toMatch(/(?:[A-Z]:\\|\/var\/|\/tmp\/|SQLITE_|Authorization|api[_-]?key\s*[:=])/i);
+    > 62 |   expect(response.status(), `error code=${body.code}`).toBe(status);
+         |                                                        ^
+      63 |   return body;
+      64 | }
+      65 |
+        at safeError (D:\Project\cvte\worktrees\p0-test\tests\helpers\api.mjs:62:56)
+        at D:\Project\cvte\worktrees\p0-test\tests\integration\api.spec.mjs:80:3
+
+    Error Context: ..\..\..\runtime\acceptance-r2\playwright-selectors-results\integration-api-P0-EXP-001-rejects-missing-selector-api\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\runtime\acceptance-r2\playwright-selectors-results\integration-api-P0-EXP-001-rejects-missing-selector-api\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\..\..\runtime\acceptance-r2\playwright-selectors-results\integration-api-P0-EXP-001-rejects-missing-selector-api\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects empty explicit frames ──────────────
+
+    Error: error code=INVALID_EXPORT_SELECTION
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 422
+
+       at helpers\api.mjs:62
+
+      60 |   const body = validateSchema('Error', await response.json());
+      61 |   expect(JSON.stringify(body)).not.toMatch(/(?:[A-Z]:\\|\/var\/|\/tmp\/|SQLITE_|Authorization|api[_-]?key\s*[:=])/i);
+    > 62 |   expect(response.status(), `error code=${body.code}`).toBe(status);
+         |                                                        ^
+      63 |   return body;
+      64 | }
+      65 |
+        at safeError (D:\Project\cvte\worktrees\p0-test\tests\helpers\api.mjs:62:56)
+        at D:\Project\cvte\worktrees\p0-test\tests\integration\api.spec.mjs:80:3
+
+    Error Context: ..\..\..\runtime\acceptance-r2\playwright-selectors-results\integration-api-P0-EXP-001-rejects-empty-explicit-frames-api\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\runtime\acceptance-r2\playwright-selectors-results\integration-api-P0-EXP-001-rejects-empty-explicit-frames-api\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\..\..\runtime\acceptance-r2\playwright-selectors-results\integration-api-P0-EXP-001-rejects-empty-explicit-frames-api\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects mixed video and frames ─────────────
+
+    Error: error code=INVALID_EXPORT_SELECTION
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 422
+
+       at helpers\api.mjs:62
+
+      60 |   const body = validateSchema('Error', await response.json());
+      61 |   expect(JSON.stringify(body)).not.toMatch(/(?:[A-Z]:\\|\/var\/|\/tmp\/|SQLITE_|Authorization|api[_-]?key\s*[:=])/i);
+    > 62 |   expect(response.status(), `error code=${body.code}`).toBe(status);
+         |                                                        ^
+      63 |   return body;
+      64 | }
+      65 |
+        at safeError (D:\Project\cvte\worktrees\p0-test\tests\helpers\api.mjs:62:56)
+        at D:\Project\cvte\worktrees\p0-test\tests\integration\api.spec.mjs:80:3
+
+    Error Context: ..\..\..\runtime\acceptance-r2\playwright-selectors-results\integration-api-P0-EXP-001-rejects-mixed-video-and-frames-api\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\runtime\acceptance-r2\playwright-selectors-results\integration-api-P0-EXP-001-rejects-mixed-video-and-frames-api\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\..\..\runtime\acceptance-r2\playwright-selectors-results\integration-api-P0-EXP-001-rejects-mixed-video-and-frames-api\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects batch without video ────────────────
+
+    Error: error code=INVALID_EXPORT_SELECTION
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 422
+
+       at helpers\api.mjs:62
+
+      60 |   const body = validateSchema('Error', await response.json());
+      61 |   expect(JSON.stringify(body)).not.toMatch(/(?:[A-Z]:\\|\/var\/|\/tmp\/|SQLITE_|Authorization|api[_-]?key\s*[:=])/i);
+    > 62 |   expect(response.status(), `error code=${body.code}`).toBe(status);
+         |                                                        ^
+      63 |   return body;
+      64 | }
+      65 |
+        at safeError (D:\Project\cvte\worktrees\p0-test\tests\helpers\api.mjs:62:56)
+        at D:\Project\cvte\worktrees\p0-test\tests\integration\api.spec.mjs:80:3
+
+    Error Context: ..\..\..\runtime\acceptance-r2\playwright-selectors-results\integration-api-P0-EXP-001-rejects-batch-without-video-api\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\runtime\acceptance-r2\playwright-selectors-results\integration-api-P0-EXP-001-rejects-batch-without-video-api\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\..\..\runtime\acceptance-r2\playwright-selectors-results\integration-api-P0-EXP-001-rejects-batch-without-video-api\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects mixed batch and frames ─────────────
+
+    Error: error code=INVALID_EXPORT_SELECTION
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 422
+
+       at helpers\api.mjs:62
+
+      60 |   const body = validateSchema('Error', await response.json());
+      61 |   expect(JSON.stringify(body)).not.toMatch(/(?:[A-Z]:\\|\/var\/|\/tmp\/|SQLITE_|Authorization|api[_-]?key\s*[:=])/i);
+    > 62 |   expect(response.status(), `error code=${body.code}`).toBe(status);
+         |                                                        ^
+      63 |   return body;
+      64 | }
+      65 |
+        at safeError (D:\Project\cvte\worktrees\p0-test\tests\helpers\api.mjs:62:56)
+        at D:\Project\cvte\worktrees\p0-test\tests\integration\api.spec.mjs:80:3
+
+    Error Context: ..\..\..\runtime\acceptance-r2\playwright-selectors-results\integration-api-P0-EXP-001-rejects-mixed-batch-and-frames-api\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\runtime\acceptance-r2\playwright-selectors-results\integration-api-P0-EXP-001-rejects-mixed-batch-and-frames-api\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\..\..\runtime\acceptance-r2\playwright-selectors-results\integration-api-P0-EXP-001-rejects-mixed-batch-and-frames-api\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5 failed
+    [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects missing selector ────────────────────
+    [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects empty explicit frames ───────────────
+    [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects mixed video and frames ──────────────
+    [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects batch without video ─────────────────
+    [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects mixed batch and frames ──────────────
+ExitCode=1 Time=2026-10-13T02:37:49.6206474+08:00
