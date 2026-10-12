@@ -1,12 +1,12 @@
 # P0计划
 
-版本：0.3.0｜状态：选型已确认，待 P0 启动批示｜日期：2026-10-13
+版本：0.4.0｜状态：选型已确认，待 P0 启动批示｜日期：2026-10-13
 时区：Asia/Shanghai（UTC+08:00）
 仓库：[XB-Dong/classroom-annotator](https://github.com/XB-Dong/classroom-annotator)
 
 > For execution agents: Choices are frozen. Do not start P0 until the user explicitly authorizes execution. Then use native Codex subagents with external Git worktrees, and OpenCode for independent GLM code and browser-experience review. Convert this plan into task packets with SDD acceptance and meaningful TDD evidence. Stop at the agreed deadline or P0 delivery gate.
 
-用户已确认此前全部 14 项推荐。本稿用于启动前审核，尚未实施或排程。目录和检查入口为交付要求，不是已存在的功能。
+用户已确认此前全部 14 项推荐，并确认角色模型与推理强度的推荐分工，见 [模型分配决定](docs/decisions/0002-agent-model-allocation.md)。本稿用于启动前审核，尚未实施或排程。目录和检查入口为交付要求，不是已存在的功能。
 
 **目标：** 交付可迭代工程底座与人工标注闭环，具备基础测试、独立智谱审核、云端验证和监控。
 **架构：** 单仓库三模块；P0 实现 React 前端与 Go 业务后端，保留第三模块的架构边界，不实现或启动推理服务。Go 是唯一业务数据入口。
@@ -145,6 +145,8 @@ R0 在仓库外合成测试页面上验证 OpenCode/智谱认证、读取限定�
 | Frontend | 画布、状态、草稿恢复与流程 | 分配的 `frontend/` 文件 |
 | Backend | 视频、抽帧、持久化与导出 | 分配的 `backend/` 文件 |
 | Test | 规格驱动的独立集成/E2E | 分配的 `tests/`，不同时修改实现者的测试 |
+| Architecture Reviewer | 核心契约、架构边界、复杂跨模块问题审核 | 只读规格与代码，写分配的审核工件 |
+| Evidence Assistant | 整理已验证日志、追踪索引与报告初稿 | 分配的审计索引/草稿，不更改原始证据 |
 | GLM Reviewer/Experience | 使用智谱独立审查 GPT 实现，核对用户操作与潜在盲点 | 只读授权代码/合成演示，写独立审核工件 |
 
 Leader 加最多三个 Worker，职责轮换席位；智谱客户端单独计入实际执行预算，不虚报为内置 GLM 子 Agent。工作树在仓库外，单文件同一时间只有一个写入者；共享依赖/契约由 Leader 合入。评审必须指出规格覆盖、测试与缺陷，不能只给主观评价。
@@ -152,6 +154,29 @@ Leader 加最多三个 Worker，职责轮换席位；智谱客户端单独计入
 交叉模型闭环：GPT 实现和测试 → 智谱独立审核/体验 → Leader 复现、核对规格并决定采纳/拒绝/暂缓 → 对采纳项修改和验证 → 必要时智谱复审。意见需要复现步骤、预期/实际行为、代码或界面位置、严重度及证据；Leader 记录处置理由，不以模型投票代替验证。
 
 同一问题沿用修复预算，不进行无限自我博弈。智谱链路未接通时继续独立开发，但记录审核门槛未满足，不能把 Codex 自审标成已完成的跨模型审核。
+
+### P0 固定模型与推理强度
+
+以下是已确认的目标配置，不是已运行证明；以 [决策 0002](docs/decisions/0002-agent-model-allocation.md) 为模型配置唯一权威来源。
+
+| 角色 | 模型 | 推理强度 | P0 使用重点 |
+| --- | --- | --- | --- |
+| Leader | `gpt-6.1-sol` | `high` | 持续协调、证据核对、审核处置与最终验收 |
+| Architecture Reviewer | `gpt-6-astra` | `high` | R0 底座/契约审核，R3/R4 坐标与保存一致性审核，复杂跨模块阻塞 |
+| Product | `gpt-6.1-sol` | `medium` | R0 明确交互、边界与验收例子 |
+| Frontend | `gpt-6.1-sol` | `high` | 画布、状态、保存恢复与流程 |
+| Backend | `gpt-6.1-sol` | `high` | 抽帧、事务/revision、导出 |
+| Test | `gpt-6.1-sol` | `high` | 独立测试设计、集成/E2E 与缺陷复现 |
+| Evidence Assistant | `gpt-6-luna` | `high` | R7 整理已有证据；Leader 核实报告 |
+| GLM Reviewer/Experience | 公司 Key 实测可用的智谱模型，R0 固定准确 ID | 只使用供应商实际支持的设置 | 独立代码审核和实际浏览器体验 |
+
+Architecture Reviewer 与 Evidence Assistant 按任务使用，仍占原生 Worker 席位，不增加并发上限。P0 不启动 AI Integration Agent。复杂问题交给既定 Astra 审核角色，不自动把所有 Worker 升到更高强度，也不因失败切换模型逃避修复预算。
+
+R0 将确认的模型配置落地为项目专用英文 Agent 定义/启动参数，进行最小启动验证；本轮只更新文档，不创建或宣称已经生效的运行配置。Leader 主会话需单独选为 `gpt-6.1-sol` / `high`；子 Agent 设置不会替主会话切换。无法确认主会话配置时记录未确认，不能凭模型自述判断。
+
+当前原生工具中，显式覆盖子 Agent 模型/推理强度使用 `fork_turns="none"`，加载自包含任务包；完整历史继承模式不支持此覆盖。启动时分别记录请求配置与可验证的实际配置，禁止把预期型号写成已验证实际型号。选定模型不可用时停止依赖该角色的任务，记录阻塞并推进独立任务，不静默替换型号或降低验收。
+
+GLM 经 OpenCode 外部调用，不伪装为 Codex 内置模型；其准确模型 ID、浏览器/工具兼容性是 R0 的实测项。P1/P2 的使用重点仅在 [后续波次前瞻](NEXT-WAVES.md) 保留，不因此启动未来任务。
 
 ### 上下文、soul、记忆与交接
 
@@ -165,7 +190,7 @@ Leader 加最多三个 Worker，职责轮换席位；智谱客户端单独计入
 
 运行上下文可独立，但重启后必须重读记忆与交接。worktree 隔离代码、任务包隔离上下文、版本化工件保持连续性，不能只靠命名角色达到这些效果。
 
-最小任务包包括 `taskId/waveId/roundId`、角色、实际 provider/model、基准 SHA、规格版本、允许路径、依赖、验收、时间/修复预算、评审者与交付格式。未知模型标明未确认，不猜测。
+最小任务包包括 `taskId/waveId/roundId/rootTaskId`、角色、`requestedModel/requestedReasoningEffort`、实际 `provider/model/reasoningEffort`、`modelVerificationStatus/modelEvidenceRef`、上下文模式、基准 SHA、规格版本、允许路径、依赖、验收、时间/修复预算、评审者与交付格式。请求与实际配置分开记录；无法核实的实际字段用 `null` 并说明原因，不猜测。角色或模型变化后重新加载规格、记忆与交接，不假设自动继承前任上下文。
 
 ## 8. 夜间 P0 轮次与预算
 
@@ -198,7 +223,7 @@ docs/audit/reports/report-20261013T083000+0800.md
 docs/waves/P0/state.json
 ```
 
-事件记录 `timestamp/runId/waveId/roundId/taskId/actor/provider/model/event/outcome/commitSha/specVersion/evidenceRefs`。未知写明未知。日志从实际启用时开始，历史事件只能标注为回顾，不补造当时不存在的记录。
+事件记录 `timestamp/runId/waveId/roundId/taskId/actor/provider/model/reasoningEffort/requestedModel/requestedReasoningEffort/modelVerificationStatus/modelEvidenceRef/contextMode/event/outcome/commitSha/specVersion/evidenceRefs`。未知实际配置用 `null`，供应商不支持的推理设置标记为 `unsupported`，不能套用 Codex 等级。日志从实际启用时开始，历史事件只能标注为回顾，不补造当时不存在的记录。
 
 Worker 各有日志流，Leader 汇总并单写状态；记录领取、规格、Red/Green、提交、评审、发布、重试、阻塞与决策。日志追加并用 Git/文件哈希锚定，但不声称不可篡改，不记录内部思维。大量原始日志留在外部受控存储，仓库保留脱敏必要证据；敏感内容及其派生哈希不公开。
 
