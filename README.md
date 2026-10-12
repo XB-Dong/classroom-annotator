@@ -9,6 +9,7 @@
 - [后续波次前瞻：P1/P2](NEXT-WAVES.md)
 - [14项确认记录](docs/decisions/0001-confirmed-choices.md)
 - [Agent 角色、极高推理与负载安排](docs/decisions/0003-lean-agent-roles.md)
+- [P0 本地材料验收范围](docs/decisions/0004-local-materials-acceptance.md)
 - [Agent 执行规则](AGENTS.md)
 - [时间戳报告](docs/audit/reports/)
 

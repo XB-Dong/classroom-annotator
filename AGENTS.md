@@ -2,7 +2,7 @@
 
 ## Read before work
 
-Read `CONSTITUTION.md`, `P0-PLAN.md`, `docs/decisions/0001-confirmed-choices.md`, `docs/decisions/0003-lean-agent-roles.md`, and the active wave's specification, task packet, and handoff. All fourteen choices and the lean role/model policy are confirmed. Decision 0003 supersedes decision 0002. P0 execution still requires the user's explicit start instruction. `NEXT-WAVES.md` is reference only and never authorizes P1/P2 work.
+Read `CONSTITUTION.md`, `P0-PLAN.md`, `docs/decisions/0001-confirmed-choices.md`, `docs/decisions/0003-lean-agent-roles.md`, `docs/decisions/0004-local-materials-acceptance.md`, and the active wave's specification, task packet, and handoff. The lean role/model policy is confirmed. Decision 0003 supersedes decision 0002; decision 0004 replaces choice 05 of decision 0001. P0 execution still requires the user's explicit start instruction. `NEXT-WAVES.md` is reference only and never authorizes P1/P2 work.
 
 ## Scope and language
 
@@ -57,11 +57,12 @@ Read `CONSTITUTION.md`, `P0-PLAN.md`, `docs/decisions/0001-confirmed-choices.md`
 - Run the checks appropriate to your change and report exit codes truthfully.
 - Tests belong in every delivery wave. P2 is expanded verification, not first verification.
 - Prefer cohesive capability modules and small explicit boundaries over speculative frameworks.
-- Do not silently skip company API acceptance or replace live evidence with mocks.
-- Report P0 core and intranet acceptance separately. Deliver `core_ready_pending_intranet` when all core gates pass but Mac live verification is pending; only both groups passing establish complete P0.
+- Validate the company API adapter using the observed handoff schema and synthetic API/media integration; retain configurable real API access. P0 does not require Mac or live company-environment verification. Do not hardcode sample responses or represent synthetic checks as live evidence.
+- Deliver `status=completed` when every current P0 gate passes, and separately record `realApiVerificationStatus=not_run` for the deferred real-environment check. That check does not block P0 completion. Otherwise report `partial`/`blocked` against actual failed gates.
+- Use authorized local samples only in their permitted Windows environment; cloud/GitHub/external-review demonstrations use synthetic or explicitly shareable materials. Do not interpret the scope change as permission to upload real classroom media or operate production resources.
 - Use React Konva, a single-user workflow, student-head-only labels, visible-part boxes for partial occlusion, independent extraction batches, and completed-frame-only COCO image exports including explicitly completed zero-head frames.
 - Log observable progress using timezone-aware timestamps and redact sensitive content.
 - Follow the active wave's deadline and retry budget. Record blockers and continue independent work when possible.
 - P0 ends at the earlier of 7.5 hours after the explicit start instruction or 2026-10-13T08:30:00+08:00. Do not extend the deadline automatically. Successor tasks inherit the root task's repair counts.
 - Only the Leader integrates/deploys and decides whether another round is needed.
-- At the P0 core delivery gate, complete-wave gate, deadline, or budget exhaustion, produce the report and stop for user review. Do not enter P1 or P2 automatically. After P0 is explicitly started, the Leader may integrate verified task branches and deploy to the authorized demo host without per-round user approval.
+- At the P0 delivery gate, deadline, or budget exhaustion, produce the report and stop for user review. Do not enter P1 or P2 automatically. After P0 is explicitly started, the Leader may integrate verified task branches and deploy to the authorized demo host without per-round user approval.
