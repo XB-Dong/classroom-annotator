@@ -1,0 +1,151 @@
+
+added 192 packages, and audited 193 packages in 9s
+
+52 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+
+> classroom-annotator-frontend@0.1.0 typecheck
+> tsc --noEmit
+
+
+> classroom-annotator-frontend@0.1.0 lint
+> eslint src
+
+
+> classroom-annotator-frontend@0.1.0 test
+> vitest run --run
+
+
+ RUN  v5.0.4 D:/Project/cvte/code/frontend
+
+
+ Test Files  7 passed (7)
+      Tests  33 passed (33)
+   Start at  02:51:16
+   Duration  29.90s (environment 88%, import 10%, tests 1%)
+
+
+> classroom-annotator-frontend@0.1.0 build
+> tsc --noEmit && vite build
+
+vite v8.3.4 building client environment for production...
+transforming...
+✓ 102 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.41 kB │ gzip:   0.30 kB
+dist/assets/index-CDNzS4dh.css   10.34 kB │ gzip:   2.95 kB
+dist/assets/index-3iiFy5Hh.js   239.32 kB │ gzip:  75.61 kB
+dist/assets/Editor-DgSDkGVk.js  339.30 kB │ gzip: 103.90 kB
+
+✓ built in 425ms
+?   	github.com/XB-Dong/classroom-annotator/backend/cmd/server	[no test files]
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/annotations	1.855s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/dataset	1.024s
+?   	github.com/XB-Dong/classroom-annotator/backend/internal/domain	[no test files]
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/exports	3.821s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/extraction	2.497s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/httpapi	5.470s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/jobs	2.374s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/media	3.230s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/platform/config	1.416s
+?   	github.com/XB-Dong/classroom-annotator/backend/internal/platform/observability	[no test files]
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/platform/store	2.020s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/annotations	3.658s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/dataset	1.646s
+?   	github.com/XB-Dong/classroom-annotator/backend/internal/domain	[no test files]
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/exports	4.658s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/extraction	2.334s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/httpapi	6.085s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/jobs	2.201s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/media	2.045s
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/platform/config	1.429s
+?   	github.com/XB-Dong/classroom-annotator/backend/internal/platform/observability	[no test files]
+ok  	github.com/XB-Dong/classroom-annotator/backend/internal/platform/store	2.365s
+
+added 11 packages, and audited 12 packages in 2s
+
+2 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+
+> check
+> node scripts/check.mjs
+
+Acceptance JavaScript syntax checked.
+
+> test
+> node --test unit/*.test.mjs
+
+✔ independent reader accepts consistent JPEG/COCO and zero-head frames (39.7147ms)
+✔ independent reader rejects false dimensions (11.8073ms)
+✔ independent reader rejects dangling annotation (12.7516ms)
+✔ independent reader rejects wrong area (5.2059ms)
+✔ independent reader rejects out of bounds box (7.8003ms)
+✔ frozen contract rejects malformed annotation and mixed export selectors (5.8144ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2753.2099
+
+> list
+> playwright test --list
+
+Listing tests:
+  [api] › integration\api.spec.mjs:5:1 › P0-BASE-001 readiness and safe missing resources
+  [api] › integration\api.spec.mjs:17:1 › P0-VID/FRM/SAVE/PROG/EXP independent full API acceptance
+  [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects missing selector
+  [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects empty explicit frames
+  [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects mixed video and frames
+  [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects batch without video
+  [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects mixed batch and frames
+  [api] › integration\api.spec.mjs:83:1 › P0-VID-001 corrupt upload and invalid extraction do not publish
+  [api] › integration\api.spec.mjs:95:1 › P0-JOB-001 cancellation leaves no published batch; terminal cancellation is stable
+  [api] › integration\api.spec.mjs:109:1 › P0-FRM-001 unavailable tail fails rather than silently dropping targets
+  [chromium] › e2e\workflow.spec.mjs:22:1 › P0-E2E-001 browser upload/extract/draw/move/resize/delete/autosave/refresh/complete/export
+  [chromium] › e2e\workflow.spec.mjs:112:1 › P0-SAVE-001 real server acknowledgement cannot discard a newer canvas edit
+  [chromium] › e2e\workflow.spec.mjs:139:1 › P0-SAVE-001 stale browser revision shows conflict and preserves server snapshot
+Total: 13 tests in 2 files
+
+> fixtures
+> node scripts/generate-fixtures.mjs
+
+Generated synthetic 320x240 / 4s / 25fps fixtures outside the repository.
+
+> dataset
+> node scripts/dataset-check.mjs
+
+P0-VID-002A: observed pagination/path/schema, import/play URL, media key isolation, unsafe ID rejection, upstream failure passed.
+
+> restart
+> node scripts/restart-check.mjs
+
+P0-SAVE/JOB restart: saved snapshot persisted, running job failed INTERRUPTED, partial batch absent.
+
+> local-api
+> node scripts/run-api.mjs
+
+
+Running 10 tests using 1 worker
+
+(node:4532) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 [api] › integration\api.spec.mjs:5:1 › P0-BASE-001 readiness and safe missing resources (47ms)
+  ok  2 [api] › integration\api.spec.mjs:17:1 › P0-VID/FRM/SAVE/PROG/EXP independent full API acceptance (1.0s)
+  ok  3 [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects missing selector (11ms)
+  ok  4 [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects empty explicit frames (10ms)
+  ok  5 [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects mixed video and frames (10ms)
+  ok  6 [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects batch without video (10ms)
+  ok  7 [api] › integration\api.spec.mjs:79:4 › P0-EXP-001 rejects mixed batch and frames (10ms)
+  ok  8 [api] › integration\api.spec.mjs:83:1 › P0-VID-001 corrupt upload and invalid extraction do not publish (197ms)
+  ok  9 [api] › integration\api.spec.mjs:95:1 › P0-JOB-001 cancellation leaves no published batch; terminal cancellation is stable (215ms)
+  ok 10 [api] › integration\api.spec.mjs:109:1 › P0-FRM-001 unavailable tail fails rather than silently dropping targets (224ms)
+
+  10 passed (2.8s)

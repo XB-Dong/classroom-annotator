@@ -1,0 +1,8 @@
+{
+  "label": "Normalize external env line endings and attach verified restored data volume",
+  "ssh_host_key": "pinned",
+  "action": "exec",
+  "exit_code": 0,
+  "stdout": "restored_volume_attached=classroom-p0-app-restored-20261013t0308\n{\"status\":\"ok\",\"version\":\"64b65df305daebf09cf0b1563cf87750a714222b\"}",
+  "stderr": " Container classroom-annotator-backend-1 Recreate \n Container classroom-annotator-backend-1 Recreated \n Container classroom-annotator-backend-1 Starting \n Container classroom-annotator-backend-1 Started \n"
+}

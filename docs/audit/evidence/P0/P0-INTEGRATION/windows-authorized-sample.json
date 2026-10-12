@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-10-12T19:01:45.825Z",
+  "scope": "authorized_Windows_only",
+  "sourceSha": "64b65df305daebf09cf0b1563cf87750a714222b",
+  "passed": true,
+  "width": 1920,
+  "height": 1080,
+  "durationSeconds": 20,
+  "frameCount": 4,
+  "targetTimestampsMs": [
+    0,
+    5000,
+    10000,
+    15000
+  ],
+  "privateMediaUploadedToCloud": false,
+  "originalAnnotationsCreated": false
+}
