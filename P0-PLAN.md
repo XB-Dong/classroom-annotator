@@ -1,7 +1,9 @@
 # P0计划
 
-版本：0.6.0｜状态：选型已确认，待 P0 启动批示｜日期：2026-10-13
+版本：0.6.0｜状态：用户已批示启动，执行状态见 P0 state｜日期：2026-10-13
 时区：Asia/Shanghai（UTC+08:00）
+
+执行记录：用户已批示“启动p0”，2026-10-13T01:30:22+08:00 开始，最晚 08:30 停止。下文关于“尚未启动”的段落保留为原计划基线，现行进度以 [P0状态](docs/waves/P0/state.json) 为准。
 仓库：[XB-Dong/classroom-annotator](https://github.com/XB-Dong/classroom-annotator)
 
 > For execution agents: Choices are frozen. Do not start P0 until the user explicitly authorizes execution. Then use native Codex subagents with external Git worktrees, and OpenCode for independent GLM code and browser-experience review. Convert this plan into task packets with SDD acceptance and meaningful TDD evidence. Stop at the agreed deadline or P0 delivery gate.
