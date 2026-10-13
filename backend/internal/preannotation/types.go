@@ -8,6 +8,7 @@ import (
 )
 
 const ModelSHA256 = "a5ece478fc918787258afccd0b313e54319f8f39aeb1ceca11f27dbd269e78bc"
+const ModelID = "yolov9_n_wholebody34_0100_1x3x640x640"
 const PipelineVersion = "classroom-head-v1-fullframe-2x2-15"
 const RiskPolicyVersion = "classroom-risk-v1"
 const MaxCandidates = 1000
@@ -90,6 +91,7 @@ type Snapshot struct {
 	Annotations []domain.Annotation `json:"annotations"`
 	Candidates  []Candidate         `json:"candidates"`
 	CurrentRun  *Run                `json:"currentRun"`
+	ActiveRunID *string             `json:"activeRunId"`
 	Issues      []Issue             `json:"issues"`
 }
 type Decision struct {
@@ -98,6 +100,48 @@ type Decision struct {
 	BBox        *[4]float64 `json:"bbox,omitempty"`
 	ReasonCode  string      `json:"reasonCode,omitempty"`
 }
+
+func (d *Decision) UnmarshalJSON(raw []byte) error {
+	var wire struct {
+		CandidateID *string         `json:"candidateId"`
+		Decision    *string         `json:"decision"`
+		BBox        json.RawMessage `json:"bbox"`
+		ReasonCode  json.RawMessage `json:"reasonCode"`
+	}
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	dec.DisallowUnknownFields()
+	if dec.Decode(&wire) != nil || wire.CandidateID == nil || wire.Decision == nil {
+		return ErrInvalidReview
+	}
+	var extra any
+	if dec.Decode(&extra) != io.EOF {
+		return ErrInvalidReview
+	}
+	*d = Decision{CandidateID: *wire.CandidateID, Decision: *wire.Decision}
+	if len(wire.ReasonCode) > 0 {
+		var reason *string
+		if json.Unmarshal(wire.ReasonCode, &reason) != nil || reason == nil {
+			return ErrInvalidReview
+		}
+		d.ReasonCode = *reason
+	}
+	if len(wire.BBox) > 0 {
+		var numbers []*float64
+		if json.Unmarshal(wire.BBox, &numbers) != nil || numbers == nil || len(numbers) != 4 {
+			return ErrInvalidReview
+		}
+		var b [4]float64
+		for i, n := range numbers {
+			if n == nil {
+				return ErrInvalidReview
+			}
+			b[i] = *n
+		}
+		d.BBox = &b
+	}
+	return nil
+}
+
 type IssueResolution struct {
 	ID         string `json:"id"`
 	Resolution string `json:"resolution"`

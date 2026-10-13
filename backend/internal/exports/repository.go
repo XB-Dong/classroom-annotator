@@ -9,6 +9,7 @@ import (
 	"github.com/XB-Dong/classroom-annotator/backend/internal/annotations"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/domain"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/store"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/reviewstate"
 )
 
 const DefaultMaxFrames = 10000
@@ -83,6 +84,7 @@ func (s Service) Snapshot(ctx context.Context, selection Selection) ([]Record, e
 	out := make([]Record, 0, len(frames))
 	totalAnnotations := 0
 	for _, f := range frames {
+		if err=reviewstate.Gate(ctx,tx,f.ID);err!=nil{return nil,ErrInvalid}
 		anns, err := annotations.ReadAnnotations(ctx, tx, f.ID)
 		if err != nil {
 			return nil, err
@@ -94,6 +96,7 @@ func (s Service) Snapshot(ctx context.Context, selection Selection) ([]Record, e
 		if err = annotations.Validate(annotations.Save{ExpectedRevision: f.Revision, Status: f.Status, Annotations: anns}, f.Width, f.Height); err != nil {
 			return nil, err
 		}
+		if err=reviewstate.Verify(ctx,tx,f.ID,anns);err!=nil{return nil,ErrInvalid}
 		out = append(out, Record{Frame: f, Annotations: anns})
 	}
 	if err = tx.Commit(); err != nil {

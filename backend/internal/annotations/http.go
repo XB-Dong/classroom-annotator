@@ -6,6 +6,7 @@ import (
 	"github.com/XB-Dong/classroom-annotator/backend/internal/domain"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/httpapi"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/store"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/reviewstate"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -43,6 +44,13 @@ func Register(g *gin.RouterGroup, s *store.Store, registry prometheus.Registerer
 		} else {
 			failures.Inc()
 		}
+		if errors.Is(err, ErrConflict) {
+			latest, e := repo.Get(c.Request.Context(), c.Param("id"))
+			if e == nil {
+				c.JSON(409, gin.H{"code": "REVISION_CONFLICT", "message": "Frame was changed; reload before saving", "currentRevision": latest.Revision, "latestUpdatedBy": latest.UpdatedBy})
+				return
+			}
+		}
 		respondError(c, err)
 	})
 }
@@ -53,9 +61,11 @@ type writeRequest struct {
 	Annotations      *[]writeAnnotation `json:"annotations"`
 }
 type writeAnnotation struct {
-	ID     *string    `json:"id"`
-	BBox   *[]float64 `json:"bbox"`
-	Source *string    `json:"source"`
+	ID          *string     `json:"id"`
+	BBox        *[]*float64 `json:"bbox"`
+	Source      *string     `json:"source"`
+	CandidateID string      `json:"candidateId,omitempty"`
+	RunID       string      `json:"runId,omitempty"`
 }
 
 var errMissing = errors.New("required field missing")
@@ -75,7 +85,14 @@ func (w writeRequest) save() (Save, error) {
 		if len(*a.BBox) != 4 {
 			return Save{}, ErrInvalid
 		}
-		out.Annotations = append(out.Annotations, domain.Annotation{ID: *a.ID, BBox: [4]float64(*a.BBox), Source: *a.Source})
+		var bbox [4]float64
+		for i, n := range *a.BBox {
+			if n == nil {
+				return Save{}, ErrInvalid
+			}
+			bbox[i] = *n
+		}
+		out.Annotations = append(out.Annotations, domain.Annotation{ID: *a.ID, BBox: bbox, Source: *a.Source, CandidateID: a.CandidateID, RunID: a.RunID})
 	}
 	return out, nil
 }
@@ -90,6 +107,10 @@ func respondError(c *gin.Context, err error) {
 		httpapi.Error(c, 400, "ANNOTATION_ID_COLLISION", "Annotation ID belongs to another frame")
 	case errors.Is(err, ErrInvalid):
 		httpapi.Error(c, 422, "INVALID_ANNOTATIONS", "Annotation snapshot is invalid")
+	case errors.Is(err, reviewstate.ErrUnresolved):
+		httpapi.Error(c, 422, "REVIEW_UNRESOLVED", "Resolve candidates and image risks before completing")
+	case errors.Is(err, reviewstate.ErrProvenance):
+		httpapi.Error(c, 422, "INVALID_PROVENANCE", "Annotation provenance is invalid")
 	case errors.Is(err, errMissing):
 		httpapi.Error(c, 400, "INVALID_REQUEST", "Required annotation fields are missing")
 	default:

@@ -15,6 +15,7 @@ import (
 
 var ErrInvalidDetection = errors.New("invalid detection response")
 var ErrUnavailable = errors.New("AI unavailable")
+var ErrBusy = errors.New("AI busy")
 
 type Client struct{ URL, Token string }
 
@@ -55,6 +56,9 @@ func (c Client) Detect(ctx context.Context, image []byte, width, height int, req
 		return DetectionResult{}, ErrUnavailable
 	}
 	defer response.Body.Close()
+	if response.StatusCode == 429 {
+		return DetectionResult{}, ErrBusy
+	}
 	if response.StatusCode != 200 {
 		return DetectionResult{}, ErrUnavailable
 	}
