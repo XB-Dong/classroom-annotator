@@ -19,7 +19,7 @@
   "proposedP1MaxRepairRounds": 8,
   "maxRepairRoundsPerTask": 2,
   "repairBudgetApproved": true,
-  "repairRoundsUsed": 5,
+  "repairRoundsUsed": 6,
   "requestedLeaderModel": "gpt-6.1-sol",
   "requestedLeaderReasoningEffort": "high",
   "actualLeaderModel": null,
@@ -33,7 +33,7 @@
   "realApiVerificationStatus": "bounded_help_provider_timeouts_windows_and_cloud",
   "macRealDeploymentStatus": "not_run_deferred",
   "planReviewStatus": "previous_readonly_architecture_review_plus_leader_help_addendum_self_review_not_product_verification",
-  "reportRef": "docs/audit/reports/report-20261014T033000+0800.md",
+  "reportRef": "docs/audit/reports/report-20261014T040245+0800.md",
   "preparedAt": "2026-10-14T01:24:44.359872+08:00",
   "reviewDispositionRef": "docs/waves/P1/PLAN-REVIEW-DISPOSITION.md",
   "preparationReportRef": "docs/audit/reports/report-20261014T012444+0800.md",
@@ -54,12 +54,12 @@
   "planApproved": true,
   "maxRepairRoundsForWave": 8,
   "round": "R1",
-  "lastCheckpointAt": "2026-10-13T19:55:15.038Z",
+  "lastCheckpointAt": "2026-10-13T20:04:13.225Z",
   "approvedPlanCommit": "5fcb41d9f2950235293992e2bd1707684b69ef1e",
   "taskRepairCounts": {
     "P1-FRONT-001": 2,
     "P1-HELP-001": 1,
-    "P1-AUTH-CAS-001": 1,
+    "P1-AUTH-CAS-001": 2,
     "P1-AI-SERVICE-001": 1,
     "P1-AI-REVIEW-001": 2,
     "P1-BASE-001": 1,
@@ -139,6 +139,14 @@
       ],
       "reason": "old HTTP test incorrectly expected private media hash in public JSON; assert persisted byte hash/size and hidden response fields instead; align frontend local_directory discriminator and its visible source label with frozen backend contract",
       "evidence": "runtime/p1-preparation/ci-38456555129/11_Common verification.txt; r5-test-compile.txt; PG rerun pending"
+    },
+    {
+      "round": 6,
+      "rootTasks": [
+        "P1-AUTH-CAS-001"
+      ],
+      "reason": "enhanced annotation409 omitted frozen common error requestId",
+      "evidence": "ci-38457705392; r6-conflict-red.txt/green.txt"
     }
   ],
   "cloudRetirement": {
@@ -149,18 +157,20 @@
   },
   "tlsStatus": "issued_certificate_bundle_copied_nginx_not_installed",
   "latestCI": {
-    "sha": "aa9cb604a540fa2e023707c2b72fb983181e86e7",
-    "runId": 38456555129,
-    "status": "failed_old_http_integrity_response_expectation",
+    "sha": "7899b2bc1c3e6f1fef2623e03b8130da6fce261b",
+    "runId": 38457705392,
+    "status": "go_all_pg_and_race_passed_then_HTTP_error_contract_failed",
     "passedSlices": [
-      "python28unit",
-      "real_ONNX_synthetic",
+      "python28",
+      "true_ONNX",
       "frontend79_type_lint_build",
-      "Go_vet",
-      "Go_real_PG_auth_annotations_AI_review_metrics_scheduler_sources_exports_migrations"
+      "Go_vet_build_all_real_PG_tests",
+      "Go_internal_race",
+      "Node11",
+      "schema8_migration_faithful_import_rollback"
     ],
-    "race": "not_run",
-    "browser": "not_run"
+    "browser": "not_run",
+    "multiarchContainers": "not_run"
   },
   "schemaVersion": 8,
   "cloudReleasePreparation": {

@@ -47,12 +47,16 @@ func Register(g *gin.RouterGroup, s *store.Store, registry prometheus.Registerer
 		if errors.Is(err, ErrConflict) {
 			latest, e := repo.Get(c.Request.Context(), c.Param("id"))
 			if e == nil {
-				c.JSON(409, gin.H{"code": "REVISION_CONFLICT", "message": "Frame was changed; reload before saving", "currentRevision": latest.Revision, "latestUpdatedBy": latest.UpdatedBy})
+				writeConflict(c, latest)
 				return
 			}
 		}
 		respondError(c, err)
 	})
+}
+
+func writeConflict(c *gin.Context, latest domain.Snapshot) {
+	c.JSON(409, gin.H{"code": "REVISION_CONFLICT", "message": "Frame was changed; reload before saving", "requestId": c.GetString("requestId"), "currentRevision": latest.Revision, "latestUpdatedBy": latest.UpdatedBy})
 }
 
 type writeRequest struct {
