@@ -80,6 +80,7 @@ export interface ReviewStats {
   riskyCandidates: number;
   unresolvedRiskCandidates: number;
   unresolvedRiskImages: number;
+  unresolvedRiskFrameIds?: string[];
   manualAdded: number;
   rates: Record<
     | 'acceptedUnchanged'

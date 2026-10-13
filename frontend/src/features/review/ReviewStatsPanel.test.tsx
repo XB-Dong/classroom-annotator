@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { ReviewStatsPanel } from './ReviewStatsPanel';
 afterEach(() => {
@@ -69,4 +69,56 @@ it('does not claim 100 percent when no candidates have been reviewed', async () 
   render(<ReviewStatsPanel videoId="v" batchId="b" refresh={0} />);
   await screen.findByText(/无需调整通过率 无样本/);
   expect(screen.queryByText(/100.0%/)).toBeNull();
+});
+
+it('publishes risk IDs, clears them while loading or unavailable, and ignores old-scope replies', async () => {
+  let finishOld!: (value: Response) => void;
+  const onRiskFrames = vi.fn();
+  const response = (value: unknown) =>
+    new Response(JSON.stringify(value), { headers: { 'Content-Type': 'application/json' } });
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string) => {
+      if (url.includes('batchId=old'))
+        return new Promise<Response>((resolve) => {
+          finishOld = resolve;
+        });
+      if (url.includes('batchId=error')) throw new Error('synthetic outage');
+      if (url.includes('batchId=missing'))
+        return response({ candidates: 0, accepted: 0, adjusted: 0, rejected: 0 });
+      return response({
+        candidates: 0,
+        accepted: 0,
+        adjusted: 0,
+        rejected: 0,
+        unresolvedRiskFrameIds: ['current'],
+      });
+    }),
+  );
+  const { rerender } = render(
+    <ReviewStatsPanel {...{ videoId: 'v', batchId: 'old', refresh: 0, onRiskFrames }} />,
+  );
+  expect(onRiskFrames).toHaveBeenLastCalledWith(undefined);
+  rerender(<ReviewStatsPanel {...{ videoId: 'v', batchId: 'new', refresh: 0, onRiskFrames }} />);
+  await waitFor(() => expect(onRiskFrames).toHaveBeenLastCalledWith(['current']));
+  await act(async () => {
+    finishOld(
+      response({
+        candidates: 0,
+        accepted: 0,
+        adjusted: 0,
+        rejected: 0,
+        unresolvedRiskFrameIds: ['old'],
+      }),
+    );
+  });
+  expect(onRiskFrames).toHaveBeenLastCalledWith(['current']);
+  rerender(<ReviewStatsPanel {...{ videoId: 'v', batchId: 'error', refresh: 0, onRiskFrames }} />);
+  await screen.findByText(/无法连接服务/);
+  expect(onRiskFrames).toHaveBeenLastCalledWith(undefined);
+  rerender(
+    <ReviewStatsPanel {...{ videoId: 'v', batchId: 'missing', refresh: 0, onRiskFrames }} />,
+  );
+  await waitFor(() => expect(screen.queryByText(/无法连接服务/)).toBeNull());
+  expect(onRiskFrames).toHaveBeenLastCalledWith(undefined);
 });

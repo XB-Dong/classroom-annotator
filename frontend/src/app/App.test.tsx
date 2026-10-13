@@ -21,7 +21,11 @@ afterEach(() => {
 });
 async function setup(
   status: Snapshot['status'],
-  options: { delayedUpload?: boolean; saveError?: boolean } = {},
+  options: {
+    delayedUpload?: boolean;
+    saveError?: boolean;
+    riskStats?: (url: string) => Promise<Response>;
+  } = {},
 ) {
   let ack!: () => void;
   let uploadAck!: () => void;
@@ -74,6 +78,17 @@ async function setup(
         value = {
           batches: [
             { id: 'b', videoId: 'v', jobId: 'j', createdAt: '2026-10-13T00:00:00Z', frameCount: 2 },
+            ...(options.riskStats
+              ? [
+                  {
+                    id: 'second',
+                    videoId: 'v',
+                    jobId: 'j2',
+                    createdAt: '2026-10-13T00:00:00Z',
+                    frameCount: 2,
+                  },
+                ]
+              : []),
           ],
         };
       else if (url.includes('/frames?'))
@@ -90,6 +105,7 @@ async function setup(
             revision: 0,
           })),
         };
+      else if (url.includes('/review-stats') && options.riskStats) return options.riskStats(url);
       else if (url.includes('/progress'))
         value = { total: 2, notStarted: 0, inProgress: 0, completed: 2 };
       else if (url.includes('/annotations') || url.endsWith('/review')) {
@@ -285,4 +301,94 @@ it('blocks export for a persisted draft in another frame of the selected batch',
   await setup('completed');
   expect((screen.getByTestId('export-zip') as HTMLButtonElement).disabled).toBe(true);
   expect(screen.getByText(/当前批次有 1 帧草稿/)).toBeTruthy();
+});
+
+const riskResponse = (ids: string[]) =>
+  new Response(
+    JSON.stringify({
+      candidates: 0,
+      accepted: 0,
+      adjusted: 0,
+      rejected: 0,
+      unresolvedRiskFrameIds: ids,
+    }),
+    { headers: { 'Content-Type': 'application/json' } },
+  );
+
+it('keeps the dirty current canvas when risk filtering hides its image and guards risk-image navigation', async () => {
+  const state = await setup('in_progress', {
+    saveError: true,
+    riskStats: async () => riskResponse(['b']),
+  });
+  await screen.findByText('需复核图片 1 张');
+  fireEvent.click(screen.getByTestId('annotation-item-head'));
+  fireEvent.click(screen.getByText('删除选中框'));
+  fireEvent.click(screen.getByRole('checkbox', { name: '仅看需复核图片' }));
+  expect(screen.queryByTestId('frame-item-a')).toBeNull();
+  expect(screen.getByTestId('annotation-canvas')).toBeTruthy();
+  expect(screen.queryByTestId('annotation-item-head')).toBeNull();
+  expect(localStorage.getItem(draftKey('a', draftScope))).not.toBeNull();
+  expect(state.writes).toHaveLength(0);
+  fireEvent.click(screen.getByTestId('frame-item-b'));
+  await waitFor(() => expect(state.writes).toHaveLength(1));
+  expect(state.writes[0].frameId).toBe('a');
+  state.ack();
+  await screen.findByText('当前帧尚未保存。请先重试保存或处理草稿冲突，再切换。');
+  expect(screen.getByTestId('save-state').textContent).toBe('保存失败');
+  expect(screen.getByText('当前帧不在筛选结果中，画布继续保留。')).toBeTruthy();
+  expect(screen.queryByTestId('annotation-item-head')).toBeNull();
+});
+
+it('ignores late statistics from the previous batch', async () => {
+  let finishOld!: (response: Response) => void;
+  let finishNew!: (response: Response) => void;
+  await setup('in_progress', {
+    riskStats: (url) =>
+      new Promise((resolve) => {
+        if (url.includes('batchId=second')) finishNew = resolve;
+        else finishOld = resolve;
+      }),
+  });
+  fireEvent.change(screen.getByTestId('batch-select'), { target: { value: 'second' } });
+  await waitFor(() =>
+    expect((screen.getByTestId('batch-select') as HTMLSelectElement).value).toBe('second'),
+  );
+  await screen.findByTestId('frame-item-a');
+  expect(screen.getByText('图片风险数据暂不可用')).toBeTruthy();
+  await act(async () => finishOld(riskResponse(['a'])));
+  expect(screen.getByText('图片风险数据暂不可用')).toBeTruthy();
+  expect(screen.getByTestId('frame-item-a').textContent).not.toContain('需复核');
+  await act(async () => finishNew(riskResponse(['b'])));
+  await screen.findByText('需复核图片 1 张');
+  expect(screen.getByTestId('frame-item-b').textContent).toContain('需复核');
+  expect(screen.getByTestId('frame-item-a').textContent).not.toContain('需复核');
+});
+
+it('clears published risk IDs and the active filter when switching batch scope', async () => {
+  let finishNew!: (response: Response) => void;
+  await setup('in_progress', {
+    riskStats: async (url) =>
+      url.includes('batchId=second')
+        ? new Promise<Response>((resolve) => {
+            finishNew = resolve;
+          })
+        : riskResponse(['a']),
+  });
+  await screen.findByText('需复核图片 1 张');
+  fireEvent.click(screen.getByRole('checkbox', { name: '仅看需复核图片' }));
+  expect(screen.queryByTestId('frame-item-b')).toBeNull();
+  fireEvent.change(screen.getByTestId('batch-select'), { target: { value: 'second' } });
+  await waitFor(() =>
+    expect((screen.getByTestId('batch-select') as HTMLSelectElement).value).toBe('second'),
+  );
+  await screen.findByTestId('frame-item-b');
+  expect(screen.getByText('图片风险数据暂不可用')).toBeTruthy();
+  expect(
+    (screen.getByRole('checkbox', { name: '仅看需复核图片' }) as HTMLInputElement).checked,
+  ).toBe(false);
+  expect(screen.getByTestId('frame-item-a').textContent).not.toContain('需复核');
+  await act(async () => finishNew(riskResponse(['b'])));
+  await screen.findByText('需复核图片 1 张');
+  expect(screen.getByTestId('frame-item-b').textContent).toContain('需复核');
+  expect(screen.getByTestId('frame-item-a')).toBeTruthy();
 });

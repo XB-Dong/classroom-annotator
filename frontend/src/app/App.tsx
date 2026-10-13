@@ -96,6 +96,7 @@ function Workspace() {
   const [batchLoading, setBatchLoading] = useState(false);
   const [batchRefresh, setBatchRefresh] = useState(0);
   const [reviewRefresh, setReviewRefresh] = useState(0);
+  const [riskFrames, setRiskFrames] = useState<{ scope: string; ids?: string[] }>();
   const batchesVideo = useRef('');
   const controller = useRef<SaveController>(undefined);
   const [editorReady, setEditorReady] = useState(false);
@@ -105,6 +106,12 @@ function Workspace() {
   const [navigationError, setNavigationError] = useState<string>();
   const progressRequests = useRef(new ScopedRequest());
   const scope = `${videoId}:${batchId}`;
+  const riskFramesChanged = useCallback(
+    (ids: string[] | undefined) => {
+      setRiskFrames({ scope, ids });
+    },
+    [scope],
+  );
   progressRequests.current.setScope(scope);
   const unresolvedDrafts = frames.filter((f) => {
     try {
@@ -355,6 +362,7 @@ function Workspace() {
                   videoId={videoId}
                   batchId={batchId}
                   refresh={reviewRefresh}
+                  onRiskFrames={riskFramesChanged}
                 />
               </div>
             )}
@@ -385,7 +393,9 @@ function Workspace() {
             ) : (
               <div className="workbench">
                 <FramePicker
+                  key={scope}
                   frames={frames}
+                  unresolvedRiskFrameIds={riskFrames?.scope === scope ? riskFrames.ids : undefined}
                   frameId={frameId}
                   busy={navigationBusy}
                   select={(id) => {

@@ -5,32 +5,39 @@ export function ReviewStatsPanel({
   videoId,
   batchId,
   refresh,
+  onRiskFrames,
 }: {
   videoId: string;
   batchId: string;
   refresh: number;
+  onRiskFrames?: (ids: string[] | undefined) => void;
 }) {
   const [stats, setStats] = useState<ReviewStats>();
   const [error, setError] = useState<string>();
   useEffect(() => {
     let active = true;
+    setStats(undefined);
+    setError(undefined);
+    onRiskFrames?.(undefined);
     void request<ReviewStats>(`/videos/${idPath(videoId)}/review-stats?batchId=${idPath(batchId)}`)
       .then((result) => {
         if (active) {
           setStats(result);
           setError(undefined);
+          onRiskFrames?.(result.unresolvedRiskFrameIds);
         }
       })
       .catch((cause) => {
         if (active) {
           setStats(undefined);
           setError((cause as Error).message);
+          onRiskFrames?.(undefined);
         }
       });
     return () => {
       active = false;
     };
-  }, [videoId, batchId, refresh]);
+  }, [videoId, batchId, refresh, onRiskFrames]);
   const rate = (value: number | null | undefined) =>
     value == null ? '无样本' : `${(value * 100).toFixed(1)}%`;
   return (
