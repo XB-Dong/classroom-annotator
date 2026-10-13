@@ -35,7 +35,7 @@ func (a *Agent) capabilities() mediaapi.Capabilities {
 		f.Close()
 		writable = os.Remove(f.Name()) == nil
 	}
-	return mediaapi.Capabilities{ContractVersion: mediaapi.ContractVersion, AgentVersion: a.cfg.AgentVersion, MediaRootWritable: writable, FFmpegAvailable: a.ffmpegAvailable, FFprobeAvailable: a.ffprobeAvailable, MaxUploadBytes: a.cfg.MaxUploadBytes, MaxFrames: a.cfg.MaxFrames, LeaseSeconds: int(a.cfg.Lease / time.Second), QueueSize: a.cfg.QueueSize, MaxOperationSeconds: int(a.cfg.MaxOperation / time.Second), ArchiveTtlSeconds: int(a.cfg.ArchiveTTL / time.Second), MaxControlBytes: a.cfg.MaxControlBytes, MaxArchiveImageBytes: a.cfg.MaxArchiveImageBytes}
+	return mediaapi.Capabilities{ContractVersion: mediaapi.ContractVersion, AgentVersion: a.cfg.AgentVersion, MediaRootWritable: writable, FFmpegAvailable: a.ffmpegAvailable, FFprobeAvailable: a.ffprobeAvailable, DatasetConfigured: a.cfg.Dataset != nil, SourceConfigured: a.cfg.SourceURL != "" && a.cfg.SourceToken != "", MaxUploadBytes: a.cfg.MaxUploadBytes, MaxFrames: a.cfg.MaxFrames, LeaseSeconds: int(a.cfg.Lease / time.Second), QueueSize: a.cfg.QueueSize, MaxOperationSeconds: int(a.cfg.MaxOperation / time.Second), ArchiveTtlSeconds: int(a.cfg.ArchiveTTL / time.Second), MaxControlBytes: a.cfg.MaxControlBytes, MaxArchiveImageBytes: a.cfg.MaxArchiveImageBytes}
 }
 func (a *Agent) route(w http.ResponseWriter, r *http.Request) {
 	switch {
@@ -157,6 +157,18 @@ func (a *Agent) operation(w http.ResponseWriter, r *http.Request) {
 			}
 			a.mu.Lock()
 			o = a.state.Operations[parts[0]]
+		} else if o.Status == "failed" && o.Staging != "" {
+			if err := a.cleanup(o.Staging); err != nil {
+				a.mu.Unlock()
+				a.respondError(w, err)
+				return
+			}
+			o.Staging = ""
+			if err := a.persistLocked(); err != nil {
+				a.mu.Unlock()
+				a.respondError(w, err)
+				return
+			}
 		}
 	default:
 		a.mu.Unlock()
@@ -192,22 +204,17 @@ func (a *Agent) respondError(w http.ResponseWriter, err error) {
 }
 func (a *Agent) serveMedia(w http.ResponseWriter, r *http.Request) {
 	key := strings.TrimPrefix(r.URL.Path, "/bridge/v1/media/")
-	res, p, e := a.getResource(key)
+	res, p, e := a.lookupResource(key)
 	if e != nil {
 		a.respondError(w, e)
 		return
 	}
-	f, e := os.Open(p)
+	f, e := openVerifiedResource(p, res)
 	if e != nil {
-		a.fail(w, 404, "RESOURCE_NOT_FOUND")
+		a.respondError(w, e)
 		return
 	}
 	defer f.Close()
-	info, e := f.Stat()
-	if e != nil || !info.Mode().IsRegular() || info.Size() != res.SizeBytes {
-		a.fail(w, 409, "RESOURCE_CHANGED")
-		return
-	}
 	if strings.Contains(r.Header.Get("Range"), ",") {
 		w.Header().Set("Content-Range", "bytes */"+strconv.FormatInt(res.SizeBytes, 10))
 		a.fail(w, 416, "INVALID_REQUEST")

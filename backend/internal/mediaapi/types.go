@@ -11,6 +11,8 @@ type Capabilities struct {
 	MediaRootWritable    bool   `json:"mediaRootWritable"`
 	FFmpegAvailable      bool   `json:"ffmpegAvailable"`
 	FFprobeAvailable     bool   `json:"ffprobeAvailable"`
+	DatasetConfigured    bool   `json:"datasetConfigured"`
+	SourceConfigured     bool   `json:"sourceConfigured"`
 	MaxUploadBytes       int64  `json:"maxUploadBytes"`
 	MaxFrames            int    `json:"maxFrames"`
 	LeaseSeconds         int    `json:"leaseSeconds"`
@@ -49,6 +51,12 @@ type Registration struct {
 	Width           int     `json:"width"`
 	Height          int     `json:"height"`
 	DurationSeconds float64 `json:"durationSeconds"`
+}
+
+// UploadIntent is the request identity known before the multipart body is read.
+type UploadIntent struct {
+	VideoID string `json:"videoId"`
+	Name    string `json:"name"`
 }
 type ExtractionRequest struct {
 	OperationID     string  `json:"operationId"`

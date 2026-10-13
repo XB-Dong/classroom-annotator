@@ -128,10 +128,11 @@ func (a *Agent) datasetImport(w http.ResponseWriter, r *http.Request) {
 			return nil, errors.New("PROCESS_FAILED")
 		}
 		defer body.Close()
-		if _, _, e = copyFile(ctx, filepath.Join(dir, "video"), body, a.cfg.MaxUploadBytes); e != nil {
+		hash, size, e := copyFile(ctx, filepath.Join(dir, "video"), body, a.cfg.MaxUploadBytes)
+		if e != nil {
 			return nil, e
 		}
-		return a.probeVideo(ctx, stage, req.VideoID, req.OperationID)
+		return a.probeVideo(ctx, stage, req.VideoID, req.OperationID, hash, size)
 	})
 	if e != nil {
 		a.respondError(w, e)

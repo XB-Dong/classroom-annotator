@@ -90,10 +90,13 @@ func hashFile(path string) (string, int64, error) {
 	}
 	return hex.EncodeToString(h.Sum(nil)), n, nil
 }
-func (a *Agent) probeVideo(ctx context.Context, stage, videoID, operationID string) (preparedOutput, error) {
+func (a *Agent) probeVideo(ctx context.Context, stage, videoID, operationID, expectedHash string, expectedSize int64) (preparedOutput, error) {
 	p, e := a.safePath(stage + "/video")
 	if e != nil {
 		return preparedOutput{}, e
+	}
+	if hash, size, err := hashFile(p); err != nil || hash != expectedHash || size != expectedSize {
+		return preparedOutput{}, errors.New("RESOURCE_CHANGED")
 	}
 	m, e := a.cfg.Runner.Probe(ctx, p)
 	if e != nil || m.Width <= 0 || m.Height <= 0 || m.Duration <= 0 || math.IsNaN(m.Duration) || math.IsInf(m.Duration, 0) {
@@ -103,10 +106,21 @@ func (a *Agent) probeVideo(ctx context.Context, stage, videoID, operationID stri
 	if e != nil {
 		return preparedOutput{}, e
 	}
+	if hash != expectedHash || size != expectedSize {
+		return preparedOutput{}, errors.New("RESOURCE_CHANGED")
+	}
 	key := opaqueID()
 	return preparedOutput{Manifest: mediaapi.Registration{OperationID: operationID, VideoID: videoID, MediaKey: key, SHA256: hash, SizeBytes: size, Width: m.Width, Height: m.Height, DurationSeconds: m.Duration}, Resources: map[string]resource{key: {Path: "video", ContentType: "video/mp4", SHA256: hash, SizeBytes: size, Width: m.Width, Height: m.Height, DurationSeconds: m.Duration}}}, nil
 }
 func (a *Agent) getResource(key string) (resource, string, error) {
+	r, p, e := a.lookupResource(key)
+	if e != nil { return resource{}, "", e }
+	f, e := openVerifiedResource(p, r)
+	if e != nil { return resource{}, "", e }
+	f.Close()
+	return r, p, nil
+}
+func (a *Agent) lookupResource(key string) (resource, string, error) {
 	a.mu.Lock()
 	r, ok := a.state.Resources[key]
 	a.mu.Unlock()
@@ -119,8 +133,30 @@ func (a *Agent) getResource(key string) (resource, string, error) {
 	}
 	return r, p, nil
 }
+func openVerifiedResource(path string, r resource) (*os.File, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, errors.New("RESOURCE_NOT_FOUND")
+	}
+	info, err := f.Stat()
+	if err != nil || !info.Mode().IsRegular() || info.Size() != r.SizeBytes {
+		f.Close()
+		return nil, errors.New("RESOURCE_CHANGED")
+	}
+	h := sha256.New()
+	n, err := io.Copy(h, f)
+	if err != nil || n != r.SizeBytes || hex.EncodeToString(h.Sum(nil)) != r.SHA256 {
+		f.Close()
+		return nil, errors.New("RESOURCE_CHANGED")
+	}
+	if _, err = f.Seek(0, io.SeekStart); err != nil {
+		f.Close()
+		return nil, errors.New("RESOURCE_CHANGED")
+	}
+	return f, nil
+}
 func (a *Agent) extract(ctx context.Context, req mediaapi.ExtractionRequest, stage string) (any, error) {
-	_, input, e := a.getResource(req.MediaKey)
+	video, input, e := a.getResource(req.MediaKey)
 	if e != nil {
 		return nil, e
 	}
@@ -152,5 +188,10 @@ func (a *Agent) extract(ctx context.Context, req mediaapi.ExtractionRequest, sta
 		manifest.Frames = append(manifest.Frames, frame)
 		resources[key] = resource{Path: filename, ContentType: "image/jpeg", SHA256: hash, SizeBytes: size, Width: width, Height: height}
 	}
+	verified, e := openVerifiedResource(input, video)
+	if e != nil {
+		return nil, e
+	}
+	verified.Close()
 	return preparedOutput{manifest, resources}, nil
 }

@@ -2,6 +2,8 @@ package mediaagent
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"io"
@@ -112,7 +114,7 @@ func (a *Agent) registration(w http.ResponseWriter, r *http.Request) {
 		if hash != source.Source.SHA256 || size != source.Source.SizeBytes {
 			return nil, errors.New("RESOURCE_CHANGED")
 		}
-		return a.probeVideo(ctx, stage, req.VideoID, req.OperationID)
+		return a.probeVideo(ctx, stage, req.VideoID, req.OperationID, hash, size)
 	})
 	if e != nil {
 		a.respondError(w, e)
@@ -130,9 +132,29 @@ func (a *Agent) upload(w http.ResponseWriter, r *http.Request) {
 		a.fail(w, 503, "PROCESS_FAILED")
 		return
 	}
-	ctx, cancel := context.WithTimeout(r.Context(), a.cfg.MaxOperation)
+	select {
+	case a.uploadReceivers <- struct{}{}:
+		defer func() { <-a.uploadReceivers }()
+	default:
+		a.fail(w, 429, "QUEUE_FULL")
+		return
+	}
+	a.mu.Lock()
+	if a.closed {
+		a.mu.Unlock()
+		a.fail(w, 503, "PROCESS_FAILED")
+		return
+	}
+	a.uploadWG.Add(1)
+	a.mu.Unlock()
+	defer a.uploadWG.Done()
+	ctx, cancel := context.WithTimeout(a.rootctx, a.cfg.MaxOperation)
 	defer cancel()
+	stopRequest := context.AfterFunc(r.Context(), cancel)
+	defer stopRequest()
 	r.Body = http.MaxBytesReader(w, r.Body, a.cfg.MaxUploadBytes+a.cfg.MaxControlBytes)
+	stopBody := context.AfterFunc(ctx, func() { _ = r.Body.Close() })
+	defer stopBody()
 	reader, e := r.MultipartReader()
 	if e != nil {
 		a.fail(w, 400, "INVALID_REQUEST")
@@ -143,45 +165,154 @@ func (a *Agent) upload(w http.ResponseWriter, r *http.Request) {
 		a.fail(w, 400, "INVALID_REQUEST")
 		return
 	}
+	intent := mediaapi.UploadIntent{VideoID: videoID, Name: part.FileName()}
+	if _, exists, conflict := a.existing(id, "upload", intent); exists {
+		if conflict != nil {
+			a.respondError(w, conflict)
+			return
+		}
+		hash, size, err := hashUpload(ctx, part, a.cfg.MaxUploadBytes)
+		if err != nil {
+			a.respondError(w, err)
+			return
+		}
+		if _, err = reader.NextPart(); err != io.EOF {
+			a.fail(w, 400, "INVALID_REQUEST")
+			return
+		}
+		a.mu.Lock()
+		record := a.state.Operations[id]
+		matches := record != nil && record.ContentSHA256 != "" && record.ContentSHA256 == hash && record.ContentSizeBytes == size
+		a.mu.Unlock()
+		if !matches {
+			a.fail(w, 409, "OPERATION_CONFLICT")
+			return
+		}
+		a.waitPrepared(w, r, id)
+		return
+	}
 	stage, dir, e := a.stage()
 	if e != nil {
 		a.respondError(w, e)
 		return
 	}
-	defer func() {
-		a.mu.Lock()
-		record := a.state.Operations[id]
-		owned := record != nil && record.Staging == stage
-		a.mu.Unlock()
-		if !owned {
-			_ = a.cleanup(stage)
-		}
-	}()
+	if e = a.beginUpload(id, videoID, intent, stage, ctx, cancel); e != nil {
+		_ = a.cleanup(stage)
+		a.respondError(w, e)
+		return
+	}
 	hash, size, e := copyFile(ctx, filepath.Join(dir, "video"), part, a.cfg.MaxUploadBytes)
 	if e != nil {
+		a.failUpload(id, ctx, e)
 		a.respondError(w, e)
 		return
 	}
 	if _, e = reader.NextPart(); e != io.EOF {
+		a.failUpload(id, ctx, errors.New("INVALID_REQUEST"))
 		a.fail(w, 400, "INVALID_REQUEST")
 		return
 	}
-	canonical := struct {
-		VideoID, SHA256, Name string
-		SizeBytes             int64
-	}{videoID, hash, part.FileName(), size}
-	uploadDeadline, _ := ctx.Deadline()
-	remaining := time.Until(uploadDeadline)
-	if remaining <= 0 {
-		a.fail(w, 504, "TIMEOUT")
-		return
-	}
-	_, e = a.submitStaged(id, "upload", "", videoID, canonical, stage, remaining, func(ctx context.Context) (any, error) { return a.probeVideo(ctx, stage, videoID, id) })
+	e = a.queueUpload(id, hash, size, ctx, func(ctx context.Context) (any, error) { return a.probeVideo(ctx, stage, videoID, id, hash, size) })
 	if e != nil {
 		a.respondError(w, e)
 		return
 	}
 	a.waitPrepared(w, r, id)
+}
+func hashUpload(ctx context.Context, r io.Reader, limit int64) (string, int64, error) {
+	h := sha256.New()
+	n, err := io.Copy(h, io.LimitReader(contextReader{ctx, r}, limit+1))
+	if err != nil {
+		return "", n, err
+	}
+	if n > limit {
+		return "", n, errUploadLimit
+	}
+	if n == 0 {
+		return "", n, errors.New("INVALID_REQUEST")
+	}
+	return hex.EncodeToString(h.Sum(nil)), n, nil
+}
+func (a *Agent) beginUpload(id, videoID string, intent mediaapi.UploadIntent, stage string, ctx context.Context, cancel context.CancelFunc) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.closed {
+		return errors.New("PROCESS_FAILED")
+	}
+	if previous := a.state.Operations[id]; previous != nil {
+		return errors.New("OPERATION_CONFLICT")
+	}
+	deadline, _ := ctx.Deadline()
+	now := time.Now()
+	lease := now.Add(a.cfg.Lease)
+	if lease.After(deadline) {
+		lease = deadline
+	}
+	o := &operationRecord{Operation: mediaapi.Operation{ContractVersion: mediaapi.ContractVersion, OperationID: id, OperationType: "upload", ResourceID: ptr(videoID), RequestFingerprint: fingerprint(intent), PublicationStatus: "unpublished", Status: "running"}, LeaseUntil: lease, Deadline: deadline, Staging: stage}
+	a.state.Operations[id] = o
+	a.done[id] = make(chan struct{})
+	a.running[id] = cancel
+	if err := a.persistLocked(); err != nil {
+		delete(a.state.Operations, id)
+		delete(a.done, id)
+		delete(a.running, id)
+		return err
+	}
+	return nil
+}
+func (a *Agent) failUpload(id string, ctx context.Context, err error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	o := a.state.Operations[id]
+	if o == nil || o.Status != "running" {
+		return
+	}
+	delete(a.running, id)
+	if ctx.Err() != nil {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) || (o.ErrorCode != nil && *o.ErrorCode == "TIMEOUT") {
+			a.finishLocked(o, "failed", "TIMEOUT", nil)
+		} else if a.closed {
+			a.finishLocked(o, "failed", "PROCESS_FAILED", nil)
+		} else {
+			a.finishLocked(o, "cancelled", "", nil)
+		}
+	} else {
+		a.finishLocked(o, "failed", safeError(err), nil)
+	}
+}
+func (a *Agent) queueUpload(id, hash string, size int64, receiverCtx context.Context, run func(context.Context) (any, error)) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	o := a.state.Operations[id]
+	if o == nil || o.Status != "running" || receiverCtx.Err() != nil || time.Now().After(o.LeaseUntil) || time.Now().After(o.Deadline) {
+		responseErr := errors.New("TIMEOUT")
+		if o != nil && o.Status == "running" {
+			if a.closed {
+				a.finishLocked(o, "failed", "PROCESS_FAILED", nil)
+				responseErr = errors.New("PROCESS_FAILED")
+			} else if errors.Is(receiverCtx.Err(), context.Canceled) && (o.ErrorCode == nil || *o.ErrorCode != "TIMEOUT") {
+				a.finishLocked(o, "cancelled", "", nil)
+				responseErr = errors.New("OPERATION_CONFLICT")
+			} else {
+				a.finishLocked(o, "failed", "TIMEOUT", nil)
+			}
+		}
+		return responseErr
+	}
+	delete(a.running, id)
+	o.ContentSHA256, o.ContentSizeBytes = hash, size
+	o.Status = "queued"
+	if err := a.persistLocked(); err != nil {
+		a.finishLocked(o, "failed", "NO_SPACE", nil)
+		return err
+	}
+	select {
+	case a.queue <- task{id, run}:
+		return nil
+	default:
+		a.finishLocked(o, "failed", "QUEUE_FULL", nil)
+		return errors.New("QUEUE_FULL")
+	}
 }
 func (a *Agent) extraction(w http.ResponseWriter, r *http.Request) {
 	var req mediaapi.ExtractionRequest
