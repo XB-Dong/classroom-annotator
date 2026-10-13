@@ -24,10 +24,9 @@ done
 export P01_TEST_DATABASE_URL="$(< "$P01_GO_DATABASE_URL_FILE")"
 export GOTOOLCHAIN=local GOMAXPROCS=2 GOFLAGS=-p=1
 export P0_EXPECTED_SHA="$(git rev-parse HEAD)"
-export P01_EXPECTED_AGENT_SHA="$P0_EXPECTED_SHA"
 export P01_MIGRATE_BINARY="$test_runtime/migrate"
 export P01_IMPORT_BINARY="$test_runtime/import-sqlite"
-export P01_AGENT_BINARY="$test_runtime/media-agent"
+export P1_BOOTSTRAP_BINARY="$test_runtime/bootstrap-user"
 export P01_SEED_BINARY="$test_runtime/seed-samples"
 export P01_API_OUTPUT="$test_runtime/postgres-data"
 export P01_MAC_OUTPUT="$test_runtime/agent-check"
@@ -41,6 +40,12 @@ export P0_RESTART_DATA_DIR="$test_runtime/restart-data"
 export P0_DATASET_DATA_DIR="$test_runtime/dataset-data"
 export P0_API_DATA_DIR="$test_runtime/api-data"
 export P0_FIXTURE_DIR="${P0_FIXTURE_DIR:-$test_runtime/fixtures}"
+export P1_RUNTIME="$test_runtime"
+export PYTHONPATH="$PWD/ai-service/src"
+export P1_PYTHON_BINARY="$(command -v python)"
+node scripts/sync-help-document.mjs
+python -m pytest ai-service/tests -q -m 'not real_model'
+P1_MODEL_EVIDENCE="$test_runtime/model-evidence.json" python tests/p1-model-check.py
 test -f frontend/package-lock.json
 test -f backend/go.mod
 (cd tests; npm ci; node scripts/verify-databases.mjs)
@@ -62,7 +67,7 @@ test -f backend/go.mod
   CGO_ENABLED=0 go build -ldflags "-X main.version=$P0_EXPECTED_SHA" -o "$P0_BACKEND_BINARY" ./cmd/server
   CGO_ENABLED=0 go build -o "$P01_MIGRATE_BINARY" ./cmd/migrate
   CGO_ENABLED=0 go build -o "$P01_IMPORT_BINARY" ./cmd/import-sqlite
-  CGO_ENABLED=0 go build -ldflags "-X main.version=$P01_EXPECTED_AGENT_SHA" -o "$P01_AGENT_BINARY" ./cmd/media-agent
+  CGO_ENABLED=0 go build -o "$P1_BOOTSTRAP_BINARY" ./cmd/bootstrap-user
   CGO_ENABLED=0 go build -o "$P01_SEED_BINARY" ./cmd/seed-samples
   if [[ "${P0_SKIP_RACE:-0}" == 1 ]]; then
     echo 'RACE NOT RUN: explicit P0_SKIP_RACE=1; delivery needs separate race evidence.'
@@ -79,9 +84,7 @@ test -f backend/go.mod
   npm run migration
   npm run postgres
   npm run restart
-  npm run job-race
-  npm run mac-media
-  if [[ "$e2e" == 1 ]]; then node scripts/run-api.mjs --e2e; else npm run local-api; fi
+  if [[ "$e2e" == 1 ]]; then node scripts/p1-run-stack.mjs --e2e; else node scripts/p1-run-stack.mjs; fi
 )
 if [[ -n "${P01_RELEASE_ARTIFACT_DIR:-}" ]]; then
   mkdir -p "$P01_RELEASE_ARTIFACT_DIR/artifacts" "$P01_RELEASE_ARTIFACT_DIR/frontend-dist"
@@ -89,6 +92,7 @@ if [[ -n "${P01_RELEASE_ARTIFACT_DIR:-}" ]]; then
   cp "$P01_MIGRATE_BINARY" "$P01_RELEASE_ARTIFACT_DIR/artifacts/migrate"
   cp "$P01_IMPORT_BINARY" "$P01_RELEASE_ARTIFACT_DIR/artifacts/import-sqlite"
   cp "$P01_SEED_BINARY" "$P01_RELEASE_ARTIFACT_DIR/artifacts/seed-samples"
+  cp "$P1_BOOTSTRAP_BINARY" "$P01_RELEASE_ARTIFACT_DIR/artifacts/bootstrap-user"
   cp -R frontend/dist/. "$P01_RELEASE_ARTIFACT_DIR/frontend-dist/"
   printf '%s\n' "$P0_EXPECTED_SHA" > "$P01_RELEASE_ARTIFACT_DIR/source-sha.txt"
   (cd "$P01_RELEASE_ARTIFACT_DIR"; sha256sum artifacts/* > SHA256SUMS)

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/p1-session.mjs';
 import { upload, extract, snapshot, save, safeError, terminalJob } from '../helpers/api.mjs';
 import { inspectExport } from '../helpers/zip.mjs';
 
@@ -11,7 +11,7 @@ test('P0-BASE-001 readiness and safe missing resources', async ({ request }) => 
     expect(typeof health.version).toBe('string');
     if (process.env.P0_EXPECTED_SHA) expect(health.version).toBe(process.env.P0_EXPECTED_SHA);
   }
-  await safeError(await request.get('/api/v1/frames/missing/annotations'), 404);
+  await safeError(await request.get('/api/v1/frames/missing/annotations'), 403);
 });
 
 test('P0-VID/FRM/SAVE/PROG/EXP independent full API acceptance', async ({ request }) => {
@@ -52,8 +52,8 @@ test('P0-VID/FRM/SAVE/PROG/EXP independent full API acceptance', async ({ reques
   expect(batches.batches.map(item => item.id)).toEqual([second.job.batchId, first.job.batchId]);
   const progress = await (await request.get(`/api/v1/videos/${video.id}/progress?batchId=${first.job.batchId}`)).json();
   expect(progress).toEqual({ total: 3, notStarted: 1, inProgress: 0, completed: 2 });
-  await safeError(await request.post('/api/v1/exports', { data: { frameIds: ['missing'] } }), 404);
-  await safeError(await request.post('/api/v1/exports', { data: { videoId: video.id, batchId: 'missing' } }), 404);
+  await safeError(await request.post('/api/v1/exports', { data: { frameIds: ['missing'] } }), 403);
+  await safeError(await request.post('/api/v1/exports', { data: { videoId: video.id, batchId: 'missing' } }), 403);
   const response = await request.post('/api/v1/exports', { data: { videoId: video.id, batchId: first.job.batchId } });
   expect(response.status()).toBe(200);
   expect(response.headers()['content-type']).toMatch(/application\/zip/);

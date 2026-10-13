@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/p1-session.mjs';
 import AdmZip from 'adm-zip';
 import { extract, save, snapshot } from '../helpers/api.mjs';
 import { inspectExport } from '../helpers/zip.mjs';
@@ -57,11 +57,12 @@ test('P01-SAMPLE-001 cached public samples preserve identity/annotations and cre
   await closure(request, sample, await register(request, sample));
 });
 
-test('P01-SAMPLE-002 public extraction/save/export survives backend restart with Mac agent stopped', async ({ request }) => {
-  test.skip(process.env.P01_OFFLINE_PHASE !== '1', 'Runs only after the owned native agent has actually stopped');
+test('P01-SAMPLE-002 public extraction/save/export survives owned backend restart without a media bridge', async ({ request }) => {
+  test.skip(process.env.P01_OFFLINE_PHASE !== '1', 'Runs only after the owned backend has actually restarted');
   const storage = await (await request.get('/api/v1/media-storage/status')).json();
   expect(storage.sources.find(item => item.sourceKind === 'public_sample').available).toBe(true);
-  for (const kind of ['mac', 'upload', 'dataset']) expect(storage.sources.find(item => item.sourceKind === kind).available).toBe(false);
+  expect(storage.sources.find(item => item.sourceKind === 'mac').available).toBe(false);
+  expect(storage.sources.find(item => item.sourceKind === 'upload').available).toBe(true);
   const sample = await firstSample(request);
   const video = await register(request, sample);
   const prior = (await (await request.get(`/api/v1/videos/${video.id}/frames`)).json()).frames;

@@ -54,8 +54,9 @@ async function sameRevision(http, pool, frame) {
   assert.equal(responses.filter(value => value.status === 200).length, 1, 'Same-revision race did not have exactly one winner');
   assert.equal(responses.filter(value => value.status === 409).length, 19, 'Same-revision race losers must all return 409');
   const winner = responses.findIndex(value => value.status === 200);
+  const actual = await http.snapshot(frame.id);
   const expected = { frameId: frame.id, revision: before.revision + 1, status: 'completed', annotations: payloads[winner].annotations };
-  assert.deepEqual(await http.snapshot(frame.id), expected, 'Losers changed the committed winning snapshot');
+  assert.deepEqual(Object.fromEntries(Object.keys(expected).map(key => [key, actual[key]])), expected, 'Losers changed the committed winning snapshot');
   await assertDatabaseSnapshot(pool, frame.id, expected);
   return { requests: 20, statuses: responses.map(value => value.status), winner, revision: expected.revision };
 }

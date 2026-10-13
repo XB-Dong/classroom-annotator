@@ -34,9 +34,10 @@ export async function waitFor(predicate, timeout = 30_000, label = 'Acceptance c
   throw new Error(`${label} timed out`);
 }
 
-export async function dedicatedServer(binary, environment, origin, readinessRoute = '/health/ready') {
-  const child = spawn(externalPath(binary, 'P0_BACKEND_BINARY'), [], {
-    env: { ...process.env, ...environment, APP_ADDR: origin.replace('http://', '') },
+export async function dedicatedServer(binary, environment, origin, readinessRoute = '/health/ready', args = []) {
+  const child = spawn(externalPath(binary, 'Acceptance executable'), args, {
+    env: { ...process.env, APP_AUTH_INVITE_CODE: 'synthetic-ci-invite', APP_AUTH_COOKIE_SECURE: 'false',
+      APP_AUTH_TRUSTED_ORIGINS: origin, ...environment, APP_ADDR: origin.replace('http://', '') },
     stdio: ['ignore', 'ignore', 'ignore'],
   });
   let startupError;

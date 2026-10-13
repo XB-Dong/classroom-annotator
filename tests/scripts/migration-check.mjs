@@ -91,7 +91,9 @@ await acceptance(async () => {
       evidence.commands.push(await command(process.env.P01_MIGRATE_BINARY, ['up'], environment));
       await assertEmptyBusiness(pool);
       const version = (await pool.query('SELECT version_id,is_applied FROM goose_db_version ORDER BY id')).rows;
-      assert.equal(Number(version.filter(row => row.is_applied).at(-1).version_id), 4, 'Expected schema version 4 not applied');
+      const migrationDirectory = new URL('../../backend/migrations/', import.meta.url);
+      const expectedVersion = Math.max(...fs.readdirSync(migrationDirectory).filter(name => /^\d+.*\.sql$/.test(name)).map(name => Number(name.match(/^\d+/)[0])));
+      assert.equal(Number(version.filter(row => row.is_applied).at(-1).version_id), expectedVersion, 'All committed migrations must be applied');
       evidence.schemaTypes = await schemaTypes(pool);
       evidence.schemaVersion = Number(version.filter(row => row.is_applied).at(-1).version_id);
       evidence.commands.push(await command(process.env.P01_MIGRATE_BINARY, ['up'], environment));

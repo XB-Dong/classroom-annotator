@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/p1-session.mjs';
 import fs from 'node:fs';
 import AdmZip from 'adm-zip';
 import { snapshot, terminalJob } from '../helpers/api.mjs';
@@ -8,7 +8,7 @@ test('P01-SAMPLE-003 default public browser entry displays attribution and compl
   test.skip(process.env.P01_HAS_PUBLIC_SAMPLES !== '1', 'Requires prepared real public media');
   await page.goto('/');
   await expect(page.getByRole('tab', { name: '公共示例', exact: true })).toHaveAttribute('aria-selected', 'true');
-  for (const name of ['Mac素材', '本地上传', '公司接口']) await expect(page.getByRole('tab', { name, exact: true })).toBeVisible();
+  for (const name of ['本机素材', '本地上传', '公司接口']) await expect(page.getByRole('tab', { name, exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: '素材出处' }).first()).toHaveAttribute('href', /^https:\/\//);
   const imported = page.waitForResponse(response => response.url().endsWith('/samples/imports') && response.request().method() === 'POST');
   await page.getByRole('button', { name: '开始标注', exact: true }).first().click();

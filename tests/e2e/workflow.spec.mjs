@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/p1-session.mjs';
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import { fixture, snapshot, upload, extract, save, terminalJob } from '../helpers/api.mjs';

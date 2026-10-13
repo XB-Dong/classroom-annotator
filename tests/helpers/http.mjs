@@ -2,8 +2,28 @@ import assert from 'node:assert/strict';
 import { waitFor } from './process.mjs';
 
 export function api(origin) {
+  let identity;
+  async function authenticate() {
+    if (identity) return identity;
+    identity = (async () => {
+      const headers = { Origin: origin, 'Content-Type': 'application/json' };
+      const account = { username: 'p1_legacy_fixture', password: 'synthetic-ci-password-2026' };
+      const registered = await fetch(`${origin}/api/v1/auth/register`, { method: 'POST', headers,
+        body: JSON.stringify({ ...account, inviteCode: 'synthetic-ci-invite' }), signal: AbortSignal.timeout(30_000) });
+      assert.ok([201, 400].includes(registered.status), 'Synthetic account creation failed');
+      const login = await fetch(`${origin}/api/v1/auth/login`, { method: 'POST', headers,
+        body: JSON.stringify(account), signal: AbortSignal.timeout(30_000) });
+      assert.equal(login.status, 200, 'Synthetic account login failed');
+      const value = await login.json();
+      const cookie = login.headers.get('set-cookie')?.split(';')[0];
+      assert.match(cookie || '', /^cvte_session=/);
+      return { Cookie: cookie, Origin: origin, 'X-CSRF-Token': value.csrfToken };
+    })();
+    return identity;
+  }
   async function request(route, options = {}) {
-    return fetch(`${origin}${route}`, { ...options, signal: AbortSignal.timeout(30_000) });
+    const headers = route.startsWith('/health/') ? {} : await authenticate();
+    return fetch(`${origin}${route}`, { ...options, headers: { ...headers, ...options.headers }, signal: AbortSignal.timeout(30_000) });
   }
   async function json(route, options = {}, status = 200) {
     const response = await request(route, options);
