@@ -18,6 +18,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/XB-Dong/classroom-annotator/backend/internal/dataset"
@@ -323,13 +324,31 @@ func (c *Client) Ack(ctx context.Context, id string, publicationRevision int64) 
 	return c.control(ctx, id, "ack", mediaapi.AckRequest{PublicationRevision: publicationRevision})
 }
 
+type uploadSourceTracker struct {
+	io.ReadCloser
+	consumed atomic.Bool
+}
+
+func (s *uploadSourceTracker) Read(p []byte) (int, error) {
+	n, err := s.ReadCloser.Read(p)
+	if err == io.EOF {
+		s.consumed.Store(true)
+	}
+	return n, err
+}
+
 func (c *Client) Upload(ctx context.Context, operationID, videoID, filename string, source io.ReadCloser, limit int64) (mediaapi.Registration, error) {
 	var result mediaapi.Registration
 	if !opaqueKey.MatchString(operationID) || !opaqueKey.MatchString(videoID) || source == nil || limit <= 0 || limit > 1<<30 {
 		return result, ErrInvalid
 	}
 	pipeR, pipeW := io.Pipe()
-	interrupt := sync.OnceFunc(func() { _ = source.Close() })
+	tracked := &uploadSourceTracker{ReadCloser: source}
+	interrupt := sync.OnceFunc(func() {
+		if !tracked.consumed.Load() {
+			_ = source.Close()
+		}
+	})
 	stopInterrupt := context.AfterFunc(ctx, interrupt)
 	defer stopInterrupt()
 	writer := multipart.NewWriter(pipeW)
@@ -339,7 +358,7 @@ func (c *Client) Upload(ctx context.Context, operationID, videoID, filename stri
 		part, err := writer.CreateFormFile("file", filename)
 		if err == nil {
 			var n int64
-			n, err = io.Copy(part, io.LimitReader(source, limit+1))
+			n, err = io.Copy(part, io.LimitReader(tracked, limit+1))
 			if err == nil && n == 0 {
 				err = ErrInvalid
 			}
