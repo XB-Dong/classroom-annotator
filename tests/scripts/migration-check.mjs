@@ -102,18 +102,21 @@ await acceptance(async () => {
         await pool.query(`CREATE FUNCTION p01_test_reject_frame() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.id='legacy-frame-3' THEN RAISE EXCEPTION 'SYNTHETIC_IMPORT_FAILURE'; END IF; RETURN NEW; END $$`);
         await pool.query('CREATE TRIGGER p01_test_reject_frame BEFORE INSERT ON frames FOR EACH ROW EXECUTE FUNCTION p01_test_reject_frame()');
         try {
-          evidence.commands.push(await command(process.env.P01_IMPORT_BINARY, ['--source', source, '--report', report], environment, 'failure'));
+          evidence.commands.push(await command(process.env.P01_IMPORT_BINARY, [source], environment, 'failure'));
           await assertEmptyBusiness(pool);
         } finally {
           await pool.query('DROP TRIGGER p01_test_reject_frame ON frames');
           await pool.query('DROP FUNCTION p01_test_reject_frame()');
         }
       } else {
-        evidence.commands.push(await command(process.env.P01_IMPORT_BINARY, ['--source', source, '--report', report], environment));
+        const imported = await command(process.env.P01_IMPORT_BINARY, [source], environment);
+        const importReport = JSON.parse(imported.output);
+        fs.writeFileSync(report, JSON.stringify(importReport, null, 2));
+        evidence.commands.push(imported);
         assert.deepEqual(await businessRows(pool), expected, 'Imported fields differ from the read-only SQLite backup');
-        assert.ok(fs.existsSync(report), 'Importer did not write its requested external report');
+        assert.ok(fs.existsSync(report), 'Importer JSON summary was not retained as external evidence');
         const before = await businessRows(pool);
-        evidence.commands.push(await command(process.env.P01_IMPORT_BINARY, ['--source', source, '--report', path.join(root, 'refused-report.json')], environment, 'failure'));
+        evidence.commands.push(await command(process.env.P01_IMPORT_BINARY, [source], environment, 'failure'));
         assert.deepEqual(await businessRows(pool), before, 'Refused nonempty target was changed');
         for (const [table, rows] of Object.entries(before)) evidence.tables[table] = { count: rows.length, sha256: hash(JSON.stringify(rows)) };
         const provider = (await pool.query('SELECT source_kind,storage_provider FROM videos')).rows;

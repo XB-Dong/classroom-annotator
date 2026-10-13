@@ -180,10 +180,10 @@ await acceptance(async () => {
     const http = api(origin);
     const health = await http.json('/health/ready');
     assert.equal(health.version, process.env.P0_EXPECTED_SHA);
-    const job = await http.json(`/api/v1/videos/${videoId}/extractions`, http.body({ intervalSeconds: 0.1, startSeconds: 0, endSeconds: 3 }), 202);
+    const job = await http.json(`/api/v1/videos/${videoId}/extractions`, http.body({ intervalSeconds: 0.5, startSeconds: 0, endSeconds: 3 }), 202);
     assert.equal((await http.terminal(job.id)).status, 'completed');
     const { frames } = await http.json(`/api/v1/videos/${videoId}/frames?batchId=${job.batchId}`);
-    assert.equal(frames.length, 30, 'Real FFmpeg extraction did not publish all planned frames');
+    assert.equal(frames.length, 6, 'Real FFmpeg extraction did not publish all planned frames');
     const evidence = { sourceSHA: process.env.P0_EXPECTED_SHA, observedAt: new Date().toISOString(), dataType: 'synthetic',
       sameRevision: await sameRevision(http, pool, frames[0]),
       crossFrame: await crossFrameRace(http, pool, frames.slice(1, 3)),

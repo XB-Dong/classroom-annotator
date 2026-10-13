@@ -28,8 +28,8 @@ await acceptance(async () => {
     MAC_SOURCE_SERVICE_URL: fixture.origin, MAC_SOURCE_TOKEN_FILE: sourceTokenFile,
     MAC_FFMPEG: process.env.FFMPEG_PATH, MAC_FFPROBE: process.env.FFPROBE_PATH,
     MAC_DATASET_API_URL: fixture.apiOrigin, MAC_DATASET_ID: '42', MAC_DATASET_API_KEY_FILE: datasetKeyFile,
-    MAC_ALLOWED_PRIVATE_ORIGINS: `${fixture.origin},${fixture.apiOrigin},${fixture.mediaOrigin}`,
-    MAC_ALLOWED_MEDIA_ORIGINS: fixture.mediaOrigin,
+    MAC_DATASET_ALLOWED_PRIVATE_ORIGINS: `${fixture.origin},${fixture.apiOrigin},${fixture.mediaOrigin}`,
+    MAC_DATASET_ALLOWED_MEDIA_ORIGINS: fixture.mediaOrigin,
     APP_ALLOWED_PRIVATE_ORIGINS: `${fixture.origin},${fixture.apiOrigin},${fixture.mediaOrigin}`,
     APP_ALLOWED_MEDIA_ORIGINS: fixture.mediaOrigin,
     APP_VERSION: process.env.P01_EXPECTED_AGENT_SHA, MAC_AGENT_VERSION: process.env.P01_EXPECTED_AGENT_SHA };
@@ -121,7 +121,7 @@ await acceptance(async () => {
     const zipBytes = Buffer.from(await archiveResponse.arrayBuffer());
     assert.equal(hash(zipBytes), archive.manifest.sha256); assert.equal(zipBytes.length, archive.manifest.sizeBytes);
     inspectExport(zipBytes, selected.map(frame => ({ ...frame, id: frame.frameId })));
-    const lessons = await json('/dataset/lessons?page=2&pageSize=1');
+    const lessons = await json('/dataset/lessons?page=2&page_size=1');
     assert.deepEqual(lessons.items[0].videos.map(item => item.channel), [1, 4]);
     assert.ok(fixture.evidence.apiRequests.some(call => call.page === '2' && call.pageSize === '1'));
     const imported = { operationId: randomUUID(), jobId: randomUUID(), videoId: randomUUID(), catalogFileId: '4', name: 'Synthetic company import' };

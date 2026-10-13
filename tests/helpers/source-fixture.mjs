@@ -50,7 +50,7 @@ export async function sourceFixture(directory, token, datasetKey) {
     response.setHeader('Cache-Control', 'no-store');
     if (url.pathname === '/v1/media' && request.method === 'GET') {
       response.setHeader('Content-Type', 'application/json');
-      response.end(JSON.stringify({ items: [...records].map(([id, record]) => ({ id, url: `${origin}/v1/media/${id}`, size_bytes: record.bytes.length, content_type: record.contentType, sha256: changed && id.endsWith('1.mp4') ? hash(Buffer.from('changed identity')) : hash(record.bytes) })) })); return;
+      response.end(JSON.stringify({ items: [...records].map(([id, record]) => ({ id, url: `/v1/media/${id}`, size_bytes: record.bytes.length, content_type: record.contentType, sha256: changed && id.endsWith('1.mp4') ? hash(Buffer.from('changed identity')) : hash(record.bytes) })) })); return;
     }
     const record = records.get(decodeURIComponent(url.pathname.replace(/^\/v1\/media\//, '')));
     if (!record || !['GET', 'HEAD'].includes(request.method)) { response.writeHead(404); response.end(); return; }
