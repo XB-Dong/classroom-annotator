@@ -49,7 +49,7 @@ test -f backend/go.mod
   npm ci
   npm run typecheck
   npm run lint
-  npm test -- --run
+  npm test -- --run --pool=threads --maxWorkers=1 --no-file-parallelism
   npm run build
 )
 (

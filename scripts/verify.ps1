@@ -52,7 +52,7 @@ try {
   Invoke-Checked npm @('ci')
   Invoke-Checked npm @('run', 'typecheck')
   Invoke-Checked npm @('run', 'lint')
-  Invoke-Checked npm @('test', '--', '--run')
+  Invoke-Checked npm @('test', '--', '--run', '--pool=threads', '--maxWorkers=1', '--no-file-parallelism')
   Invoke-Checked npm @('run', 'build')
 } finally { Pop-Location }
 Push-Location backend

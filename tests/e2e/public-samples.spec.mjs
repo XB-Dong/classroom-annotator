@@ -1,0 +1,38 @@
+import { test, expect } from '@playwright/test';
+import fs from 'node:fs';
+import AdmZip from 'adm-zip';
+import { snapshot, terminalJob } from '../helpers/api.mjs';
+import { inspectExport } from '../helpers/zip.mjs';
+
+test('P01-SAMPLE-003 default public browser entry displays attribution and completes zero-head original JPEG export', async ({ page, request }) => {
+  test.skip(process.env.P01_HAS_PUBLIC_SAMPLES !== '1', 'Requires prepared real public media');
+  await page.goto('/');
+  await expect(page.getByRole('tab', { name: '公共示例', exact: true })).toHaveAttribute('aria-selected', 'true');
+  for (const name of ['Mac素材', '本地上传', '公司接口']) await expect(page.getByRole('tab', { name, exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: '素材出处' }).first()).toHaveAttribute('href', /^https:\/\//);
+  const imported = page.waitForResponse(response => response.url().endsWith('/samples/imports') && response.request().method() === 'POST');
+  await page.getByRole('button', { name: '开始标注', exact: true }).first().click();
+  const video = await (await imported).json();
+  await page.getByTestId('video-select').selectOption(video.id);
+  await page.getByTestId('interval-seconds').fill('1');
+  await page.getByTestId('start-seconds').fill('0');
+  await page.getByTestId('end-seconds').fill('3');
+  const submitted = page.waitForResponse(response => response.url().endsWith('/extractions') && response.request().method() === 'POST');
+  await page.getByTestId('extract-submit').click();
+  const job = await (await submitted).json(); expect((await terminalJob(request, job.id)).status).toBe('completed');
+  const frames = (await (await request.get(`/api/v1/videos/${video.id}/frames?batchId=${job.batchId}`)).json()).frames;
+  expect(frames).toHaveLength(3);
+  await page.getByTestId(`frame-item-${frames[0].id}`).click();
+  await expect(page.getByTestId('annotation-canvas').locator('.konvajs-content')).toBeVisible();
+  await page.getByTestId('complete-frame').click();
+  await expect.poll(async () => (await snapshot(request, frames[0].id)).status).toBe('completed');
+  await page.reload(); await page.getByTestId('video-select').selectOption(video.id);
+  await page.getByTestId(`frame-item-${frames[0].id}`).click();
+  expect((await snapshot(request, frames[0].id)).annotations).toEqual([]);
+  const download = page.waitForEvent('download'); await page.getByTestId('export-zip').click();
+  const bytes = fs.readFileSync(await (await download).path());
+  const media = await request.get(frames[0].imageUrl); expect(media.status()).toBe(200);
+  inspectExport(bytes, [{ ...frames[0], annotations: [], imageBytes: await media.body() }]);
+  const credits = JSON.parse(new AdmZip(bytes).readAsText('credits.json'));
+  expect(credits.items[0].videoId).toBe(video.id);
+});

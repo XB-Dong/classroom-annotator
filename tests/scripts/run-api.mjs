@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { acceptance, externalPath, dedicatedConnection, openPostgres, assertEmptyBusiness } from '../helpers/postgres.mjs';
@@ -55,6 +55,7 @@ await acceptance(async () => {
     APP_DATA_DIR: path.join(root, 'cloud-media'), APP_VERSION: version,
     APP_FFMPEG: process.env.FFMPEG_PATH || 'ffmpeg', APP_FFPROBE: process.env.FFPROBE_PATH || 'ffprobe',
     APP_MAC_BRIDGE_URL: agentOrigin, APP_MAC_BRIDGE_TOKEN_FILE: secrets.agent,
+    APP_SAMPLE_CATALOG_FILE: process.env.P01_PUBLIC_SAMPLE_CATALOG || '',
     APP_ALLOWED_PRIVATE_ORIGINS: agentOrigin };
   let agent; let backend; let frontendServer;
   try {
@@ -70,21 +71,49 @@ await acceptance(async () => {
       MAC_DATASET_ALLOWED_PRIVATE_ORIGINS: `${fixture.apiOrigin},${fixture.mediaOrigin}`,
       MAC_DATASET_ALLOWED_MEDIA_ORIGINS: fixture.mediaOrigin, MAC_AGENT_VERSION: version, APP_VERSION: version }, agentOrigin, '/health/live');
     if (process.env.P01_PUBLIC_SAMPLE_CATALOG) {
-      await command(process.env.P01_SEED_BINARY, ['--catalog', externalPath(process.env.P01_PUBLIC_SAMPLE_CATALOG, 'Public sample catalog')], environment);
+      await command(process.env.P01_SEED_BINARY, ['--catalog', externalPath(process.env.P01_PUBLIC_SAMPLE_CATALOG, 'Public sample catalog'),
+        '--report', path.join(root, 'public-seed-report.json')], environment);
     }
     backend = await dedicatedServer(process.env.P0_BACKEND_BINARY, environment, backendOrigin);
     frontendServer = await frontendProxy(backendOrigin);
     const cli = fileURLToPath(new URL('../node_modules/@playwright/test/cli.js', import.meta.url));
     const args = ['test', '--project=api'];
     if (process.argv.includes('--e2e')) args.push('--project=chromium');
-    const runner = spawn(process.execPath, [cli, ...args], { env: { ...process.env, P0_BASE_URL: frontendServer.origin,
-      P01_LOCAL_STACK: '1', P01_HAS_PUBLIC_SAMPLES: process.env.P01_PUBLIC_SAMPLE_CATALOG ? '1' : '0' }, stdio: 'inherit' });
-    const code = await new Promise((resolve, reject) => { runner.once('error', reject); runner.once('exit', resolve); });
-    assert.equal(code, 0, 'Real PostgreSQL/native agent API/browser acceptance failed');
+    const run = async (arguments_, additionalEnvironment = {}) => {
+      const runner = spawn(process.execPath, [cli, ...arguments_], { env: { ...process.env, P0_BASE_URL: frontendServer.origin,
+        P01_LOCAL_STACK: '1', P01_HAS_PUBLIC_SAMPLES: process.env.P01_PUBLIC_SAMPLE_CATALOG ? '1' : '0', ...additionalEnvironment }, stdio: 'inherit' });
+      const code = await new Promise((resolve, reject) => { runner.once('error', reject); runner.once('exit', resolve); });
+      assert.equal(code, 0, 'Real PostgreSQL/native agent API/browser acceptance failed');
+    };
+    await run(args);
+    const privateMedia = (await pool.query(`SELECT storage_provider,media_sha256 FROM videos WHERE source_kind IN ('upload','mac','dataset')
+      UNION ALL SELECT f.storage_provider,f.media_sha256 FROM frames f JOIN videos v ON v.id=f.video_id WHERE v.source_kind IN ('upload','mac','dataset')`)).rows;
+    assert.ok(privateMedia.length > 0, 'No private-source media exercised through actual HTTP');
+    assert.ok(privateMedia.every(row => row.storage_provider === 'mac'), 'Private-source resource was routed to cloud storage');
+    const privateHashes = new Set(privateMedia.map(row => row.media_sha256));
+    const inspectCloud = directory => {
+      if (!fs.existsSync(directory)) return;
+      for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+        const file = path.join(directory, entry.name);
+        if (entry.isDirectory()) inspectCloud(file);
+        else assert.ok(!privateHashes.has(createHash('sha256').update(fs.readFileSync(file)).digest('hex')), 'Private video/JPEG bytes persisted in cloud media tree');
+      }
+    };
+    inspectCloud(environment.APP_DATA_DIR);
+    if (process.env.P01_PUBLIC_SAMPLE_CATALOG) {
+      await command(process.env.P01_SEED_BINARY, ['--catalog', process.env.P01_PUBLIC_SAMPLE_CATALOG,
+        '--report', path.join(root, 'public-reseed-report.json')], environment);
+      await agent.stop(); await backend.stop();
+      backend = await dedicatedServer(process.env.P0_BACKEND_BINARY, environment, backendOrigin);
+      await run(['test', '--project=api', '--grep', 'P01-SAMPLE-002'], { P01_OFFLINE_PHASE: '1',
+        P0_TEST_OUTPUT: path.join(root, 'offline-results'), P0_REPORT_OUTPUT: path.join(root, 'offline-report') });
+    }
     fixture.assertClean();
     fs.writeFileSync(path.join(root, 'stack-evidence.json'), JSON.stringify({ observedAt: new Date().toISOString(), sourceSHA: version,
       dataType: 'synthetic', PostgreSQL: '17', schemaVersion: 4, nativeAgent: true,
-      actualMacVerificationStatus: 'not_run', browserRun: process.argv.includes('--e2e'), fixtureRequests: fixture.evidence }, null, 2));
+      actualMacVerificationStatus: 'not_run', browserRun: process.argv.includes('--e2e'),
+      privateMediaMetadataRows: privateMedia.length, privateMediaAbsentFromCloudDisk: true,
+      publicSampleStatus: process.env.P01_PUBLIC_SAMPLE_CATALOG ? 'online/reseed/restart/offline_checked' : 'not_run', fixtureRequests: fixture.evidence }, null, 2));
   } finally {
     if (frontendServer) await frontendServer.stop(); if (backend) await backend.stop(); if (agent) await agent.stop();
     await fixture.stop(); await pool.end();
