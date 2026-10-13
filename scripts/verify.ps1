@@ -15,12 +15,38 @@ if ($env:FFMPEG_PATH) { $env:PATH = (Split-Path $env:FFMPEG_PATH -Parent) + [IO.
 if ($env:FFPROBE_PATH) { $env:PATH = (Split-Path $env:FFPROBE_PATH -Parent) + [IO.Path]::PathSeparator + $env:PATH }
 $testRuntime = Join-Path ([System.IO.Path]::GetTempPath()) ('classroom-acceptance-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $testRuntime | Out-Null
+foreach ($variable in @('P01_GO_DATABASE_URL_FILE', 'P01_DATABASE_URL_FILE', 'P01_ACCEPTANCE_DATABASE_URL_FILE', 'P01_IMPORT_DATABASE_URL_FILE', 'P01_ROLLBACK_DATABASE_URL_FILE')) {
+  $file = [Environment]::GetEnvironmentVariable($variable)
+  if (!$file -or !(Test-Path -LiteralPath $file -PathType Leaf)) { throw "Required isolated PostgreSQL DSN file missing: $variable" }
+}
+$env:P01_TEST_DATABASE_URL = (Get-Content -LiteralPath $env:P01_GO_DATABASE_URL_FILE -Raw).Trim()
+$env:GOTOOLCHAIN = 'local'
+$env:GOMAXPROCS = '2'
+$env:GOFLAGS = '-p=1'
+$env:P0_EXPECTED_SHA = (& git rev-parse HEAD).Trim()
+$env:P01_EXPECTED_AGENT_SHA = $env:P0_EXPECTED_SHA
+$env:P01_MIGRATE_BINARY = Join-Path $testRuntime 'migrate.exe'
+$env:P01_IMPORT_BINARY = Join-Path $testRuntime 'import-sqlite.exe'
+$env:P01_AGENT_BINARY = Join-Path $testRuntime 'media-agent.exe'
+$env:P01_SEED_BINARY = Join-Path $testRuntime 'seed-samples.exe'
+$env:P01_API_OUTPUT = Join-Path $testRuntime 'postgres-data'
+$env:P01_MAC_OUTPUT = Join-Path $testRuntime 'agent-check'
+$env:P01_JOB_OUTPUT = Join-Path $testRuntime 'job-race-check'
+$env:P01_MIGRATION_OUTPUT = Join-Path $testRuntime 'migration-check'
+$env:P0_TEST_OUTPUT = Join-Path $testRuntime 'playwright-results'
+$env:P0_REPORT_OUTPUT = Join-Path $testRuntime 'playwright-report'
+$env:P0_RESTORE_BASELINE = Join-Path $env:P01_API_OUTPUT 'restore-baseline.json'
 $env:P0_BACKEND_BINARY = Join-Path $testRuntime 'backend-server.exe'
 $env:P0_RESTART_DATA_DIR = Join-Path $testRuntime 'restart-data'
 $env:P0_DATASET_DATA_DIR = Join-Path $testRuntime 'dataset-data'
 $env:P0_API_DATA_DIR = Join-Path $testRuntime 'api-data'
 if (!$env:P0_FIXTURE_DIR) { $env:P0_FIXTURE_DIR = Join-Path $testRuntime 'fixtures' }
 if (!(Test-Path frontend/package-lock.json) -or !(Test-Path backend/go.mod)) { throw 'Frontend/backend product workspace is missing.' }
+Push-Location tests
+try {
+  Invoke-Checked npm @('ci')
+  Invoke-Checked node @('scripts/verify-databases.mjs')
+} finally { Pop-Location }
 Push-Location frontend
 try {
   Invoke-Checked npm @('ci')
@@ -37,6 +63,10 @@ try {
   Invoke-Checked go @('test', './...')
   Invoke-Checked go @('build', './...')
   Invoke-Checked go @('build', '-o', $env:P0_BACKEND_BINARY, './cmd/server')
+  Invoke-Checked go @('build', '-o', $env:P01_MIGRATE_BINARY, './cmd/migrate')
+  Invoke-Checked go @('build', '-o', $env:P01_IMPORT_BINARY, './cmd/import-sqlite')
+  Invoke-Checked go @('build', '-o', $env:P01_AGENT_BINARY, './cmd/media-agent')
+  Invoke-Checked go @('build', '-o', $env:P01_SEED_BINARY, './cmd/seed-samples')
   if ($env:P0_SKIP_RACE -eq '1') {
     Write-Output 'RACE NOT RUN: explicit P0_SKIP_RACE=1; delivery needs separate race evidence.'
   } else {
@@ -47,17 +77,16 @@ try {
 } finally { Pop-Location }
 Push-Location tests
 try {
-  Invoke-Checked npm @('ci')
   Invoke-Checked npm @('run', 'check')
   Invoke-Checked npm @('test')
   Invoke-Checked npm @('run', 'list')
   Invoke-Checked npm @('run', 'fixtures')
-  Invoke-Checked npm @('run', 'dataset')
+  Invoke-Checked npm @('run', 'migration')
+  Invoke-Checked npm @('run', 'postgres')
   Invoke-Checked npm @('run', 'restart')
-  Invoke-Checked npm @('run', 'local-api')
-  if ($Integration -or $E2E) {
-    if (!$env:P0_FIXTURE_DIR) { throw 'P0_FIXTURE_DIR external fixture directory required.' }
-    Invoke-Checked npm @('run', 'contract')
-  }
-  if ($E2E) { Invoke-Checked npm @('run', 'e2e') }
+  Invoke-Checked npm @('run', 'job-race')
+  Invoke-Checked npm @('run', 'mac-media')
+  if ($E2E) { Invoke-Checked node @('scripts/run-api.mjs', '--e2e') }
+  else { Invoke-Checked npm @('run', 'local-api') }
 } finally { Pop-Location }
+Write-Output "Verification evidence: $testRuntime"

@@ -91,7 +91,7 @@ await acceptance(async () => {
       evidence.commands.push(await command(process.env.P01_MIGRATE_BINARY, ['up'], environment));
       await assertEmptyBusiness(pool);
       const version = (await pool.query('SELECT version_id,is_applied FROM goose_db_version ORDER BY id')).rows;
-      assert.ok(version.some(row => Number(row.version_id) >= 2 && row.is_applied), 'Expected provider schema migration not applied');
+      assert.equal(Number(version.filter(row => row.is_applied).at(-1).version_id), 4, 'Expected schema version 4 not applied');
       evidence.schemaTypes = await schemaTypes(pool);
       evidence.schemaVersion = Number(version.filter(row => row.is_applied).at(-1).version_id);
       evidence.commands.push(await command(process.env.P01_MIGRATE_BINARY, ['up'], environment));

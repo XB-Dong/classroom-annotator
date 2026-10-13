@@ -9,7 +9,7 @@ export default defineConfig({
   retries: 0,
   forbidOnly: !!process.env.CI,
   outputDir: process.env.P0_TEST_OUTPUT || 'test-results',
-  reporter: [['list'], ['html', { open: 'never' }]],
+  reporter: [['list'], ['html', { open: 'never', outputFolder: process.env.P0_REPORT_OUTPUT || 'playwright-report' }]],
   use: {
     baseURL: process.env.P0_BASE_URL || 'http://127.0.0.1:8180',
     trace: 'retain-on-failure',

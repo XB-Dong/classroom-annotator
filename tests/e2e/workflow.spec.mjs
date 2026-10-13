@@ -22,6 +22,7 @@ async function persisted(request, id, predicate) {
 
 test('P0-E2E-001 browser upload/extract/draw/move/resize/delete/autosave/refresh/complete/export', async ({ page, request }, testInfo) => {
   await page.goto('/');
+  await page.getByRole('tab', { name: '本地上传', exact: true }).click();
   await page.getByTestId('upload-file').setInputFiles(fixture());
   const uploaded = page.waitForResponse(response => response.url().endsWith('/api/v1/videos') && response.request().method() === 'POST');
   await page.getByTestId('upload-submit').click();

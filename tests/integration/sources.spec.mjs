@@ -1,0 +1,37 @@
+import { test, expect } from '@playwright/test';
+import { extract, terminalJob, upload } from '../helpers/api.mjs';
+
+test('P01-SRC-001 four entrances retain independent per-resource routing', async ({ request }) => {
+  test.skip(process.env.P01_LOCAL_STACK !== '1', 'Requires the dedicated synthetic source/company service');
+  const response = await request.get('/api/v1/media-storage/status');
+  expect(response.status()).toBe(200);
+  const status = await response.json();
+  expect(status.sources.map(item => item.sourceKind).sort()).toEqual(['dataset', 'mac', 'public_sample', 'upload']);
+  for (const kind of ['mac', 'upload', 'dataset']) expect(status.sources.find(item => item.sourceKind === kind).available).toBe(true);
+  const uploaded = await upload(request);
+  expect([uploaded.sourceKind, uploaded.storageProvider]).toEqual(['upload', 'mac']);
+  const sourceResponse = await request.get('/api/v1/media-sources/mac');
+  expect(sourceResponse.status()).toBe(200);
+  const sources = await sourceResponse.json();
+  expect(sources.contractVersion).toBe('1.0.0');
+  expect(sources.items.filter(item => item.mediaKind === 'video')).toHaveLength(2);
+  expect(sources.items.filter(item => item.mediaKind === 'image')).toHaveLength(7);
+  const registration = await request.post('/api/v1/media-sources/mac/imports', { data: { sourceId: sources.items.find(item => item.mediaKind === 'video').sourceId } });
+  expect(registration.status()).toBe(202);
+  const imported = await terminalJob(request, (await registration.json()).id);
+  expect(imported.status).toBe('completed');
+  const macVideo = (await (await request.get('/api/v1/videos')).json()).videos.find(item => item.id === imported.videoId);
+  expect([macVideo.sourceKind, macVideo.storageProvider]).toEqual(['mac', 'mac']);
+  expect((await extract(request, macVideo.id)).frames).toHaveLength(3);
+  const lessons = await request.get('/api/v1/dataset/lessons?page=2&pageSize=1');
+  expect(lessons.status()).toBe(200);
+  const page = await lessons.json();
+  expect(page.items[0].videos.map(item => item.channel)).toEqual([1, 4]);
+  const company = await request.post('/api/v1/dataset/imports', { data: { catalogFileId: '4', name: 'Independent synthetic company API' } });
+  expect(company.status()).toBe(202);
+  const job = await terminalJob(request, (await company.json()).id);
+  expect(job.status).toBe('completed');
+  const datasetVideo = (await (await request.get('/api/v1/videos')).json()).videos.find(item => item.id === job.videoId);
+  expect([datasetVideo.sourceKind, datasetVideo.storageProvider]).toEqual(['dataset', 'mac']);
+  expect((await extract(request, datasetVideo.id)).frames).toHaveLength(3);
+});
