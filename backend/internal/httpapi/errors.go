@@ -7,6 +7,7 @@ import (
 	"github.com/XB-Dong/classroom-annotator/backend/internal/dataset"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/jobs"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/media"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/mediabridge"
 	"github.com/gin-gonic/gin"
 	"io"
 	"net/http"
@@ -23,6 +24,16 @@ func failure(c *gin.Context, e error) {
 		Error(c, 404, "NOT_FOUND", "Resource not found")
 	case errors.Is(e, jobs.ErrQueue):
 		Error(c, 429, "JOB_QUEUE_FULL", "Job queue is full")
+	case errors.Is(e, jobs.ErrRemoteCleanupPending):
+		Error(c, 503, "REMOTE_CLEANUP_PENDING", "Remote media cleanup requires reconciliation")
+	case errors.Is(e, mediabridge.ErrUnavailable):
+		Error(c, 503, "MEDIA_SOURCE_UNAVAILABLE", "Mac media source is unavailable")
+	case errors.Is(e, mediabridge.ErrInvalid):
+		Error(c, 400, "INVALID_REQUEST", "Invalid media request")
+	case errors.Is(e, mediabridge.ErrTooLarge):
+		Error(c, 413, "UPLOAD_TOO_LARGE", "Upload exceeds configured limit")
+	case errors.Is(e, mediabridge.ErrContract):
+		Error(c, 409, "BRIDGE_CONTRACT_MISMATCH", "Mac media response did not match the operation")
 	case errors.Is(e, media.ErrSize):
 		Error(c, 413, "UPLOAD_TOO_LARGE", "Upload exceeds configured limit")
 	case errors.Is(e, media.ErrVideo):
@@ -34,6 +45,11 @@ func failure(c *gin.Context, e error) {
 	case errors.Is(e, dataset.ErrUpstream):
 		Error(c, 502, "DATASET_UPSTREAM_FAILED", "Company API request failed")
 	default:
+		var remote *mediabridge.RemoteError
+		if errors.As(e, &remote) {
+			bridgeFailure(c, e)
+			return
+		}
 		var limit *http.MaxBytesError
 		if errors.As(e, &limit) {
 			Error(c, 413, "UPLOAD_TOO_LARGE", "Upload exceeds configured limit")

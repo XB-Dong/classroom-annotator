@@ -5,11 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/XB-Dong/classroom-annotator/backend/internal/dataset"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/domain"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/extraction"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/jobs"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/media"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/mediaagent"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/mediabridge"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/config"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/store"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/testdb"
@@ -60,11 +61,44 @@ func TestSyntheticHTTPUploadExtractionAndCompanyImport(t *testing.T) {
 		t.Fatal(e)
 	}
 	defer s.DB.Close()
-	cfg := config.Config{MaxUploadBytes: 1024, MaxFrames: 10, JobTimeout: 15 * time.Second, HTTPTimeout: time.Second, DatasetAPIURL: apiHost.URL, DatasetID: "fixture", DatasetAPIKey: "fixture-key", AllowedPrivateOrigins: []string{apiHost.URL, mediaHost.URL}}
+	cfg := config.Config{MaxUploadBytes: 1024, MaxFrames: 10, JobTimeout: 15 * time.Second, HTTPTimeout: time.Second}
 	m := jobs.New(s, 3, 15*time.Second)
 	defer m.Close()
 	vsvc := &media.Service{Root: s.Root, Limit: cfg.MaxUploadBytes, Runner: flowRunner{}}
-	r := New(cfg, s, m, vsvc, &extraction.Service{Store: s, Runner: flowRunner{}}, dataset.New(cfg))
+	agent, e := mediaagent.New(mediaagent.Config{Root: t.TempDir(), Token: "test-agent-token-123", Runner: flowRunner{}, Dataset: mediaagent.NewDatasetAdapter(apiHost.URL, "fixture", "fixture-key", []string{apiHost.URL, mediaHost.URL}, []string{mediaHost.URL})})
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer agent.Close()
+	agentHost := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		recorded := httptest.NewRecorder()
+		agent.ServeHTTP(recorded, req)
+		if req.URL.Path == "/bridge/v1/capabilities" && recorded.Code == 200 {
+			var capabilities map[string]any
+			if json.Unmarshal(recorded.Body.Bytes(), &capabilities) != nil {
+				t.Fatal("invalid capabilities")
+			}
+			capabilities["ffmpegAvailable"] = true
+			capabilities["ffprobeAvailable"] = true
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(capabilities)
+			return
+		}
+		for key, values := range recorded.Header() {
+			for _, value := range values {
+				w.Header().Add(key, value)
+			}
+		}
+		w.WriteHeader(recorded.Code)
+		_, _ = w.Write(recorded.Body.Bytes())
+	}))
+	defer agentHost.Close()
+	bridge, e := mediabridge.New(mediabridge.Config{BaseURL: agentHost.URL, Token: "test-agent-token-123", AllowedOrigins: []string{agentHost.URL}, Timeout: 15 * time.Second})
+	if e != nil {
+		t.Fatal(e)
+	}
+	sources := &SourceService{Store: s, Jobs: m, Bridge: bridge, MaxUploadBytes: cfg.MaxUploadBytes, MaxFrames: cfg.MaxFrames}
+	r := NewWithSources(cfg, s, m, vsvc, &extraction.Service{Store: s, Runner: flowRunner{}}, nil, sources)
 	call := func(method, path, body string) *httptest.ResponseRecorder {
 		w := httptest.NewRecorder()
 		req := httptest.NewRequest(method, path, strings.NewReader(body))
@@ -124,7 +158,7 @@ func TestSyntheticHTTPUploadExtractionAndCompanyImport(t *testing.T) {
 		t.Fatal(frames, e)
 	}
 	w = call("GET", frames[0].ImageURL, "")
-	if w.Code != 200 || w.Header().Get("Content-Type") != "image/jpeg" || !strings.Contains(w.Header().Get("Cache-Control"), "immutable") {
+	if w.Code != 200 || w.Header().Get("Content-Type") != "image/jpeg" || w.Header().Get("Cache-Control") != "no-store" {
 		t.Fatal(w.Code, w.Header())
 	}
 	w = call("GET", "/api/v1/videos/"+video.ID+"/progress?batchId="+job.BatchID, "")

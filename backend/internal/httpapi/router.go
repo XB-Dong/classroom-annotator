@@ -23,12 +23,17 @@ type API struct {
 	Media      *media.Service
 	Extraction *extraction.Service
 	Dataset    *dataset.Adapter
+	Sources    *SourceService
 }
 
 // Extensions receive the existing group so annotation/export capabilities can register their routes.
 type Extension func(*gin.RouterGroup, *store.Store)
 
 func New(cfg config.Config, s *store.Store, m *jobs.Manager, v *media.Service, x *extraction.Service, d *dataset.Adapter, extensions ...Extension) *gin.Engine {
+	return NewWithSources(cfg, s, m, v, x, d, nil, extensions...)
+}
+
+func NewWithSources(cfg config.Config, s *store.Store, m *jobs.Manager, v *media.Service, x *extraction.Service, d *dataset.Adapter, sources *SourceService, extensions ...Extension) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
@@ -60,7 +65,7 @@ func New(cfg config.Config, s *store.Store, m *jobs.Manager, v *media.Service, x
 		c.JSON(200, gin.H{"status": "ok", "version": cfg.Version})
 	})
 	r.GET("/metrics", gin.WrapH(promhttp.HandlerFor(m.Metrics.Registry, promhttp.HandlerOpts{})))
-	a := &API{cfg, s, m, v, x, d}
+	a := &API{Cfg: cfg, Store: s, Jobs: m, Media: v, Extraction: x, Dataset: d, Sources: sources}
 	g := r.Group("/api/v1")
 	g.GET("/videos", a.videos)
 	g.POST("/videos", a.upload)
@@ -73,7 +78,11 @@ func New(cfg config.Config, s *store.Store, m *jobs.Manager, v *media.Service, x
 	g.POST("/jobs/:id/cancel", a.cancel)
 	g.GET("/dataset/lessons", a.lessons)
 	g.POST("/dataset/imports", a.importVideo)
+	if sources != nil {
+		sources.Register(g)
+	}
 	r.GET("/media/frames/:filename", a.frameMedia)
+	r.HEAD("/media/frames/:filename", a.frameMedia)
 	if len(extensions) == 0 {
 		pending := func(c *gin.Context) {
 			Error(c, http.StatusNotImplemented, "NOT_IMPLEMENTED", "Capability pending implementation")

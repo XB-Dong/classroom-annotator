@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/domain"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/extraction"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/mediabridge"
 	"github.com/gin-gonic/gin"
 	"io"
 	"math"
@@ -67,27 +68,13 @@ func (a *API) upload(c *gin.Context) {
 		Error(c, 400, "INVALID_UPLOAD", "Missing file field")
 		return
 	}
-	v, e := a.Media.Prepare(guard.ctx, body, name)
+	if a.Sources == nil {
+		bridgeFailure(c, mediabridge.ErrUnavailable)
+		return
+	}
+	v, e := a.Sources.UploadToMac(guard.ctx, body, name)
 	if e != nil {
 		if guard.report(e) {
-			return
-		}
-		failure(c, e)
-		return
-	}
-	if e = guard.ctx.Err(); e != nil {
-		if cleanupErr := a.Media.Remove(v); cleanupErr != nil {
-			failure(c, cleanupErr)
-			return
-		}
-		if !guard.report(e) {
-			failure(c, e)
-		}
-		return
-	}
-	if e = a.Store.AddVideo(v); e != nil {
-		if cleanupErr := a.Media.Remove(v); cleanupErr != nil {
-			failure(c, cleanupErr)
 			return
 		}
 		failure(c, e)
@@ -126,7 +113,15 @@ func (a *API) extract(c *gin.Context) {
 		Error(c, 422, "INVALID_EXTRACTION", "Invalid sampling interval or frame limit")
 		return
 	}
-	j, e := a.Jobs.Submit("extraction", v.ID, domain.ID(), func(ctx context.Context, j domain.Job) error { return a.Extraction.Run(ctx, j, v, targets) })
+	run := func(ctx context.Context, j domain.Job) error { return a.Extraction.Run(ctx, j, v, targets) }
+	if v.StorageProvider == "mac" {
+		if a.Sources == nil {
+			bridgeFailure(c, mediabridge.ErrUnavailable)
+			return
+		}
+		run = func(ctx context.Context, j domain.Job) error { return a.Sources.RunExtraction(ctx, j, v, targets) }
+	}
+	j, e := a.Jobs.Submit("extraction", v.ID, domain.ID(), run)
 	if e != nil {
 		failure(c, e)
 		return
@@ -166,6 +161,14 @@ func (a *API) frameMedia(c *gin.Context) {
 	f, e := a.Store.Frame(strings.TrimSuffix(name, ".jpg"))
 	if e != nil {
 		failure(c, e)
+		return
+	}
+	if f.StorageProvider == "mac" {
+		if a.Sources == nil {
+			bridgeFailure(c, mediabridge.ErrUnavailable)
+			return
+		}
+		a.Sources.StreamFrame(c, f)
 		return
 	}
 	path := filepath.Join(a.Store.Root, f.StorageKey)

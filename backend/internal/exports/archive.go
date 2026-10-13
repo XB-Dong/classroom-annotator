@@ -3,13 +3,17 @@ package exports
 import (
 	"archive/zip"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"image/jpeg"
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
+
+	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/store"
 )
 
 // Bound temporary disk usage even when a selected scope contains many images.
@@ -92,6 +96,9 @@ func (s Service) Build(ctx context.Context, records []Record) (path string, err 
 	if err = json.NewEncoder(jsonFile).Encode(doc); err != nil {
 		return "", err
 	}
+	if err = s.writeCredits(ctx, archive, records); err != nil {
+		return "", err
+	}
 	if err = archive.Close(); err != nil {
 		return "", err
 	}
@@ -103,6 +110,80 @@ func (s Service) Build(ctx context.Context, records []Record) (path string, err 
 	}
 	success = true
 	return path, nil
+}
+
+const publicSampleChanges = "Frames extracted from the original video; no rendered annotation overlays."
+
+type credit struct {
+	SampleID      string `json:"sampleId"`
+	Version       string `json:"version"`
+	VideoID       string `json:"videoId"`
+	Creator       string `json:"creator"`
+	SourcePageURL string `json:"sourcePageUrl"`
+	LicenseName   string `json:"licenseName"`
+	LicenseURL    string `json:"licenseUrl"`
+	Changes       string `json:"changes"`
+}
+
+func creditsForRows(rows []store.PublicSample) []credit {
+	credits := make([]credit, 0, len(rows))
+	for _, row := range rows {
+		credits = append(credits, credit{SampleID: row.SampleID, Version: row.Version, VideoID: row.VideoID, Creator: row.Creator, SourcePageURL: row.SourcePageURL, LicenseName: row.LicenseName, LicenseURL: row.LicenseURL, Changes: publicSampleChanges})
+	}
+	sort.Slice(credits, func(i, j int) bool {
+		if credits[i].SampleID != credits[j].SampleID {
+			return credits[i].SampleID < credits[j].SampleID
+		}
+		if credits[i].Version != credits[j].Version {
+			return credits[i].Version < credits[j].Version
+		}
+		return credits[i].VideoID < credits[j].VideoID
+	})
+	return credits
+}
+
+func (s Service) writeCredits(ctx context.Context, archive *zip.Writer, records []Record) error {
+	seen := map[string]bool{}
+	rows := []store.PublicSample{}
+	for _, record := range records {
+		id := record.Frame.VideoID
+		if seen[id] {
+			continue
+		}
+		seen[id] = true
+		row, err := s.Store.PublicSampleByVideo(ctx, id)
+		if errors.Is(err, sql.ErrNoRows) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		rows = append(rows, row)
+	}
+	if len(rows) == 0 {
+		return nil
+	}
+	credits := creditsForRows(rows)
+	file, err := archive.Create("credits.json")
+	if err != nil {
+		return err
+	}
+	if err = json.NewEncoder(file).Encode(struct {
+		SchemaVersion string   `json:"schemaVersion"`
+		Items         []credit `json:"items"`
+	}{"1.0.0", credits}); err != nil {
+		return err
+	}
+	licenseFile, err := archive.Create("LICENSES.txt")
+	if err != nil {
+		return err
+	}
+	for _, entry := range credits {
+		if _, err = io.WriteString(licenseFile, entry.SampleID+" (version "+entry.Version+")\nCreator: "+entry.Creator+"\nSource: "+entry.SourcePageURL+"\nLicense: "+entry.LicenseName+" — "+entry.LicenseURL+"\nChanges: "+entry.Changes+"\n\n"); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s Service) copyImage(ctx context.Context, archive *zip.Writer, record Record, name string, remaining int64) (int64, error) {
