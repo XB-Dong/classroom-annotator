@@ -27,7 +27,7 @@
     "P01-MEDIA-AGENT-001": 2,
     "P01-TEST-001": 1,
     "P01-DB-MIG-001": 1,
-    "P01-MEDIA-CLOUD-001": 1
+    "P01-MEDIA-CLOUD-001": 2
   },
   "maxRepairRoundsPerTask": 2,
   "maxRepairRoundsForWave": 6,
@@ -64,7 +64,7 @@
     "ffmpegVersion": "7.1",
     "videoDecodeStatus": "reported_pass",
     "ffmpegPathStatus": "absolute_path_supplied_execution_reported_pass",
-    "ffprobePathStatus": "not_found_homebrew_absent_tools_install_required",
+    "ffprobePathStatus": "verified_absolute_path_version9.0.2_user_report_and_actual_capabilities",
     "listenAddress": "127.0.0.1:19090",
     "apiPathVersion": "v1",
     "contractVersion": null,
@@ -76,8 +76,8 @@
       "image": 8
     },
     "hashHeadNoStoreStatus": "reported_pass",
-    "cloudConnectivityStatus": "not_verified",
-    "reportedAt": "2026-10-13T18:25:59+08:00",
+    "cloudConnectivityStatus": "independently_verified_control_route_not_media",
+    "reportedAt": "2026-10-13T19:00:52+08:00",
     "mediaListPath": "/v1/media",
     "mediaReadPath": "/v1/media/{id}",
     "mediaIdMeaning": "allowlisted_object_identifier_not_sourceId_or_company_id",
@@ -110,14 +110,14 @@
     "leaderUnchanged": true,
     "glmUnchanged": true
   },
-  "testHarnessReviewStatus": "glm_executed_leader_rejected_unsupported_total_pass",
+  "testHarnessReviewStatus": "final_real_api_upload_regression_confirmed_repair2_in_progress",
   "publicSamplePreparationStatus": "two_real_files_hashed_decoded_visually_verified_not_seeded",
-  "deploymentConfigurationStatus": "cloud_nginx_and_compose_syntax_passed_not_deployed",
-  "repairRoundsUsed": 5,
-  "lastCheckpointAt": "2026-10-13T18:34:17.551308+08:00",
+  "deploymentConfigurationStatus": "production_storage_and_private_relay_prepared_application_not_cutover",
+  "repairRoundsUsed": 6,
+  "lastCheckpointAt": "2026-10-13T19:25:31.314062+08:00",
   "databaseSourceSha": "55081342a5a7dcf0ff8fc5d21816c652337cc981",
   "independentMigrationStatus": "passed_real_postgresql_synthetic",
-  "independentMacAgentStatus": "e1ce700_code_and_windows_passed_real_mac_pending",
+  "independentMacAgentStatus": "actual_cloud_control_route_passed_media_route_not_run",
   "leaderEffortOverride": {
     "authorizedBy": "direct_user_instruction",
     "recordedAt": "2026-10-13T16:48:10.673136+08:00",
