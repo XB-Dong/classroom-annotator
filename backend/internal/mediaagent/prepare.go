@@ -153,7 +153,19 @@ func (a *Agent) upload(w http.ResponseWriter, r *http.Request) {
 	stopRequest := context.AfterFunc(r.Context(), cancel)
 	defer stopRequest()
 	r.Body = http.MaxBytesReader(w, r.Body, a.cfg.MaxUploadBytes+a.cfg.MaxControlBytes)
-	stopBody := context.AfterFunc(ctx, func() { _ = r.Body.Close() })
+	controller := http.NewResponseController(w)
+	stopBody := context.AfterFunc(ctx, func() {
+		// A net/http body may hold its mutex while blocked in a network Read.
+		// Expire the connection read first so Close can then finish the cleanup.
+		if err := controller.SetReadDeadline(time.Now().Add(-time.Second)); err != nil {
+			// Some response wrappers expose Hijack but not read deadlines.
+			// In-memory test writers expose neither; closing their body wakes Read.
+			if conn, _, hijackErr := controller.Hijack(); hijackErr == nil {
+				_ = conn.Close()
+			}
+		}
+		_ = r.Body.Close()
+	})
 	defer stopBody()
 	reader, e := r.MultipartReader()
 	if e != nil {
