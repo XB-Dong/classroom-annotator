@@ -16,7 +16,7 @@ command -v go >/dev/null
 export FFMPEG_PATH="$(command -v "${FFMPEG_PATH:-ffmpeg}")"
 export FFPROBE_PATH="$(command -v "${FFPROBE_PATH:-ffprobe}")"
 export TEST_FFMPEG="$FFMPEG_PATH" TEST_FFPROBE="$FFPROBE_PATH"
-export PATH="$(dirname "$FFMPEG_PATH"):$(dirname "$FFPROBE_PATH"):$PATH"
+export PATH="$PATH:$(dirname "$FFMPEG_PATH"):$(dirname "$FFPROBE_PATH")"
 test_runtime="$(mktemp -d "${TMPDIR:-/tmp}/classroom-acceptance.XXXXXXXX")"
 for variable in P01_GO_DATABASE_URL_FILE P01_DATABASE_URL_FILE P01_ACCEPTANCE_DATABASE_URL_FILE P01_IMPORT_DATABASE_URL_FILE P01_ROLLBACK_DATABASE_URL_FILE; do
   if [[ -z "${!variable:-}" || ! -f "${!variable}" ]]; then echo "Required isolated PostgreSQL DSN file missing: $variable" >&2; exit 1; fi
