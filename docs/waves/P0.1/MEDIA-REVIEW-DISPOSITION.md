@@ -10,4 +10,6 @@
 
 上述为 `P01-MEDIA-AGENT-001` 正式修复第 1 轮。旧源码二进制私密交接包仅为草稿，暂不启用。修复需独立复审及重新构建核验摘要，再交给 Mac。
 
+第 1 轮修复提交 `b39d408be5e08e58fc89673ea56bd6595e732b7a` 已通过完整单元测试及独立 FFmpeg 流程，但复审用真实 loopback TCP 上传复现新的取消/超时阻塞：Go HTTP Body.Read 与 Close 共享锁，接收取消只调用 Body.Close 无法中断正在读取的连接，取消接口超时、租约/总超时后仍 running，Agent.Close 等待客户端主动断开。三个真实 HTTP 用例 exit 1，证据在 `runtime/p01-media-rereview/real-http-result.txt` 和 `real_http_test.go`。Leader 采纳，进入媒体任务第 2/2 轮，全波次已用 4/6 轮；不得以原 io.Pipe 用例 Green 代替真实 HTTP 清理成功。
+
 合成独立媒体验收已通过真实 FFmpeg 10 帧、Range、操作重启保留与确认、完整原图/COCO ZIP、公司 API/媒体 Key 隔离。这是 Windows 合成运行证据，不能替代真实 Mac、隧道及云端不落盘验收。原验收清单空列表由测试夹具错误地使用绝对 URL 导致，已改回实际相对路径契约，不计为产品故障。

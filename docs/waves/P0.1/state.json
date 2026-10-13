@@ -11,7 +11,7 @@
   "baselineSourceSha": "d848d3517cb985e68eea513424f56f75fc2cc1e0",
   "specStatus": "v0.2_frozen_after_architecture_review",
   "databaseMigrationStatus": "implementation_committed_independent_acceptance_running",
-  "macIntegrationStatus": "agent_repair1_before_activation",
+  "macIntegrationStatus": "agent_repair2_real_http_cancellation_before_activation",
   "cloudMediaDiskCheckStatus": "not_run_for_p0.1",
   "glmCodeReviewStatus": "not_run_for_p0.1",
   "glmExperienceStatus": "not_run_for_p0.1",
@@ -24,7 +24,7 @@
   "actualLeaderReasoningEffort": null,
   "modelVerificationStatus": "not_reverified_for_p0.1",
   "repairCounts": {
-    "P01-MEDIA-AGENT-001": 1,
+    "P01-MEDIA-AGENT-001": 2,
     "P01-TEST-001": 1,
     "P01-DB-MIG-001": 1
   },
@@ -112,7 +112,7 @@
   "testHarnessReviewStatus": "glm_executed_leader_rejected_unsupported_total_pass",
   "publicSamplePreparationStatus": "two_real_files_hashed_decoded_visually_verified_not_seeded",
   "deploymentConfigurationStatus": "cloud_nginx_and_compose_syntax_passed_not_deployed",
-  "repairRoundsUsed": 3,
+  "repairRoundsUsed": 4,
   "lastCheckpointAt": "2026-10-13T16:29:28.595696+08:00",
   "databaseSourceSha": "4d61ff02c5c14803063ba38a3b64d1ef019a483c",
   "independentMigrationStatus": "passed_real_postgresql_synthetic",

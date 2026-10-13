@@ -2,3 +2,6 @@
 !deploy/
 !deploy/artifacts/
 !deploy/artifacts/backend-server
+!deploy/artifacts/migrate
+!deploy/artifacts/import-sqlite
+!deploy/artifacts/seed-samples

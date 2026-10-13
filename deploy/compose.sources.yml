@@ -1,0 +1,13 @@
+# P0.1 source configuration and restricted external files.
+# Keep the catalog and private token outside the source checkout.
+services:
+  backend:
+    environment:
+      APP_SAMPLE_CATALOG_FILE: /app-config/samples/catalog.json
+      APP_MAC_BRIDGE_URL: ${APP_MAC_BRIDGE_URL:?set private relay origin}
+      APP_MAC_BRIDGE_TOKEN_FILE: /app-secrets/mac-bridge-token
+      APP_ALLOWED_PRIVATE_ORIGINS: ${APP_ALLOWED_PRIVATE_ORIGINS:?allow the private relay origin}
+      APP_MEDIA_DOWNLOAD_TIMEOUT_SECONDS: ${APP_MEDIA_DOWNLOAD_TIMEOUT_SECONDS:-1800}
+    volumes:
+      - ${PUBLIC_SAMPLE_CATALOG_PATH:?set external public sample catalog}:/app-config/samples/catalog.json:ro
+      - ${MAC_BRIDGE_TOKEN_HOST_FILE:?set restricted external bridge token file}:/app-secrets/mac-bridge-token:ro

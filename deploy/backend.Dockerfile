@@ -6,7 +6,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg ca-certi
     && groupadd --gid 10001 app && useradd --uid 10001 --gid 10001 --no-create-home app \
     && mkdir /data && chown app:app /data
 COPY deploy/artifacts/backend-server /usr/local/bin/backend-server
-RUN chmod 0555 /usr/local/bin/backend-server
+COPY deploy/artifacts/migrate /usr/local/bin/migrate
+COPY deploy/artifacts/import-sqlite /usr/local/bin/import-sqlite
+COPY deploy/artifacts/seed-samples /usr/local/bin/seed-samples
+RUN chmod 0555 /usr/local/bin/backend-server /usr/local/bin/migrate /usr/local/bin/import-sqlite /usr/local/bin/seed-samples
 USER 10001:10001
 EXPOSE 8080
 ENTRYPOINT ["/usr/local/bin/backend-server"]
