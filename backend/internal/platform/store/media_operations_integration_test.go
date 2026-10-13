@@ -78,3 +78,25 @@ func TestPublicSampleImportKeepsVersionAndVideo(t *testing.T) {
 		t.Fatalf("version reused for changed content: %v", err)
 	}
 }
+
+func TestPendingOperationsOnlyRetriesUnconfirmedCleanup(t *testing.T) {
+	s, err := Open(t.TempDir(), Options{DatabaseURL: testdb.URL(t)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.DB.Close()
+	ctx := context.Background()
+	for _, tc := range []struct{ id, code string }{{"resolved", "INTERRUPTED"}, {"pending", "REMOTE_CLEANUP_PENDING"}} {
+		op := MediaOperation{OperationID: tc.id, OperationType: "upload", ResourceID: "video-" + tc.id, Provider: "mac", RequestFingerprint: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", Status: "queued"}
+		if err := s.PersistOperation(ctx, op); err != nil {
+			t.Fatal(err)
+		}
+		if err := s.MarkFailed(ctx, op.OperationID, tc.code); err != nil {
+			t.Fatal(err)
+		}
+	}
+	operations, err := s.PendingOperations(ctx)
+	if err != nil || len(operations) != 1 || operations[0].OperationID != "pending" {
+		t.Fatalf("recovery set: %+v %v", operations, err)
+	}
+}

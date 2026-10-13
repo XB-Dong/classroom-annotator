@@ -103,7 +103,7 @@ func (s *Store) PendingOperations(ctx context.Context) ([]MediaOperation, error)
 }
 
 func (s *Store) PendingOperationsAfter(ctx context.Context, afterCreatedAt, afterID string) ([]MediaOperation, error) {
-	rows, err := s.DB.QueryContext(ctx, `SELECT `+operationColumns+` FROM media_operations WHERE (publication_status='unpublished' OR (publication_status='committed' AND NOT acknowledged)) AND (created_at,operation_id)>($1,$2) ORDER BY created_at,operation_id LIMIT 1000`, afterCreatedAt, afterID)
+	rows, err := s.DB.QueryContext(ctx, `SELECT `+operationColumns+` FROM media_operations WHERE ((publication_status='unpublished' AND (status NOT IN ('failed','cancelled') OR error_code='REMOTE_CLEANUP_PENDING')) OR (publication_status='committed' AND NOT acknowledged)) AND (created_at,operation_id)>($1,$2) ORDER BY created_at,operation_id LIMIT 1000`, afterCreatedAt, afterID)
 	if err != nil {
 		return nil, err
 	}
