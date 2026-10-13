@@ -56,15 +56,19 @@ type Frame struct {
 	MediaSizeBytes  int64  `json:"-"`
 }
 type Annotation struct {
-	ID     string     `json:"id"`
-	BBox   [4]float64 `json:"bbox"`
-	Source string     `json:"source"`
+	ID          string     `json:"id"`
+	BBox        [4]float64 `json:"bbox"`
+	Source      string     `json:"source"`
+	CandidateID string     `json:"candidateId,omitempty"`
+	RunID       string     `json:"runId,omitempty"`
 }
 type Snapshot struct {
 	FrameID     string       `json:"frameId"`
 	Revision    int64        `json:"revision"`
 	Status      string       `json:"status"`
 	Annotations []Annotation `json:"annotations"`
+	UpdatedBy   string       `json:"updatedBy,omitempty"`
+	UpdatedAt   string       `json:"updatedAt,omitempty"`
 }
 type Progress struct {
 	Total      int `json:"total"`
