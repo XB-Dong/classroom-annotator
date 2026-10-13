@@ -72,7 +72,7 @@ func pgFixture(t *testing.T, handler http.HandlerFunc) (*Service, context.Contex
 	return s, pgActor(t, db, "alice")
 }
 func pgResult() DetectionResult {
-	r := DetectionResult{ContractVersion: "1.0.0", ModelID: "synthetic-inference-fixture", ModelSHA256: ModelSHA256, PipelineVersion: PipelineVersion, Detections: []Detection{{BBox: [4]float64{1, 2, 20, 20}, Confidence: .8, ClassID: 7}}}
+	r := DetectionResult{ContractVersion: "1.0.0", ModelID: ModelID, Mode: "fullframe", ModelSHA256: ModelSHA256, PipelineVersion: PipelineVersion, Detections: []Detection{{BBox: [4]float64{1, 2, 20, 20}, Confidence: .8, ClassID: 7}}}
 	r.Image.Width = 100
 	r.Image.Height = 80
 	return r

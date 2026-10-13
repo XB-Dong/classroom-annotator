@@ -9,7 +9,7 @@ import (
 )
 
 func TestClientSendsImageBytesAndRejectsUntrustedModel(t *testing.T) {
-	result := DetectionResult{ContractVersion: "1.0.0", ModelID: "test-model", ModelSHA256: ModelSHA256, PipelineVersion: PipelineVersion, Detections: []Detection{{BBox: [4]float64{1, 2, 10, 11}, Confidence: .8, ClassID: 7}}}
+	result := DetectionResult{ContractVersion: "1.0.0", ModelID: ModelID, ModelSHA256: ModelSHA256, PipelineVersion: PipelineVersion, Detections: []Detection{{BBox: [4]float64{1, 2, 10, 11}, Confidence: .8, ClassID: 7}}}
 	result.Image.Width = 100
 	result.Image.Height = 80
 	var seen bool
@@ -39,13 +39,18 @@ func TestClientSendsImageBytesAndRejectsUntrustedModel(t *testing.T) {
 	if e != nil || !seen || len(got.Detections) != 1 {
 		t.Fatalf("got=%+v err=%v seen=%v", got, e, seen)
 	}
+	result.ModelID = "another-model"
+	if _, e = c.Detect(context.Background(), []byte("jpg"), 100, 80, "request-123"); e != ErrInvalidDetection {
+		t.Fatalf("untrusted model identity error=%v", e)
+	}
+	result.ModelID = ModelID
 	result.ModelSHA256 = "wrong"
 	if _, e = c.Detect(context.Background(), []byte("jpg"), 100, 80, "request-123"); e != ErrInvalidDetection {
 		t.Fatalf("untrusted model error=%v", e)
 	}
 }
 func TestClientRejectsDimensionsClassesAndOutOfBounds(t *testing.T) {
-	result := DetectionResult{ContractVersion: "1.0.0", ModelSHA256: ModelSHA256, PipelineVersion: PipelineVersion, Detections: []Detection{}}
+	result := DetectionResult{ContractVersion: "1.0.0", ModelID: ModelID, ModelSHA256: ModelSHA256, PipelineVersion: PipelineVersion, Detections: []Detection{}}
 	result.Image.Width = 100
 	result.Image.Height = 80
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { json.NewEncoder(w).Encode(result) }))

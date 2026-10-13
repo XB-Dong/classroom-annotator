@@ -1,0 +1,168 @@
+{
+  "uid": "classroom-p1",
+  "title": "Classroom Annotator P1 - AI and review",
+  "schemaVersion": 40,
+  "version": 1,
+  "editable": false,
+  "tags": [
+    "p1"
+  ],
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "AI 推理请求结果 / attempts",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "p0-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (result) (rate(classroom_ai_requests_total[5m]))",
+          "legendFormat": "{{result}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "AI 推理 p95 / 秒",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "p0-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(classroom_ai_inference_duration_seconds_bucket[5m])))"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "AI 队列等待 p95 / 秒",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "p0-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(classroom_ai_queue_wait_seconds_bucket[5m])))"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "审核 API 已提交决策 / 不含后续普通保存",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "p0-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (decision) (increase(classroom_ai_review_decisions_total[1h]))",
+          "legendFormat": "{{decision}}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "当前未解决风险 / 30 秒刷新",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "p0-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "classroom_ai_unresolved_risk",
+          "legendFormat": "{{scope}}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "版本冲突 / HTTP 409",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "p0-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(classroom_http_requests_total{status=\"409\"}[5m]))"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "数据库连接 / Go pool",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "p0-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "go_sql_open_connections"
+        }
+      ]
+    }
+  ]
+}

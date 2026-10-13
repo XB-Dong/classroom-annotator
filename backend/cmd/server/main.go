@@ -18,6 +18,7 @@ import (
 	"github.com/XB-Dong/classroom-annotator/backend/internal/scheduler"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/sources"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"log"
 	"net/http"
 	"os"
@@ -88,6 +89,7 @@ func main() {
 	x := &extraction.Service{Store: s, Runner: process}
 	m := jobs.NewWithContext(workCtx, s, cfg.QueueSize, cfg.JobTimeout, lease.Owned())
 	defer m.Close()
+	m.Metrics.Registry.MustRegister(collectors.NewDBStatsCollector(s.DB, "business"))
 	if e = aiService.SetMetrics(m.Metrics.Registry); e != nil {
 		log.Fatal("AI metrics initialization failed")
 	}

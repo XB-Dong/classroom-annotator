@@ -236,7 +236,7 @@ func (s *Service) Review(ctx context.Context, frame string, w ReviewWrite) (Snap
 	if _, err = tx.ExecContext(ctx, `UPDATE frames SET revision=revision+1,status='in_progress',updated_by=$1,updated_at=now() WHERE id=$2`, actor.ID, frame); err != nil {
 		return Snapshot{}, err
 	}
-	if err = reviewstate.Audit(ctx, tx, frame, actor.ID, "accept", f.Revision+1); err != nil {
+	if err = reviewstate.Audit(ctx, tx, frame, actor.ID, reviewAction(w), f.Revision+1); err != nil {
 		return Snapshot{}, err
 	}
 	out, err := readReview(ctx, tx, frame)
@@ -250,4 +250,32 @@ func (s *Service) Review(ctx context.Context, frame string, w ReviewWrite) (Snap
 		s.metrics.Decision(decision.Decision)
 	}
 	return out, nil
+}
+
+func reviewAction(w ReviewWrite) string {
+	if len(w.Decisions) == 0 {
+		if len(w.IssueResolutions) > 0 {
+			return "resolve"
+		}
+		return "save"
+	}
+	if len(w.IssueResolutions) > 0 {
+		return "save"
+	}
+	decision := w.Decisions[0].Decision
+	for _, item := range w.Decisions[1:] {
+		if item.Decision != decision {
+			return "save"
+		}
+	}
+	switch decision {
+	case "accepted":
+		return "accept"
+	case "adjusted":
+		return "adjust"
+	case "rejected":
+		return "reject"
+	default:
+		return "save"
+	}
 }

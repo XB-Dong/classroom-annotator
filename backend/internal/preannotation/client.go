@@ -86,7 +86,7 @@ func (c Client) Detect(ctx context.Context, image []byte, width, height int, req
 	if dec.Decode(&extra) != io.EOF {
 		return DetectionResult{}, ErrInvalidDetection
 	}
-	if result.ContractVersion != "1.0.0" || result.ModelID == "" || result.ModelSHA256 != ModelSHA256 || result.PipelineVersion != PipelineVersion || result.Image.Width != width || result.Image.Height != height || len(result.Detections) > MaxCandidates || !finite(result.TimingMs) || result.TimingMs < 0 {
+	if result.ContractVersion != "1.0.0" || result.ModelID != ModelID || result.ModelSHA256 != ModelSHA256 || result.PipelineVersion != PipelineVersion || result.Image.Width != width || result.Image.Height != height || len(result.Detections) > MaxCandidates || !finite(result.TimingMs) || result.TimingMs < 0 {
 		return DetectionResult{}, ErrInvalidDetection
 	}
 	for _, d := range result.Detections {
