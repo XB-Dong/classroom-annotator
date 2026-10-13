@@ -40,6 +40,8 @@ with urllib.request.urlopen(request, timeout=45) as response:
     value = json.load(response)
 assert value["modelSHA256"] == "a5ece478fc918787258afccd0b313e54319f8f39aeb1ceca11f27dbd269e78bc"
 assert value["image"] == {"width": 320, "height": 240}
+assert value["contractVersion"] == "1.0.0"
+assert value["modelId"] == "yolov9_n_wholebody34_0100_1x3x640x640"
 assert value["pipelineVersion"] == "classroom-head-v1-fullframe-2x2-15"
 for detection in value["detections"]:
     x, y, width, height = detection["bbox"]

@@ -4,6 +4,8 @@ import { randomUUID, createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { validateSchema } from '../helpers/contract.mjs';
+import { dedicatedConnection } from '../helpers/postgres.mjs';
+import pg from 'pg';
 
 test('P1-LOCAL/DATASET-001 upload and observed-schema channel4 company import use current-host media', async ({ request }) => {
   const uploaded = await upload(request);
@@ -47,4 +49,46 @@ test('P1-LOCAL-001 directory import preserves content identity and never exposes
   const video = (await (await request.get('/api/v1/videos')).json()).videos.find(video => video.id === job.videoId);
   expect(video.storageProvider).toBe('local');
   expect((await extract(request, video.id)).frames).toHaveLength(3);
+});
+
+test('P1-LOCAL-001 retired Mac identities never read matching local paths or produce a ZIP', async ({ request }) => {
+  const video = await upload(request);
+  const { frames } = await extract(request, video.id);
+  const frame = frames[0];
+  const originalImage = await request.get(frame.imageUrl);
+  expect(originalImage.status()).toBe(200);
+  const digest = createHash('sha256').update(await originalImage.body()).digest('hex');
+  const pool = new pg.Pool({ connectionString: dedicatedConnection('P1_QA_DATABASE_URL_FILE').connectionString, max: 1 });
+  const retired = { video: randomUUID(), job: randomUUID(), batch: randomUUID(), frame: randomUUID() };
+  try {
+    await pool.query(`INSERT INTO videos(id,name,width,height,duration_seconds,status,created_at,storage_key,
+      source_kind,storage_provider,media_sha256,media_size_bytes,workspace_id)
+      SELECT $1,'Synthetic retired Mac identity',width,height,duration_seconds,status,created_at,storage_key,
+      'mac','mac',media_sha256,media_size_bytes,workspace_id FROM videos WHERE id=$2`, [retired.video, video.id]);
+    await pool.query(`INSERT INTO jobs(id,kind,video_id,batch_id,status,created_at) VALUES($1,'extraction',$2,$3,'completed',$4)`,
+      [retired.job, retired.video, retired.batch, new Date().toISOString()]);
+    await pool.query('INSERT INTO batches(id,video_id,job_id,created_at) VALUES($1,$2,$3,$4)',
+      [retired.batch, retired.video, retired.job, new Date().toISOString()]);
+    await pool.query(`INSERT INTO frames(id,video_id,batch_id,timestamp_ms,width,height,status,revision,storage_key,
+      storage_provider,media_sha256,media_size_bytes)
+      SELECT $1,$2,$3,timestamp_ms,width,height,'completed',0,storage_key,'mac',media_sha256,media_size_bytes FROM frames WHERE id=$4`,
+    [retired.frame, retired.video, retired.batch, frame.id]);
+    const image = await request.get(`/media/frames/${retired.frame}.jpg`);
+    expect(image.status()).toBe(410);
+    expect((await image.json()).code).toBe('REMOTE_STORAGE_RETIRED');
+    const archived = await request.post('/api/v1/exports', { data: { frameIds: [retired.frame] } });
+    expect(archived.status()).toBe(410);
+    expect((await archived.json()).code).toBe('REMOTE_STORAGE_RETIRED');
+    expect((await request.post(`/api/v1/videos/${retired.video}/extractions`, { data: {
+      intervalSeconds: 1, startSeconds: 0, endSeconds: 3 } })).status()).toBe(410);
+    const retained = await request.get(frame.imageUrl);
+    expect(retained.status()).toBe(200);
+    expect(createHash('sha256').update(await retained.body()).digest('hex')).toBe(digest);
+  } finally {
+    await pool.query('DELETE FROM frames WHERE id=$1', [retired.frame]);
+    await pool.query('DELETE FROM batches WHERE id=$1', [retired.batch]);
+    await pool.query('DELETE FROM jobs WHERE id=$1', [retired.job]);
+    await pool.query('DELETE FROM videos WHERE id=$1', [retired.video]);
+    await pool.end();
+  }
 });

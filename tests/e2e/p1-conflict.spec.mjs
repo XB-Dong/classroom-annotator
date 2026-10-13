@@ -27,7 +27,7 @@ test('P1-CAS-001 two account browsers collide without automatic overwrite and re
       if (arrived === 2) release();
       await barrier;
       const response = await route.fetch();
-      responses.push(response.status());
+      responses.push({ status: response.status(), view });
       await route.fulfill({ response });
     });
     const draw = async (view, x) => {
@@ -39,8 +39,8 @@ test('P1-CAS-001 two account browsers collide without automatic overwrite and re
     };
     await Promise.all([draw(page, 0.1), draw(second, 0.6)]);
     await expect.poll(() => responses.length).toBe(2);
-    expect(responses.sort()).toEqual([200, 409]);
-    const loser = (await page.getByTestId('save-state').textContent()).includes('冲突') ? page : second;
+    expect(responses.map(response => response.status).sort()).toEqual([200, 409]);
+    const loser = responses.find(response => response.status === 409).view;
     await expect(loser.getByTestId('save-state')).toContainText('冲突');
     const committed = await snapshot(request, frame.id);
     expect(committed.annotations).toHaveLength(1);

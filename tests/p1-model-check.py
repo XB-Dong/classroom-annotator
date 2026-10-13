@@ -34,6 +34,8 @@ with TestClient(create_app(Settings(model_path=str(model), internal_token=token)
         value = response.json()
         assert value["image"] == {"width": width, "height": height}
         assert value["modelSHA256"] == MODEL_SHA256
+        assert value["contractVersion"] == "1.0.0"
+        assert value["modelId"] == "yolov9_n_wholebody34_0100_1x3x640x640"
         for detection in value["detections"]:
             x, y, w, h = detection["bbox"]
             assert detection["classId"] == 7 and 0 <= x < x + w <= width and 0 <= y < y + h <= height
