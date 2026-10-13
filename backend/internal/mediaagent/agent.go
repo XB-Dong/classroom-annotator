@@ -45,6 +45,8 @@ type operationRecord struct {
 	mediaapi.Operation
 	LeaseUntil, Deadline time.Time
 	Staging              string
+	ContentSHA256        string
+	ContentSizeBytes     int64
 }
 type manifestState struct {
 	Sources    map[string]sourceRecord
@@ -60,9 +62,11 @@ type Agent struct {
 	mu                                sync.Mutex
 	state                             manifestState
 	queue                             chan task
+	uploadReceivers                   chan struct{}
 	rootctx                           context.Context
 	stop                              context.CancelFunc
 	wg                                sync.WaitGroup
+	uploadWG                          sync.WaitGroup
 	running                           map[string]context.CancelFunc
 	done                              map[string]chan struct{}
 	closed                            bool
@@ -115,7 +119,7 @@ func New(c Config) (*Agent, error) {
 			return nil, errors.New("NO_SPACE")
 		}
 	}
-	a := &Agent{cfg: c, runnerInjected: c.Runner != nil, running: map[string]context.CancelFunc{}, done: map[string]chan struct{}{}, queue: make(chan task, c.QueueSize)}
+	a := &Agent{cfg: c, runnerInjected: c.Runner != nil, running: map[string]context.CancelFunc{}, done: map[string]chan struct{}{}, queue: make(chan task, c.QueueSize), uploadReceivers: make(chan struct{}, c.QueueSize)}
 	a.rootctx, a.stop = context.WithCancel(context.Background())
 	a.state = manifestState{Sources: map[string]sourceRecord{}, Resources: map[string]resource{}, Operations: map[string]*operationRecord{}}
 	if b, err := os.ReadFile(filepath.Join(c.Root, "manifest.json")); err == nil {
@@ -142,6 +146,9 @@ func (a *Agent) Close() error {
 	a.mu.Lock()
 	a.closed = true
 	a.stop()
+	for _, cancel := range a.running {
+		cancel()
+	}
 	for _, o := range a.state.Operations {
 		if o.Status == "queued" {
 			a.finishLocked(o, "failed", "PROCESS_FAILED", nil)
@@ -149,6 +156,7 @@ func (a *Agent) Close() error {
 	}
 	a.mu.Unlock()
 	a.wg.Wait()
+	a.uploadWG.Wait()
 	a.mu.Lock()
 	for _, o := range a.state.Operations {
 		if o.Status == "queued" {

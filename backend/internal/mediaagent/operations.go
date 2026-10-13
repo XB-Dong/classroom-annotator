@@ -82,13 +82,18 @@ func (a *Agent) recover() error {
 		if o.Staging != "" && !safeRelative(o.Staging) {
 			return errors.New("INVALID_MANIFEST")
 		}
-		if o.Status == "running" || o.Status == "queued" {
-			if err := a.cleanup(o.Staging); err != nil {
-				return err
-			}
+		interrupted := o.Status == "running" || o.Status == "queued"
+		if interrupted {
 			o.Status = "failed"
 			o.ErrorCode = ptr("PROCESS_FAILED")
-			o.Staging = ""
+		}
+		if o.Staging != "" {
+			if err := a.cleanup(o.Staging); err != nil {
+				o.Status = "failed"
+				o.ErrorCode = ptr("CLEANUP_FAILED")
+			} else {
+				o.Staging = ""
+			}
 		}
 	}
 	return a.persistLocked()
@@ -281,8 +286,9 @@ func (a *Agent) finishLocked(o *operationRecord, status, code string, result any
 	if err := a.cleanup(o.Staging); err != nil {
 		status = "failed"
 		code = "CLEANUP_FAILED"
+	} else {
+		o.Staging = ""
 	}
-	o.Staging = ""
 	o.Status = status
 	o.ErrorCode = ptr(code)
 	if status == "completed" {
@@ -314,6 +320,12 @@ func (a *Agent) sweeper() {
 		case now := <-ticker.C:
 			a.mu.Lock()
 			for id, o := range a.state.Operations {
+				if o.Status == "failed" && o.Staging != "" {
+					if a.cleanup(o.Staging) == nil {
+						o.Staging = ""
+						_ = a.persistLocked()
+					}
+				}
 				if (o.Status == "queued" || o.Status == "running") && (now.After(o.LeaseUntil) || now.After(o.Deadline)) {
 					if stop := a.running[id]; stop != nil {
 						o.ErrorCode = ptr("TIMEOUT")

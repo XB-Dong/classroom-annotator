@@ -35,8 +35,9 @@ func TestUploadLimitDoesNotPublish(t *testing.T) {
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if len(a.state.Resources) != 0 || len(a.state.Operations) != 0 {
-		t.Fatal("oversize input published")
+	op := a.state.Operations["oversize"]
+	if len(a.state.Resources) != 0 || op == nil || op.Status != "failed" || op.Staging != "" {
+		t.Fatal("oversize input published or staging retained")
 	}
 }
 func TestArchiveTTLOnlyRemovesZIP(t *testing.T) {
