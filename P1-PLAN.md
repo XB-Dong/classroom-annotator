@@ -2,7 +2,7 @@
 
 > For agentic workers: This is a review draft, not execution authorization. After explicit user approval and start, use superpowers:subagent-driven-development or superpowers:executing-plans. Load this plan, the P1 specifications and task packet. Do not inherit an expired deadline, silently change contracts, or operate a tunnel. Only the Leader integrates and deploys.
 
-版本：0.2.0｜状态：待用户审核，未启动｜日期：2026-10-14
+版本：0.2.0｜状态：用户已批准并启动；实际进度见state.json｜日期：2026-10-14
 工作时区：Asia/Shanghai（UTC+08:00）
 
 **目标：** 在既有人工标注底座上交付清爽的手绘漫画风工作台、真实人头预标注、图片与具体框的高风险复核、注册登录、低并发协作及文档增强使用引导，形成可在云端验证/录屏、之后整体部署到 Mac 的初步版本。
@@ -10,6 +10,8 @@
 **架构：** 浏览器 → Nginx → Go → PostgreSQL；Go 调用同机 Python 推理服务。视频、图片和导出保存在当前部署主机的外部媒体卷。取消云端与 Mac 分拆存储及运行时隧道。
 
 **技术栈：** 保留 React / TypeScript / Vite / React Konva；Go / Gin / database/sql / pgx / goose / PostgreSQL 17；新增 Python / FastAPI / ONNX Runtime CPU；Docker Compose / Nginx / FFmpeg / Prometheus / Grafana。不加 Redis、ORM、WebSocket、CRDT、Kubernetes 或自研 Agent 编排。
+
+执行记录：用户已明确“P1启动。”，本计划与建议预算/模型配置获批；下文准备期措辞保留为审定基线，当前执行授权与真实开始时间见 docs/waves/P1/state.json。不得据历史措辞再次要求批示。
 
 ## 1. 审核边界与真实基线
 

@@ -1,5 +1,13 @@
 # Agent Instructions
 
+## Current P1 execution authorization (supersedes preparation and historical wording)
+
+The user explicitly started approved P1 plan0.2.0 on2026-10-14. Execute the active plan and task packet continuously within scope. State.json is the source of actual start/deadline:2026-10-14T08:30:00+08:00. Leader alone integrates/deploys and freezes shared contracts. No per-round confirmation is needed. Do not reapply the historical preparation-only gate below.
+
+Approved policy: Leader gpt-6.1-sol/high; native workers gpt-6.1-sol/high; implementation-only gpt-6-sol/high fallback after two recorded capacity failures; specialist gpt-6-astra/xhigh; external GLM company-glm/glm-4.7-flash for independent code and public-only real browser experience. Requested settings are not verified actual routing. Max8 P1 repair rounds/max2 per root task; retain old P0.1 used6/6 and explicitly allocate inherited continuation within P1 budget. No tunnels, no Windows Docker/autostart; one heavy local process, external runtime/worktrees. All approved P1 requirements include true registration/login and full-document onboarding QA with no vectorization.
+
+### Historical preparation text (not current authorization)
+
 ## Current P1 preparation gate (supersedes historical execution wording)
 
 The user closed P0.1 and requested P1 preparation for review. Current authorization is documentation and bounded read-only plan review only. Do not implement, install dependencies, start feature workers or servers, migrate/deploy, retire tunnel infrastructure, or operate Mac until the user explicitly approves and starts P1. Receiving a deadline or plan-review message does not start execution.
