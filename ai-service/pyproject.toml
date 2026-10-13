@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools==80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "classroom-ai"
+version = "0.1.0"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "numpy==2.2.6", "Pillow==11.3.0", "onnxruntime==1.23.2",
+  "fastapi==0.119.0", "uvicorn==0.37.0", "python-multipart==0.0.20",
+]
+
+[project.optional-dependencies]
+test = ["pytest==8.4.2", "httpx==0.28.1"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+markers = ["real_model: actual pinned ONNX artifact and authorized JPEG, no fixture outputs"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

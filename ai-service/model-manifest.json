@@ -10,13 +10,18 @@
   "licenseFile": "MODEL-LICENSE",
   "provenance": {
     "physicalArtifact": "Recovered existing evaluated artifact by Leader; byte size and SHA independently checked",
-    "authorModelLicense": "https://github.com/PINTO0309/High-Angle_Robust_Fast_FaceAlignment/blob/main/README.md#8-references",
+    "authorModelLicense": "https://github.com/PINTO0309/High-Angle_Robust_Fast_FaceAlignment/blob/main/README.md",
     "modelDirectory": "https://github.com/PINTO0309/PINTO_model_zoo/tree/d069263de93154dba4d41052cfcb055a3bb93fb4/471_YOLO-Wholebody34",
     "classTable": "https://github.com/PINTO0309/PINTO_model_zoo/blob/d069263de93154dba4d41052cfcb055a3bb93fb4/471_YOLO-Wholebody34/README.md",
     "licenseSource": "https://github.com/PINTO0309/PINTO_model_zoo/blob/d069263de93154dba4d41052cfcb055a3bb93fb4/471_YOLO-Wholebody34/LICENSE",
-    "historicalDirectory455": "Obsolete author link; never used to download a model"
+    "historicalDirectory455": "Obsolete author link; never used to download a model",
+    "fetchedSourceSHA256": {
+      "471-LICENSE": "22c818a1b15d578d5546a5fc107392831ca722afecf65f6f3d0c42f156d04aa1",
+      "471-README": "8a1c551825e37275272b0a83beb96d6bfbaa8563c1d58ebba0541b3f34964d3a",
+      "author-README": "fa76e962742acd9a80ca20013c2a4f5ebb10cf9ef6ce0ca6d67ef6d25b8d7dc1"
+    }
   },
-  "pipelineVersion": "head-letterbox-v1-fullframe-2x2-15",
+  "pipelineVersion": "classroom-head-v1-fullframe-2x2-15",
   "pipeline": {"largeImageMinimumMaxDimension": 1280, "largeImageMode": "fullframe_plus_2x2", "tileOverlapFraction": 0.15, "maximumInvocations": 5, "confidenceThreshold": 0.25, "nmsThreshold": 0.5},
   "evidence": {"realSamples": 8, "inputDescription": "Authorized PNG frames converted to JPEG in memory; no original JPEG claim", "status": "Partial head candidates with substantial visible omissions; precision and recall not evaluated", "runtimeEvidence": "runtime/p1-ai/r0-model-results.json and r0-tiling-results.json"}
 }
