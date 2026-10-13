@@ -24,4 +24,4 @@ P0 已交付人工标注闭环，并完成当前本地/合成材料范围的 14 
 
 前后端分别见 [frontend](frontend/README.md) 和 [backend](backend/README.md)。[统一验收说明](tests/README.md)、[部署说明](deploy/README.md) 和 [云端验收/恢复步骤](deploy/ACCEPTANCE.md) 说明如何复做检查。统一入口为 `scripts/verify.ps1`（Windows）或 `bash scripts/verify.sh`（Linux）；源码外配置 FFmpeg、缓存和测试数据目录。
 
-演示应用原通过授权 SSH 转发访问；用户追加公网入口要求后，当前云端已新增带密码的 HTTP 80。具体主机地址与密码在仓库外，不在源码硬编码；普通 Chrome/Edge 使用账号 demo 登录。Windows SSH 入口 `http://127.0.0.1:8180` 仍保留，Prometheus/Grafana 仍绑定 loopback，转发端口为 `:9090`、`:3000`。Grafana 密码独立配置。P0 原验收云端使用合成视频；交付后新增 mentor 许可，当前云端已导入 `channel4-20s-redacted.mp4` 真实脱敏样本。外部 GLM 仍只获准代码/独立合成数据审核，不能访问真实媒体实例。见 [展示与门禁规格](specs/cloud-demo-access.md)。
+演示应用原通过授权 SSH 转发访问；用户追加公网入口要求后，当前云端已新增带密码的 HTTP 80。具体主机地址与密码在仓库外，不在源码硬编码；普通 Chrome/Edge 使用账号 demo 登录。Windows SSH 入口 `http://127.0.0.1:8180` 仍保留，Prometheus/Grafana 仍绑定 loopback，转发端口为 `:9090`、`:3000`。Grafana 密码独立配置。P0 原验收云端使用合成视频；当前云端已导入 `channel4-20s-redacted.mp4` 真实脱敏样本。外部 GLM 仍只获准代码/独立合成数据审核，不能访问真实媒体实例。见 [展示与门禁规格](specs/cloud-demo-access.md)。
