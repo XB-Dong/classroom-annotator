@@ -4,6 +4,7 @@ import Konva from 'konva';
 import type { Annotation, Frame } from '../../shared/api/types';
 import { normalizeBox, originalPoint, type Box } from './geometry';
 import { applyNodeBox } from './nodeGeometry';
+import { authSession } from '../auth/session';
 interface Props {
   frame: Frame;
   annotations: Annotation[];
@@ -110,22 +111,26 @@ export function AnnotationCanvas({
   }, []);
   useEffect(() => {
     let active = true;
+    const generation = authSession.generation;
     if (loadedFrameId.current !== frame.id) setImage(undefined);
     setImageError(false);
     const img = new Image();
     img.onload = () => {
-      if (active) {
+      if (active && generation === authSession.generation) {
         loadedFrameId.current = frame.id;
         setImage(img);
         setImageError(false);
       }
     };
     img.onerror = () => {
-      if (active) setImageError(true);
+      if (active && generation === authSession.generation) setImageError(true);
     };
     img.src = frame.imageUrl;
     return () => {
       active = false;
+      img.onload = null;
+      img.onerror = null;
+      img.src = '';
     };
   }, [frame.id, frame.imageUrl, imageRetry]);
   const scale = Math.min(size.width / frame.width, size.height / frame.height);
@@ -169,10 +174,16 @@ export function AnnotationCanvas({
   const preview = draft && normalizeBox(draft, frame.width, frame.height);
   return (
     <div ref={container} className={`canvas-shell ${mode}`} data-testid="annotation-canvas">
-      {imageError && image && <div className="canvas-message" role="status">原图连接中断，已显示已加载的原图。标注可继续保存。 <button onClick={() => setImageRetry((value) => value + 1)}>重试加载原图</button></div>}
+      {imageError && image && (
+        <div className="canvas-message" role="status">
+          原图连接中断，已显示已加载的原图。标注可继续保存。{' '}
+          <button onClick={() => setImageRetry((value) => value + 1)}>重试加载原图</button>
+        </div>
+      )}
       {imageError && !image ? (
         <div className="canvas-message" role="alert">
-          原图暂不可用，媒体服务可能离线。<button onClick={() => setImageRetry((value) => value + 1)}>重试加载原图</button>
+          原图暂不可用，媒体服务可能离线。
+          <button onClick={() => setImageRetry((value) => value + 1)}>重试加载原图</button>
         </div>
       ) : !image ? (
         <div className="canvas-message">正在加载原图…</div>

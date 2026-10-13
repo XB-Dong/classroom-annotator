@@ -1,4 +1,32 @@
 import type { Box } from '../../features/annotation/geometry';
+export interface AuthUser {
+  id: string;
+  username: string;
+  displayName: string;
+  role: 'admin' | 'annotator';
+  workspaceId: string;
+}
+export interface AuthSession {
+  user: AuthUser;
+  csrfToken: string;
+}
+export interface HelpSection {
+  id: string;
+  title: string;
+  anchor: string;
+}
+export interface HelpDocument {
+  documentVersion: string;
+  documentSHA256: string;
+  content: string;
+  sections: HelpSection[];
+}
+export interface HelpAnswer {
+  answer: string;
+  references: { sectionId: string; title: string; anchor: string }[];
+  documentVersion: string;
+  documentSHA256: string;
+}
 export type FrameStatus = 'not_started' | 'in_progress' | 'completed';
 export interface Annotation {
   id: string;

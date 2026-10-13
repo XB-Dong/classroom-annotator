@@ -10,12 +10,74 @@ import { FramePicker } from '../features/annotation/FramePicker';
 import { ScopedRequest } from '../shared/api/scopedRequest';
 import type { SaveController, SaveState, SaveView } from '../features/annotation/saveController';
 import { draftKey } from '../features/annotation/drafts';
+import { AuthProvider, useAuth } from '../features/auth/AuthProvider';
+import { AuthPage } from '../features/auth/AuthPage';
+import { NotebookMark } from '../shared/ui/NotebookMark';
+import { HelpPanel } from '../features/help/HelpPanel';
 const Editor = lazy(() =>
   import('../features/annotation/Editor').then((module) => ({ default: module.Editor })),
 );
 import { ExportButton } from '../features/export/ExportButton';
 
 export function App() {
+  return (
+    <AuthProvider>
+      <AccountWorkspace />
+    </AuthProvider>
+  );
+}
+function AccountWorkspace() {
+  const auth = useAuth();
+  const [helpOpen, setHelpOpen] = useState(false);
+  return (
+    <div className={`app ${helpOpen ? 'help-open' : ''}`}>
+      <header className="app-header">
+        <div className="brand-mark">
+          <NotebookMark />
+        </div>
+        <div>
+          <h1>课堂人头标注</h1>
+          <p>认真标注 · 清楚复核</p>
+        </div>
+        <div className="account-actions">
+          {auth.session && (
+            <div className="workspace-identity">
+              <strong>{auth.session.user.displayName}</strong>
+              <span>共享工作区 · {auth.session.user.role === 'admin' ? '管理员' : '标注成员'}</span>
+            </div>
+          )}
+          <button
+            aria-expanded={helpOpen}
+            aria-controls="help-panel"
+            onClick={() => setHelpOpen((value) => !value)}
+          >
+            使用指南
+          </button>
+          {auth.session && <button onClick={auth.logout}>退出登录</button>}
+        </div>
+      </header>
+      <div className="app-content">
+        {helpOpen && <HelpPanel close={() => setHelpOpen(false)} />}
+        {auth.loading ? (
+          <main className="empty" role="status">
+            正在确认登录状态…
+          </main>
+        ) : auth.session ? (
+          <Workspace key={`${auth.session.user.workspaceId}:${auth.session.user.id}`} />
+        ) : (
+          <AuthPage />
+        )}
+      </div>
+    </div>
+  );
+}
+function Workspace() {
+  const { session } = useAuth();
+  const draftScope = {
+    deploymentOrigin: window.location.origin,
+    workspaceId: session!.user.workspaceId,
+    userId: session!.user.id,
+  };
   const [videos, setVideos] = useState<Video[]>([]);
   const [videoId, setVideoId] = useState('');
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -43,7 +105,7 @@ export function App() {
   progressRequests.current.setScope(scope);
   const unresolvedDrafts = frames.filter((f) => {
     try {
-      return localStorage.getItem(draftKey(f.id)) !== null;
+      return localStorage.getItem(draftKey(f.id, draftScope)) !== null;
     } catch {
       return true;
     }
@@ -218,127 +280,118 @@ export function App() {
       );
   }
   return (
-    <div className="app">
-      <header className="app-header">
-        <div className="brand-mark">▦</div>
-        <div>
-          <h1>课堂人头标注</h1>
-          <p>Classroom Annotation Workspace</p>
-        </div>
-        <div className="header-note">
-          <span className="dot" />
-          人工标注工作台 <span className="version">P0.1</span>
-        </div>
-      </header>
-      <div className="app-layout">
-        <aside className="video-sidebar">
-          <ImportPanel
-            onVideo={(v) => {
-              setVideos((previous) => [v, ...previous.filter((x) => x.id !== v.id)]);
-              void navigate(() => setVideoId(v.id));
-            }}
-            onJob={addJob}
-          />
-          <VideoLibrary
-            videos={videos}
-            videoId={videoId}
-            loading={loading}
-            error={libraryError}
-            refresh={() => void loadVideos()}
-            select={(id) => {
-              if (id !== videoId) void navigate(() => setVideoId(id));
-            }}
-          />
-          {video && <ExtractionForm key={video.id} video={video} onJob={addJob} />}
-          <JobsPanel jobs={jobs} error={jobsError} cancel={(id) => void cancel(id)} />
-        </aside>
-        <main className="workspace">
-          <div className="workspace-header">
-            <div>
-              <span className="eyebrow">03 / 标注工作台</span>
-              <h2>{video?.name || '准备开始标注'}</h2>
-            </div>
-            {videoId && batchId && progress && (
-              <ExportButton
-                videoId={videoId}
-                batchId={batchId}
-                completed={progress.completed}
-                blocked={
-                  navigationBusy || !editorReady || editorState !== 'saved' || unresolvedDrafts > 0
-                }
-              />
-            )}
+    <div className="app-layout">
+      <aside className="video-sidebar">
+        <ImportPanel
+          onVideo={(v) => {
+            setVideos((previous) => [v, ...previous.filter((x) => x.id !== v.id)]);
+            void navigate(() => setVideoId(v.id));
+          }}
+          onJob={addJob}
+        />
+        <VideoLibrary
+          videos={videos}
+          videoId={videoId}
+          loading={loading}
+          error={libraryError}
+          refresh={() => void loadVideos()}
+          select={(id) => {
+            if (id !== videoId) void navigate(() => setVideoId(id));
+          }}
+        />
+        {video && <ExtractionForm key={video.id} video={video} onJob={addJob} />}
+        <JobsPanel jobs={jobs} error={jobsError} cancel={(id) => void cancel(id)} />
+      </aside>
+      <main className="workspace">
+        <div className="workspace-header">
+          <div>
+            <span className="eyebrow">
+              标注工作台{' '}
+              {frame ? ` / 帧 ${frames.findIndex((item) => item.id === frame.id) + 1}` : ''}
+            </span>
+            <h2>{video?.name || '准备开始标注'}</h2>
           </div>
-          {video ? (
-            <>
-              <BatchBar
-                batches={batches}
-                batchId={batchId}
-                loading={batchLoading}
-                busy={navigationBusy}
-                progress={progress}
-                select={(id) => {
-                  if (id !== batchId) void navigate(() => setBatchId(id));
-                }}
-              />
-              {batchError && (
-                <div className="notice error" role="alert">
-                  {batchError}
-                </div>
-              )}
-              {navigationError && (
-                <div role="alert" className="notice error">
-                  {navigationError}
-                </div>
-              )}
-              {unresolvedDrafts > 0 && (
-                <div role="status" className="notice conflict">
-                  当前批次有 {unresolvedDrafts}{' '}
-                  帧草稿尚未保存或处理，导出已暂停。请打开这些帧完成保存或丢弃草稿。
-                </div>
-              )}
-              {framesLoading ? (
-                <div className="empty">正在加载批次图片…</div>
-              ) : frames.length === 0 ? (
-                <div className="empty">
-                  <div className="empty-icon">▧</div>
-                  <h3>还没有可标注的帧</h3>
-                  <p>创建抽帧批次，任务完成后会在这里显示。</p>
-                </div>
-              ) : (
-                <div className="workbench">
-                  <FramePicker
-                    frames={frames}
-                    frameId={frameId}
-                    busy={navigationBusy}
-                    select={(id) => {
-                      if (id !== frameId) void navigate(() => setFrameId(id));
-                    }}
-                  />
-                  {frame && (
-                    <Suspense fallback={<div className="empty">正在加载标注工具…</div>}>
-                      <Editor
-                        key={frame.id}
-                        frame={frame}
-                        onSaved={saved}
-                        onController={controllerChanged}
-                        onStateChange={editorChanged}
-                      />
-                    </Suspense>
-                  )}
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="empty intro">
-              <div className="empty-icon">▧</div>
-              <h3>从公共示例或自己的视频开始</h3>
-              <p>选择素材 → 按间隔抽帧 → 标注学生人头 → 导出训练数据</p>
-              <p className="muted">仅已完成帧会进入 COCO 图片包，零人头帧也需显式完成。</p>
-            </div>
+          {videoId && batchId && progress && (
+            <ExportButton
+              videoId={videoId}
+              batchId={batchId}
+              completed={progress.completed}
+              blocked={
+                navigationBusy || !editorReady || editorState !== 'saved' || unresolvedDrafts > 0
+              }
+            />
           )}
-        </main>
-      </div>
+        </div>
+        {video ? (
+          <>
+            <BatchBar
+              batches={batches}
+              batchId={batchId}
+              loading={batchLoading}
+              busy={navigationBusy}
+              progress={progress}
+              select={(id) => {
+                if (id !== batchId) void navigate(() => setBatchId(id));
+              }}
+            />
+            {batchError && (
+              <div className="notice error" role="alert">
+                {batchError}
+              </div>
+            )}
+            {navigationError && (
+              <div role="alert" className="notice error">
+                {navigationError}
+              </div>
+            )}
+            {unresolvedDrafts > 0 && (
+              <div role="status" className="notice conflict">
+                当前批次有 {unresolvedDrafts}{' '}
+                帧草稿尚未保存或处理，导出已暂停。请打开这些帧完成保存或丢弃草稿。
+              </div>
+            )}
+            {framesLoading ? (
+              <div className="empty">正在加载批次图片…</div>
+            ) : frames.length === 0 ? (
+              <div className="empty">
+                <div className="empty-icon">▧</div>
+                <h3>还没有可标注的帧</h3>
+                <p>创建抽帧批次，任务完成后会在这里显示。</p>
+              </div>
+            ) : (
+              <div className="workbench">
+                <FramePicker
+                  frames={frames}
+                  frameId={frameId}
+                  busy={navigationBusy}
+                  select={(id) => {
+                    if (id !== frameId) void navigate(() => setFrameId(id));
+                  }}
+                />
+                {frame && (
+                  <Suspense fallback={<div className="empty">正在加载标注工具…</div>}>
+                    <Editor
+                      key={frame.id}
+                      frame={frame}
+                      draftScope={draftScope}
+                      onSaved={saved}
+                      onController={controllerChanged}
+                      onStateChange={editorChanged}
+                    />
+                  </Suspense>
+                )}
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="empty intro">
+            <div className="empty-icon">▧</div>
+            <h3>从公共示例或自己的视频开始</h3>
+            <p>选择素材 → 按间隔抽帧 → 标注学生人头 → 导出训练数据</p>
+            <p className="muted">仅已完成帧会进入 COCO 图片包，零人头帧也需显式完成。</p>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

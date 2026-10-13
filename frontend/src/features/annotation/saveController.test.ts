@@ -139,7 +139,7 @@ describe('captured snapshot saving and draft recovery', () => {
     expect(state.clear).toHaveBeenCalledOnce();
     state.controller.dispose();
   });
-  it('suspends autosave for a recovered stale draft and replaces with latest server revision explicitly', async () => {
+  it('keeps a stale draft for reference while loading latest without resubmitting it', async () => {
     const requests: Snapshot[] = [];
     const state = setup(
       async (s) => {
@@ -153,7 +153,11 @@ describe('captured snapshot saving and draft recovery', () => {
     expect(requests).toHaveLength(0);
     await state.controller.resolve(true);
     await state.controller.flush();
-    expect(requests[0]).toMatchObject({ revision: 7, status: 'in_progress' });
+    expect(requests).toHaveLength(0);
+    expect(state.controller.snapshot).toMatchObject({ revision: 7, status: 'completed' });
+    expect(state.view?.retainedDraft?.snapshot.status).toBe('in_progress');
+    expect(state.view?.retainedDraft?.baseRevision).toBe(3);
+    expect(state.clear).not.toHaveBeenCalled();
     state.controller.dispose();
   });
   it('discarding a stale draft restores latest server and clears it without saving', async () => {

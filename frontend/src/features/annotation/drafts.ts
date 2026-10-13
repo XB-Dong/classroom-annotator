@@ -1,9 +1,20 @@
 import type { Draft } from './saveController';
 import { normalizeBox } from './geometry';
-export const draftKey = (frameId: string) => `classroom-annotator:draft:v1:${frameId}`;
-export function readDraft(frameId: string, width: number, height: number): Draft | undefined {
+export interface DraftScope {
+  deploymentOrigin: string;
+  workspaceId: string;
+  userId: string;
+}
+export const draftKey = (frameId: string, scope: DraftScope) =>
+  `classroom-annotator:draft:v2:${[scope.deploymentOrigin, scope.workspaceId, scope.userId, frameId].map(encodeURIComponent).join(':')}`;
+export function readDraft(
+  frameId: string,
+  width: number,
+  height: number,
+  scope: DraftScope,
+): Draft | undefined {
   try {
-    const raw = localStorage.getItem(draftKey(frameId));
+    const raw = localStorage.getItem(draftKey(frameId, scope));
     if (!raw) return;
     const d = JSON.parse(raw) as Draft;
     if (

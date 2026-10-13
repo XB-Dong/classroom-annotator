@@ -3,10 +3,11 @@ import type { Annotation, Frame, Snapshot } from '../../shared/api/types';
 import { idPath, request, saveSnapshot } from '../../shared/api/client';
 import { AnnotationCanvas } from './Canvas';
 import { SaveController, type SaveView } from './saveController';
-import { draftKey, readDraft } from './drafts';
+import { draftKey, readDraft, type DraftScope } from './drafts';
 import { EditHistory } from './history';
 interface Props {
   frame: Frame;
+  draftScope: DraftScope;
   onSaved: (snapshot: Snapshot) => void;
   onController?: (controller?: SaveController) => void;
   onStateChange?: (view: SaveView) => void;
@@ -18,7 +19,7 @@ const statusLabels = {
   error: '保存失败',
   conflict: '版本冲突',
 };
-export function Editor({ frame, onSaved, onController, onStateChange }: Props) {
+export function Editor({ frame, draftScope, onSaved, onController, onStateChange }: Props) {
   const [view, setView] = useState<SaveView>();
   const [loadError, setLoadError] = useState<string>();
   const [draftWarning, setDraftWarning] = useState<string>();
@@ -54,20 +55,20 @@ export function Editor({ frame, onSaved, onController, onStateChange }: Props) {
             },
             writeDraft: (d) => {
               try {
-                localStorage.setItem(draftKey(frame.id), JSON.stringify(d));
+                localStorage.setItem(draftKey(frame.id, draftScope), JSON.stringify(d));
               } catch {
                 setDraftWarning('浏览器草稿存储不可用，请保持页面打开直到保存成功。');
               }
             },
             clearDraft: () => {
               try {
-                localStorage.removeItem(draftKey(frame.id));
+                localStorage.removeItem(draftKey(frame.id, draftScope));
               } catch {
                 setDraftWarning('无法清理浏览器草稿。');
               }
             },
           },
-          readDraft(frame.id, frame.width, frame.height),
+          readDraft(frame.id, frame.width, frame.height, draftScope),
         );
         lifecycleCallbacks.current.onController?.(controller.current);
       })
@@ -80,7 +81,14 @@ export function Editor({ frame, onSaved, onController, onStateChange }: Props) {
       controller.current = undefined;
       lifecycleCallbacks.current.onController?.(undefined);
     };
-  }, [frame.id, frame.width, frame.height]);
+  }, [
+    frame.id,
+    frame.width,
+    frame.height,
+    draftScope.deploymentOrigin,
+    draftScope.workspaceId,
+    draftScope.userId,
+  ]);
   function edit(snapshot: Snapshot) {
     if (!controller.current || view?.state === 'conflict') return;
     history.current.push(controller.current.snapshot);
@@ -203,13 +211,13 @@ export function Editor({ frame, onSaved, onController, onStateChange }: Props) {
             <strong>草稿需要处理</strong>
             <p>
               服务器版本 {view.conflict?.revision ?? '待获取'}
-              。自动保存已暂停。替换前将重新获取最新版本。
+              。自动保存已暂停。请读取最新版本，保留草稿后在新版本上重新编辑。
             </p>
             <button
               disabled={view.resolving}
               onClick={() => void controller.current?.resolve(true)}
             >
-              用草稿替换服务器内容
+              查看最新并保留草稿
             </button>
             <button
               data-testid="conflict-reload"
@@ -218,6 +226,24 @@ export function Editor({ frame, onSaved, onController, onStateChange }: Props) {
             >
               丢弃草稿，使用服务器内容
             </button>
+          </div>
+        )}
+        {view.retainedDraft && (
+          <div className="notice conflict" role="status">
+            <strong>本账号原草稿已保留</strong>
+            <p>
+              旧版本 {view.retainedDraft.baseRevision} ·{' '}
+              {view.retainedDraft.snapshot.annotations.length}{' '}
+              个框。画布已显示最新服务器版本；请参考草稿重新编辑，保存新的修改后清理旧草稿。
+            </p>
+            <details>
+              <summary>查看草稿坐标</summary>
+              {view.retainedDraft.snapshot.annotations.map((annotation) => (
+                <p key={annotation.id}>
+                  {annotation.bbox.map((value) => value.toFixed(1)).join(', ')}
+                </p>
+              ))}
+            </details>
           </div>
         )}
         <AnnotationCanvas

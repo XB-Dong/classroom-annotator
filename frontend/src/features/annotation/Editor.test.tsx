@@ -43,7 +43,17 @@ afterEach(() => {
 });
 describe('annotation editor interactions', () => {
   it('deletes the selected stable annotation and undo restores it', async () => {
-    render(<Editor frame={frame} onSaved={() => {}} />);
+    render(
+      <Editor
+        draftScope={{
+          deploymentOrigin: window.location.origin,
+          workspaceId: 'shared',
+          userId: 'test',
+        }}
+        frame={frame}
+        onSaved={() => {}}
+      />,
+    );
     await screen.findByText('学生人头 1');
     fireEvent.click(screen.getByTestId('annotation-item-a'));
     fireEvent.keyDown(window, { key: 'Delete' });
@@ -55,7 +65,15 @@ describe('annotation editor interactions', () => {
     render(
       <>
         <input aria-label="test-input" />
-        <Editor frame={frame} onSaved={() => {}} />
+        <Editor
+          draftScope={{
+            deploymentOrigin: window.location.origin,
+            workspaceId: 'shared',
+            userId: 'test',
+          }}
+          frame={frame}
+          onSaved={() => {}}
+        />
       </>,
     );
     await screen.findByText('学生人头 1');
@@ -64,7 +82,17 @@ describe('annotation editor interactions', () => {
     expect(screen.getByText('学生人头 1')).toBeTruthy();
   });
   it('explicitly completes a zero-head frame and saves the empty annotations', async () => {
-    render(<Editor frame={frame} onSaved={() => {}} />);
+    render(
+      <Editor
+        draftScope={{
+          deploymentOrigin: window.location.origin,
+          workspaceId: 'shared',
+          userId: 'test',
+        }}
+        frame={frame}
+        onSaved={() => {}}
+      />,
+    );
     await screen.findByText('学生人头 1');
     fireEvent.click(screen.getByTestId('annotation-item-a'));
     fireEvent.click(screen.getByText('删除选中框'));
@@ -93,7 +121,17 @@ describe('annotation editor interactions', () => {
           ),
       ),
     );
-    render(<Editor frame={frame} onSaved={() => {}} />);
+    render(
+      <Editor
+        draftScope={{
+          deploymentOrigin: window.location.origin,
+          workspaceId: 'shared',
+          userId: 'test',
+        }}
+        frame={frame}
+        onSaved={() => {}}
+      />,
+    );
     await screen.findByText('学生人头 1');
     fireEvent.click(screen.getByTestId('annotation-item-a'));
     fireEvent.click(screen.getByText('删除选中框'));

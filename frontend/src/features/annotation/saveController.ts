@@ -11,6 +11,7 @@ export interface SaveView {
   error?: string;
   conflict?: Snapshot;
   resolving: boolean;
+  retainedDraft?: Draft;
 }
 export interface SaveDependencies {
   save: (snapshot: Snapshot) => Promise<Snapshot>;
@@ -29,6 +30,7 @@ export class SaveController {
   private idleWaiters: Array<() => void> = [];
   private timer?: ReturnType<typeof setTimeout>;
   private state: SaveState = 'saved';
+  private retainedDraft?: Draft;
   constructor(
     public snapshot: Snapshot,
     public dependencies: SaveDependencies,
@@ -37,7 +39,10 @@ export class SaveController {
     if (draft) {
       this.sequence = Math.max(1, draft.editSequence);
       const stale = draft.baseRevision !== snapshot.revision;
-      this.snapshot = { ...structuredClone(draft.snapshot), revision: snapshot.revision };
+      this.snapshot = {
+        ...structuredClone(draft.snapshot),
+        revision: stale ? draft.baseRevision : snapshot.revision,
+      };
       this.suspended = stale;
       this.state = stale ? 'conflict' : 'dirty';
       this.emit(
@@ -55,6 +60,7 @@ export class SaveController {
         error,
         conflict,
         resolving: this.resolving,
+        retainedDraft: this.retainedDraft,
       });
   }
   private persist() {
@@ -94,6 +100,7 @@ export class SaveController {
       if (this.sequence === capturedSequence) {
         this.snapshot = ack;
         this.state = 'saved';
+        this.retainedDraft = undefined;
         this.dependencies.clearDraft();
       } else {
         this.state = 'dirty';
@@ -112,7 +119,7 @@ export class SaveController {
         this.state = 'conflict';
         try {
           const latest = await this.dependencies.load();
-          this.emit('服务器内容已改变，请选择替换或丢弃草稿。', latest);
+          this.emit('服务器内容已改变，请查看最新版本或丢弃草稿。', latest);
         } catch {
           this.emit('版本冲突；获取服务器版本失败，请重试恢复。');
         }
@@ -126,7 +133,7 @@ export class SaveController {
       if (this.state === 'dirty') this.schedule();
     }
   }
-  async resolve(replace: boolean) {
+  async resolve(keepDraft: boolean) {
     if (this.inFlight || this.disposed || this.resolving || !this.suspended) return;
     this.resolving = true;
     const capturedSequence = this.sequence;
@@ -136,18 +143,18 @@ export class SaveController {
       const latest = await this.dependencies.load();
       if (this.disposed || capturedSequence !== this.sequence) return;
       this.suspended = false;
-      if (replace) {
-        this.snapshot = { ...this.snapshot, revision: latest.revision };
-        this.sequence++;
-        this.state = 'dirty';
-        this.persist();
-        this.schedule();
-      } else {
-        this.snapshot = latest;
-        this.acknowledged = this.sequence;
-        this.state = 'saved';
-        this.dependencies.clearDraft();
-      }
+      this.retainedDraft = keepDraft
+        ? {
+            baseRevision: this.snapshot.revision,
+            editSequence: this.sequence,
+            snapshot: structuredClone(this.snapshot),
+          }
+        : undefined;
+      if (keepDraft) this.dependencies.writeDraft(this.retainedDraft!);
+      else this.dependencies.clearDraft();
+      this.snapshot = latest;
+      this.acknowledged = this.sequence;
+      this.state = 'saved';
       this.emit();
     } catch (error) {
       resolutionError = error instanceof Error ? error.message : '无法获取最新版本';

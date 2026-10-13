@@ -2,11 +2,20 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, expect, it, vi } from 'vitest';
 import { App } from './App';
 import type { Snapshot } from '../shared/api/types';
+import { authSession } from '../features/auth/session';
+import { draftKey } from '../features/annotation/drafts';
+import { act } from '@testing-library/react';
+const draftScope = {
+  deploymentOrigin: window.location.origin,
+  workspaceId: 'shared',
+  userId: 'test-user',
+};
 vi.mock('../features/annotation/Canvas', () => ({
   AnnotationCanvas: () => <div data-testid="annotation-canvas" />,
 }));
 afterEach(() => {
   cleanup();
+  authSession.clear();
   localStorage.clear();
   vi.unstubAllGlobals();
 });
@@ -21,7 +30,18 @@ async function setup(
     'fetch',
     vi.fn(async (url: string, requestOptions?: RequestInit) => {
       let value: unknown;
-      if (url === '/api/v1/videos' && requestOptions?.method === 'POST') {
+      if (url === '/api/v1/auth/me')
+        value = {
+          user: {
+            id: 'test-user',
+            username: 'tester',
+            displayName: 'tester',
+            role: 'annotator',
+            workspaceId: 'shared',
+          },
+          csrfToken: 'test-csrf',
+        };
+      else if (url === '/api/v1/videos' && requestOptions?.method === 'POST') {
         await new Promise<void>((resolve) => {
           uploadAck = resolve;
         });
@@ -116,6 +136,59 @@ async function setup(
   await screen.findByTestId('annotation-item-head', {}, { timeout: 10000 });
   return { writes, ack: () => ack(), finishUpload: () => uploadAck() };
 }
+it('does not load private workspace queries for an anonymous session', async () => {
+  const fetchMock = vi.fn<(url: string) => Promise<Response>>(
+    async () => new Response(JSON.stringify({ code: 'UNAUTHENTICATED' }), { status: 401 }),
+  );
+  vi.stubGlobal('fetch', fetchMock);
+  render(<App />);
+  await screen.findByRole('button', { name: '登录工作区' });
+  expect(fetchMock.mock.calls.every(([url]) => String(url).endsWith('/auth/me'))).toBe(true);
+});
+
+it('unmounts the old workspace on logout and does not display a late private video response', async () => {
+  let finish!: (response: Response) => void;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string) => {
+      if (url.endsWith('/auth/me'))
+        return new Response(
+          JSON.stringify({
+            user: {
+              id: 'alice',
+              username: 'alice',
+              displayName: 'Alice',
+              role: 'annotator',
+              workspaceId: 'shared',
+            },
+            csrfToken: 'csrf',
+          }),
+          { headers: { 'Content-Type': 'application/json' } },
+        );
+      if (url.endsWith('/videos'))
+        return new Promise<Response>((resolve) => {
+          finish = resolve;
+        });
+      if (url.endsWith('/auth/logout')) return new Response(null, { status: 204 });
+      return new Response(JSON.stringify({ jobs: [], items: [], sources: [] }), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }),
+  );
+  render(<App />);
+  await screen.findByText('Alice');
+  fireEvent.click(screen.getByRole('button', { name: '退出登录' }));
+  await screen.findByRole('button', { name: '登录工作区' });
+  await act(async () =>
+    finish(
+      new Response(JSON.stringify({ videos: [{ id: 'private', name: 'Alice private video' }] }), {
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ),
+  );
+  expect(screen.queryByText('Alice private video')).toBeNull();
+  expect(screen.queryByTestId('video-select')).toBeNull();
+});
 it('flushes editing a completed frame before a fast frame switch and blocks stale export', async () => {
   const state = await setup('completed');
   fireEvent.click(screen.getByTestId('annotation-item-head'));
@@ -139,11 +212,11 @@ it('uses the latest active editor when an upload begun without a frame completes
   await waitFor(() =>
     expect((screen.getByTestId('video-select') as HTMLSelectElement).value).toBe('new'),
   );
-  expect(localStorage.getItem('classroom-annotator:draft:v1:a')).toBeNull();
+  expect(localStorage.getItem(draftKey('a', draftScope))).toBeNull();
 });
 it('blocks delayed upload navigation when the latest selected editor has a conflict', async () => {
   localStorage.setItem(
-    'classroom-annotator:draft:v1:a',
+    draftKey('a', draftScope),
     JSON.stringify({
       baseRevision: 3,
       editSequence: 1,
@@ -160,7 +233,7 @@ it('blocks delayed upload navigation when the latest selected editor has a confl
   await screen.findByText('当前帧尚未保存。请先重试保存或处理草稿冲突，再切换。');
   expect((screen.getByTestId('video-select') as HTMLSelectElement).value).toBe('v');
   expect(state.writes).toHaveLength(0);
-  expect(localStorage.getItem('classroom-annotator:draft:v1:a')).not.toBeNull();
+  expect(localStorage.getItem(draftKey('a', draftScope))).not.toBeNull();
 });
 it('blocks delayed upload navigation when saving the latest selected editor fails', async () => {
   const state = await setup('in_progress', { delayedUpload: true, saveError: true });
@@ -171,7 +244,7 @@ it('blocks delayed upload navigation when saving the latest selected editor fail
   await screen.findByText('当前帧尚未保存。请先重试保存或处理草稿冲突，再切换。');
   expect((screen.getByTestId('video-select') as HTMLSelectElement).value).toBe('v');
   expect(screen.getByTestId('save-state').textContent).toBe('保存失败');
-  expect(localStorage.getItem('classroom-annotator:draft:v1:a')).not.toBeNull();
+  expect(localStorage.getItem(draftKey('a', draftScope))).not.toBeNull();
 });
 it('saves an explicit completion before immediately switching away', async () => {
   const state = await setup('in_progress');
@@ -199,7 +272,7 @@ it.each(['video-select', 'batch-select'])(
 );
 it('blocks export for a persisted draft in another frame of the selected batch', async () => {
   localStorage.setItem(
-    'classroom-annotator:draft:v1:b',
+    draftKey('b', draftScope),
     JSON.stringify({
       baseRevision: 0,
       editSequence: 1,

@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import type { Video } from '../../shared/api/types';
 const sourceLabels = {
-  public_sample: '公共示例', mac: 'Mac素材', upload: '本地上传', dataset: '公司接口', legacy: '历史素材',
+  public_sample: '公共示例',
+  mac: '历史远端素材',
+  upload: '本地上传',
+  dataset: '公司接口',
+  legacy: '历史素材',
 };
 export function VideoLibrary({
   videos,
@@ -19,7 +23,9 @@ export function VideoLibrary({
   select: (id: string) => void;
 }) {
   const [showHistory, setShowHistory] = useState(false);
-  const visible = videos.filter((video) => showHistory || video.id === videoId || video.sourceKind !== 'legacy');
+  const visible = videos.filter(
+    (video) => showHistory || video.id === videoId || video.sourceKind !== 'legacy',
+  );
   const selectedVideo = videos.find((video) => video.id === videoId);
   return (
     <section className="library">
@@ -53,11 +59,21 @@ export function VideoLibrary({
             <option value="">选择视频</option>
             {visible.map((v) => (
               <option key={v.id} value={v.id}>
-                {v.name}{v.sourceKind ? ` · ${sourceLabels[v.sourceKind]}` : ''}
+                {v.name}
+                {v.sourceKind ? ` · ${sourceLabels[v.sourceKind]}` : ''}
               </option>
             ))}
           </select>
-          {selectedVideo?.sourceKind && <span className="muted small">来源：{sourceLabels[selectedVideo.sourceKind]} · 存储：{selectedVideo.storageProvider === 'mac' ? 'Mac' : selectedVideo.storageProvider === 'local' ? '云端' : '未知'}</span>}
+          {selectedVideo?.sourceKind && (
+            <span className="muted small">
+              来源：{sourceLabels[selectedVideo.sourceKind]} · 存储：
+              {selectedVideo.storageProvider === 'mac'
+                ? '历史远端（不可用）'
+                : selectedVideo.storageProvider === 'local'
+                  ? '当前部署主机'
+                  : '未知'}
+            </span>
+          )}
         </label>
       )}
     </section>
