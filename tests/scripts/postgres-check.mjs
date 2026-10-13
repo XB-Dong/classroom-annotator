@@ -14,7 +14,11 @@ import { postgresProxy } from '../helpers/postgres-proxy.mjs';
 const box = (id, x = 10) => ({ id, bbox: [x, 20, 30, 40], source: 'manual' });
 
 async function databaseAvailability(http, pool, relay, frame) {
-  await waitFor(() => relay.stats().active <= 2, 3_000, 'Default product pool idle bound');
+  const heldLease = (await pool.query(`SELECT l.pid FROM pg_locks l JOIN pg_stat_activity a ON a.pid=l.pid
+    WHERE a.datname=current_database() AND l.locktype='advisory' AND l.granted
+      AND l.classid=1129731141::oid AND l.objid=1::oid AND l.objsubid=2`)).rows;
+  assert.equal(heldLease.length, 1, 'One actual session must hold the P1 scheduler lease');
+  await waitFor(() => relay.stats().active <= 3, 3_000, 'Default product pool has at most two idle sessions plus one held scheduler lease');
   assert.ok(relay.stats().peak > 1 && relay.stats().peak <= 5, 'Default product pool must use concurrent bounded connections');
   const schema = (await pool.query('SELECT id,version_id FROM goose_db_version WHERE is_applied ORDER BY id DESC LIMIT 1')).rows[0];
   try {
@@ -37,7 +41,9 @@ async function databaseAvailability(http, pool, relay, frame) {
   } finally { relay.reconnect(); }
   await waitFor(async () => (await http.request('/health/ready')).status === 200, 15_000, 'DB reconnect readiness');
   assert.deepEqual(await http.snapshot(frame.id), before, 'Failed disconnected write changed saved snapshot');
-  return { schemaMismatchReadiness: 503, disconnectedReadiness: 503, failedWriteUnchanged: true, requestElapsedMs: Date.now() - started, pool: relay.stats() };
+  return { schemaMismatchReadiness: 503, disconnectedReadiness: 503, failedWriteUnchanged: true,
+    heldSchedulerLeasePid: heldLease[0].pid, maxIdleSessions: 2, heldLeaseSessions: 1,
+    requestElapsedMs: Date.now() - started, pool: relay.stats() };
 }
 
 async function assertDatabaseSnapshot(pool, frameId, snapshot) {

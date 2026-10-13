@@ -8,6 +8,10 @@ P1同机全栈单独入口`node tests/scripts/p1-run-stack.mjs --e2e`（从`test
 
 锁定Python单测、合成JPEG真实ONNX计算和课堂图质量是三种不同证据。CI只从作者单文件release下载3221705字节、固定SHA的真实Nano；`tests/p1-model-check.py`会加载真实ONNX，但不把合成图结果描述成准确率/课堂8图验证。独立AI原8私有图证据不进Git/CI/GLM。
 
+全栈入口在真实Go→Python API阶段之后，停止自己拥有的Python进程，在原AI loopback端口运行`fixture_not_real_model`确定性HTTP服务；Go API地址与真实PG不变。三个固定原图框用于独立检查接受/调整/拒绝、原始风险、空分母、删除撤销与不可变provenance、重跑保留旧正式框、失败/取消/stale/批次部分结果。fixture读取实际320×240合成JPEG并保存输入SHA、请求ID与屏障时间，不把固定框当模型效果。恢复真实Python后才执行浏览器/10分钟负载，最后单独停实际Python做人工降级闭环。
+
+fixture专属控制令牌只传入本次测试子进程，不写证据。它只绑定loopback，控制自己启动的第二个Go API与首实例的loopback数据库故障代理。第二实例启动时首实例AI HTTP请求仍被屏障挂起；随后20轮双进程PG行锁竞态必须每轮恰好一个200、一个409且只有一个审计事件。首实例失锁并恢复DB后，人工保存仍可用，任务入口保持503直到重启。`fixture-review-evidence.json`、`follower-cas-evidence.json`及独立fixture Playwright目录即使失败也保留；收集用例或Node fixture单测通过不代表这些PG/API断言已执行。
+
 完整checks通过后才导出`p1-linux-amd64-SHA`的精确二进制/前端；后置job交叉编译arm64 Go工具并打包同一已验证前端，ARM64运行仍需另验。另一个双架构job构建真实AI Docker镜像、通过容器readiness与真实模型/JPEG推理后保存离线`p1-ai-{amd64,arm64}-SHA`。arm64在Linux QEMU运行，不等于Mac实机验证。镜像、源SHA、平台、模型许可证、检查结果与SHA256SUMS一并保存；任一步失败就不上传“verified”镜像工件。
 
 下文P0/P0.1入口保留为历史说明。Mac代理专属检查已退出P1公共CI；PG/导入/CAS/事务快照/FFmpeg/COCO的不变量保留或换成同机测试，不能把退役接口删除当成业务证明。

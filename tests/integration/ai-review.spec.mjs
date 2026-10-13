@@ -3,6 +3,13 @@ import { upload, extract, snapshot, save } from '../helpers/api.mjs';
 import { validateSchema } from '../helpers/contract.mjs';
 import { inspectExport } from '../helpers/zip.mjs';
 import { randomUUID } from 'node:crypto';
+import { decide, decideIndividually } from '../helpers/review.mjs';
+
+function overlap(a, b) {
+  const area = Math.max(0, Math.min(a[0] + a[2], b[0] + b[2]) - Math.max(a[0], b[0])) *
+    Math.max(0, Math.min(a[1] + a[3], b[1] + b[3]) - Math.max(a[1], b[1]));
+  return area / (a[2] * a[3] + b[2] * b[3] - area);
+}
 
 test('P1-AI/GATE/REVIEW-001 true Go to Python run cannot bypass human completion gates', async ({ request }) => {
   const video = await upload(request);
@@ -28,10 +35,11 @@ test('P1-AI/GATE/REVIEW-001 true Go to Python run cannot bypass human completion
   const saved = await save(request, frame, [manual], 'in_progress');
   review = validateSchema('ReviewSnapshot', await (await request.get(`/api/v1/frames/${frame.id}/review`)).json());
   expect(review.revision).toBe(saved.revision);
-  const resolved = await request.put(`/api/v1/frames/${frame.id}/review`, { data: {
-    expectedRevision: review.revision, decisions: review.candidates.map(candidate => ({ candidateId: candidate.id, decision: 'rejected' })),
-    issueResolutions: review.issues.filter(issue => !issue.resolved).map(issue => ({ id: issue.id, resolution: 'manual_checked' })) } });
-  expect(resolved.status()).toBe(200);
+  review = await decideIndividually(request, frame, review, review.candidates.map(candidate => ({
+    candidateId: candidate.id, decision: 'rejected',
+    ...(overlap(candidate.bbox, manual.bbox) >= .35 ? { reasonCode: 'ALREADY_LABELED' } : {}) })));
+  const issues = review.issues.filter(issue => !issue.resolved).map(issue => ({ id: issue.id, resolution: 'manual_checked' }));
+  if (issues.length) review = await decide(request, frame, review, [], issues);
   await save(request, frame, [manual], 'completed');
   const exported = await request.post('/api/v1/exports', { data: { frameIds: [frame.id] } });
   expect(exported.status()).toBe(200);
