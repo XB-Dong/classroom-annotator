@@ -69,7 +69,7 @@ func TestUploadStreamsToAgent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	registration, err := c.Upload(context.Background(), "op-1", "vid-1", "test.webm", bytes.NewReader(bytes.Repeat([]byte("z"), 65536)), 1<<20)
+	registration, err := c.Upload(context.Background(), "op-1", "vid-1", "test.webm", io.NopCloser(bytes.NewReader(bytes.Repeat([]byte("z"), 65536))), 1<<20)
 	if err != nil || registration.OperationID != "op-1" {
 		t.Fatalf("upload: %+v, %v", registration, err)
 	}

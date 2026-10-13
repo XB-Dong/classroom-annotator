@@ -62,13 +62,7 @@ func RegisterWithBridge(g *gin.RouterGroup, s *store.Store, bridge *mediabridge.
 					if response.StatusCode != http.StatusOK || response.Header.Get("Content-Type") != "application/zip" || response.Header.Get("ETag") != `"`+manifest.SHA256+`"` || response.Header.Get("Content-Length") != strconv.FormatInt(manifest.SizeBytes, 10) {
 						err = mediabridge.ErrContract
 					} else {
-						counter.WithLabelValues("success").Inc()
-						c.Header("Content-Type", "application/zip")
-						c.Header("Content-Disposition", `attachment; filename="annotations.zip"`)
-						c.Header("Content-Length", strconv.FormatInt(manifest.SizeBytes, 10))
-						c.Header("Cache-Control", "no-store")
-						c.Status(http.StatusOK)
-						_, _ = io.CopyBuffer(c.Writer, response.Body, make([]byte, 32<<10))
+						streamRemoteZIP(c, response, manifest.SizeBytes, counter)
 						return
 					}
 				}
@@ -89,6 +83,20 @@ func RegisterWithBridge(g *gin.RouterGroup, s *store.Store, bridge *mediabridge.
 		c.Header("Content-Type", "application/zip")
 		c.FileAttachment(path, "annotations.zip")
 	})
+}
+
+func streamRemoteZIP(c *gin.Context, response *http.Response, expectedSize int64, counter *prometheus.CounterVec) {
+	c.Header("Content-Type", "application/zip")
+	c.Header("Content-Disposition", `attachment; filename="annotations.zip"`)
+	c.Header("Content-Length", strconv.FormatInt(expectedSize, 10))
+	c.Header("Cache-Control", "no-store")
+	c.Status(http.StatusOK)
+	n, err := io.CopyBuffer(c.Writer, response.Body, make([]byte, 32<<10))
+	if err != nil || n != expectedSize || c.Request.Context().Err() != nil {
+		counter.WithLabelValues("transfer_failed").Inc()
+		return
+	}
+	counter.WithLabelValues("success").Inc()
 }
 
 func selectedMixedProviders(s *store.Store, selection Selection) error {

@@ -13,7 +13,25 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"time"
 )
+
+type interruptibleUploadPart struct {
+	io.Reader
+	guard *uploadDeadline
+	body  io.ReadCloser
+	once  sync.Once
+}
+
+func (p *interruptibleUploadPart) Close() error {
+	var result error
+	p.once.Do(func() {
+		_ = p.guard.controller.SetReadDeadline(time.Now())
+		result = p.body.Close()
+	})
+	return result
+}
 
 func (a *API) videos(c *gin.Context) {
 	v, e := a.Store.Videos()
@@ -35,7 +53,7 @@ func (a *API) upload(c *gin.Context) {
 		Error(c, 400, "INVALID_UPLOAD", "Expected multipart file")
 		return
 	}
-	var body io.Reader
+	var body io.ReadCloser
 	var name string
 	for {
 		part, e := reader.NextPart()
@@ -55,7 +73,7 @@ func (a *API) upload(c *gin.Context) {
 			return
 		}
 		if part.FormName() == "file" && part.FileName() != "" {
-			body = part
+			body = &interruptibleUploadPart{Reader: part, guard: guard, body: c.Request.Body}
 			name = part.FileName()
 			break
 		}

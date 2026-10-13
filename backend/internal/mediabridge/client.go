@@ -17,6 +17,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/XB-Dong/classroom-annotator/backend/internal/dataset"
@@ -55,12 +56,14 @@ type RemoteError struct {
 func (e *RemoteError) Error() string { return e.Code }
 
 type Config struct {
-	BaseURL         string
-	Token           string
-	AllowedOrigins  []string
-	Timeout         time.Duration
-	DownloadTimeout time.Duration
-	HTTPClient      *http.Client
+	BaseURL          string
+	Token            string
+	AllowedOrigins   []string
+	Timeout          time.Duration
+	ControlTimeout   time.Duration
+	DownloadTimeout  time.Duration
+	MediaIdleTimeout time.Duration
+	HTTPClient       *http.Client
 }
 
 type Limits struct {
@@ -71,10 +74,12 @@ type Limits struct {
 }
 
 type Client struct {
-	base     *url.URL
-	token    string
-	http     *http.Client
-	download *http.Client
+	base             *url.URL
+	token            string
+	http             *http.Client
+	download         *http.Client
+	controlTimeout   time.Duration
+	mediaIdleTimeout time.Duration
 }
 
 func privateOrigin(raw string, allowed []string) (*url.URL, error) {
@@ -115,14 +120,28 @@ func New(cfg Config) (*Client, error) {
 	if cfg.DownloadTimeout <= 0 {
 		cfg.DownloadTimeout = 1800 * time.Second
 	}
-	client := cfg.HTTPClient
-	if client == nil {
-		transport := &http.Transport{Proxy: nil, DialContext: (&net.Dialer{Timeout: 5 * time.Second, KeepAlive: 30 * time.Second}).DialContext, ResponseHeaderTimeout: 60 * time.Second, DisableCompression: true}
-		client = &http.Client{Transport: transport, Timeout: cfg.Timeout, CheckRedirect: rejectRedirect}
+	if cfg.ControlTimeout <= 0 {
+		cfg.ControlTimeout = 30 * time.Second
 	}
-	download := &http.Client{Transport: client.Transport, Timeout: cfg.DownloadTimeout, CheckRedirect: rejectRedirect}
-	return &Client{base: base, token: cfg.Token, http: client, download: download}, nil
+	if cfg.MediaIdleTimeout <= 0 {
+		cfg.MediaIdleTimeout = 60 * time.Second
+	}
+	client := cfg.HTTPClient
+	var downloadTransport http.RoundTripper
+	if client == nil {
+		transport := &http.Transport{Proxy: nil, DialContext: (&net.Dialer{Timeout: 5 * time.Second, KeepAlive: 30 * time.Second}).DialContext, DisableCompression: true}
+		client = &http.Client{Transport: transport, Timeout: cfg.Timeout, CheckRedirect: rejectRedirect}
+		mediaTransport := transport.Clone()
+		mediaTransport.ResponseHeaderTimeout = 60 * time.Second
+		downloadTransport = mediaTransport
+	} else {
+		downloadTransport = client.Transport
+	}
+	download := &http.Client{Transport: downloadTransport, Timeout: cfg.DownloadTimeout, CheckRedirect: rejectRedirect}
+	return &Client{base: base, token: cfg.Token, http: client, download: download, controlTimeout: cfg.ControlTimeout, mediaIdleTimeout: cfg.MediaIdleTimeout}, nil
 }
+
+func (c *Client) ControlTimeout() time.Duration { return c.controlTimeout }
 
 func rejectRedirect(*http.Request, []*http.Request) error { return ErrContract }
 
@@ -145,6 +164,12 @@ func (c *Client) request(ctx context.Context, method, path string, body io.Reade
 }
 
 func (c *Client) json(ctx context.Context, method, path string, in, out any, expected int) error {
+	ctx, cancel := context.WithTimeout(ctx, c.controlTimeout)
+	defer cancel()
+	return c.jsonWithin(ctx, method, path, in, out, expected)
+}
+
+func (c *Client) jsonWithin(ctx context.Context, method, path string, in, out any, expected int) error {
 	var body io.Reader
 	if in != nil {
 		b, err := json.Marshal(in)
@@ -172,7 +197,10 @@ func (c *Client) json(ctx context.Context, method, path string, in, out any, exp
 		return nil
 	}
 	b, err := io.ReadAll(io.LimitReader(resp.Body, maxControlBytes+1))
-	if err != nil || int64(len(b)) > maxControlBytes || json.Unmarshal(b, out) != nil {
+	if err != nil {
+		return ErrUnavailable
+	}
+	if int64(len(b)) > maxControlBytes || json.Unmarshal(b, out) != nil {
 		return ErrContract
 	}
 	return nil
@@ -234,7 +262,7 @@ func (c *Client) Sources(ctx context.Context, cursor string) (mediaapi.Sources, 
 
 func (c *Client) Registration(ctx context.Context, req mediaapi.RegistrationRequest) (mediaapi.Registration, error) {
 	var result mediaapi.Registration
-	err := c.json(ctx, http.MethodPost, "/bridge/v1/registrations", req, &result, 200)
+	err := c.jsonWithin(ctx, http.MethodPost, "/bridge/v1/registrations", req, &result, 200)
 	if err == nil && !validRegistration(result, req.OperationID, req.VideoID) {
 		err = ErrContract
 	}
@@ -295,12 +323,15 @@ func (c *Client) Ack(ctx context.Context, id string, publicationRevision int64) 
 	return c.control(ctx, id, "ack", mediaapi.AckRequest{PublicationRevision: publicationRevision})
 }
 
-func (c *Client) Upload(ctx context.Context, operationID, videoID, filename string, source io.Reader, limit int64) (mediaapi.Registration, error) {
+func (c *Client) Upload(ctx context.Context, operationID, videoID, filename string, source io.ReadCloser, limit int64) (mediaapi.Registration, error) {
 	var result mediaapi.Registration
 	if !opaqueKey.MatchString(operationID) || !opaqueKey.MatchString(videoID) || source == nil || limit <= 0 || limit > 1<<30 {
 		return result, ErrInvalid
 	}
 	pipeR, pipeW := io.Pipe()
+	interrupt := sync.OnceFunc(func() { _ = source.Close() })
+	stopInterrupt := context.AfterFunc(ctx, interrupt)
+	defer stopInterrupt()
 	writer := multipart.NewWriter(pipeW)
 	copyDone := make(chan error, 1)
 	go func() {
@@ -325,14 +356,17 @@ func (c *Client) Upload(ctx context.Context, operationID, videoID, filename stri
 	req, err := c.request(ctx, http.MethodPost, "/bridge/v1/uploads", pipeR)
 	if err != nil {
 		_ = pipeR.Close()
+		interrupt()
 		<-copyDone
 		return result, err
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Expect", "100-continue")
 	req.Header.Set("X-Operation-ID", operationID)
 	req.Header.Set("X-Video-ID", videoID)
 	resp, err := c.http.Do(req)
 	_ = pipeR.Close()
+	interrupt()
 	copyErr := <-copyDone
 	if err != nil {
 		if copyErr != nil {
@@ -366,8 +400,10 @@ func (c *Client) OpenMedia(ctx context.Context, method, key, rangeHeader string)
 	if !opaqueKey.MatchString(key) || (rangeHeader != "" && !singleRange.MatchString(rangeHeader)) {
 		return nil, ErrInvalid
 	}
-	req, err := c.request(ctx, method, "/bridge/v1/media/"+key, nil)
+	mediaCtx, mediaCancel := context.WithCancel(ctx)
+	req, err := c.request(mediaCtx, method, "/bridge/v1/media/"+key, nil)
 	if err != nil {
+		mediaCancel()
 		return nil, err
 	}
 	if rangeHeader != "" {
@@ -375,16 +411,20 @@ func (c *Client) OpenMedia(ctx context.Context, method, key, rangeHeader string)
 	}
 	resp, err := c.download.Do(req)
 	if err != nil {
+		mediaCancel()
 		return nil, ErrUnavailable
 	}
 	if resp.StatusCode != 200 && resp.StatusCode != 206 && resp.StatusCode != 416 {
 		defer resp.Body.Close()
+		defer mediaCancel()
 		return nil, decodeError(resp)
 	}
 	if resp.StatusCode != 416 && resp.Header.Get("Content-Length") == "" {
 		resp.Body.Close()
+		mediaCancel()
 		return nil, fmt.Errorf("%w: missing length", ErrContract)
 	}
+	resp.Body = newIdleBody(resp.Body, mediaCancel, c.mediaIdleTimeout)
 	return resp, nil
 }
 

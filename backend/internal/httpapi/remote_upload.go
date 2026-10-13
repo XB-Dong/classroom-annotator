@@ -23,7 +23,7 @@ type byteCounter struct{ n int64 }
 func (c *byteCounter) Write(p []byte) (int, error) { c.n += int64(len(p)); return len(p), nil }
 
 // UploadToMac streams bytes to the agent while hashing them; no cloud media file is created.
-func (s *SourceService) UploadToMac(ctx context.Context, source io.Reader, filename string) (video domain.Video, result error) {
+func (s *SourceService) UploadToMac(ctx context.Context, source io.ReadCloser, filename string) (video domain.Video, result error) {
 	if s.Bridge == nil || source == nil {
 		return video, mediabridge.ErrUnavailable
 	}
@@ -46,7 +46,10 @@ func (s *SourceService) UploadToMac(ctx context.Context, source io.Reader, filen
 	}
 	hash := sha256.New()
 	count := &byteCounter{}
-	tee := io.TeeReader(source, io.MultiWriter(hash, count))
+	tee := struct {
+		io.Reader
+		io.Closer
+	}{Reader: io.TeeReader(source, io.MultiWriter(hash, count)), Closer: source}
 	submitted := false
 	defer func() {
 		if result != nil && submitted {

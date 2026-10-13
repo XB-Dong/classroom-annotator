@@ -16,6 +16,8 @@ import (
 )
 
 func (s *SourceService) findMacSource(ctx context.Context, id string) (mediaapi.Source, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.Bridge.ControlTimeout())
+	defer cancel()
 	cursor := ""
 	for page := 0; page < 100; page++ {
 		result, err := s.Bridge.Sources(ctx, cursor)
@@ -85,7 +87,54 @@ func (s *SourceService) importMacSource(c *gin.Context) {
 			}
 		}()
 		submitted = true
-		registration, err := s.Bridge.Registration(ctx, request)
+		registrationCtx, cancelRegistration := context.WithCancel(ctx)
+		stopRenew := make(chan struct{})
+		renewDone := make(chan error, 1)
+		interval := time.Duration(capabilities.LeaseSeconds) * time.Second / 3
+		if interval > 30*time.Second {
+			interval = 30 * time.Second
+		}
+		if interval < time.Second {
+			interval = time.Second
+		}
+		go func() {
+			ticker := time.NewTicker(interval)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-stopRenew:
+					renewDone <- nil
+					return
+				case <-registrationCtx.Done():
+					renewDone <- nil
+					return
+				case <-ticker.C:
+					renewCtx, cancel := context.WithTimeout(registrationCtx, 5*time.Second)
+					op, renewErr := s.Bridge.Renew(renewCtx, operationID)
+					cancel()
+					var remoteErr *mediabridge.RemoteError
+					if errors.As(renewErr, &remoteErr) && remoteErr.Code == "RESOURCE_NOT_FOUND" {
+						continue
+					}
+					if renewErr == nil && (op.Status == "queued" || op.Status == "running" || op.Status == "completed") {
+						continue
+					}
+					if renewErr == nil {
+						renewErr = mediabridge.ErrContract
+					}
+					cancelRegistration()
+					renewDone <- renewErr
+					return
+				}
+			}
+		}()
+		registration, err := s.Bridge.Registration(registrationCtx, request)
+		close(stopRenew)
+		renewErr := <-renewDone
+		cancelRegistration()
+		if renewErr != nil {
+			err = errors.Join(err, renewErr)
+		}
 		if err != nil {
 			return err
 		}

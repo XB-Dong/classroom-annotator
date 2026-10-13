@@ -68,7 +68,7 @@ func TestStreamedUploadRenewsShortAgentLease(t *testing.T) {
 	sources := &SourceService{Store: s, Bridge: bridge, MaxUploadBytes: 1024, MaxFrames: 10}
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	video, err := sources.UploadToMac(ctx, &delayedBytes{data: []byte("synthetic-video"), delay: 400 * time.Millisecond}, "slow.mp4")
+	video, err := sources.UploadToMac(ctx, io.NopCloser(&delayedBytes{data: []byte("synthetic-video"), delay: 400 * time.Millisecond}), "slow.mp4")
 	if err != nil || video.StorageProvider != "mac" || renewals.Load() < 2 {
 		t.Fatalf("lease renewal: video=%+v renewals=%d error=%v", video, renewals.Load(), err)
 	}

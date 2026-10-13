@@ -56,7 +56,7 @@ func main() {
 		if err != nil {
 			log.Fatal("Mac bridge token unavailable")
 		}
-		bridge, err = mediabridge.New(mediabridge.Config{BaseURL: cfg.MacBridgeURL, Token: token, AllowedOrigins: cfg.AllowedPrivateOrigins, Timeout: cfg.JobTimeout, DownloadTimeout: cfg.MediaDownloadTimeout})
+		bridge, err = mediabridge.New(mediabridge.Config{BaseURL: cfg.MacBridgeURL, Token: token, AllowedOrigins: cfg.AllowedPrivateOrigins, Timeout: cfg.JobTimeout, ControlTimeout: cfg.HTTPTimeout, DownloadTimeout: cfg.MediaDownloadTimeout})
 		if err != nil {
 			log.Fatal("invalid Mac bridge configuration")
 		}
