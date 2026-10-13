@@ -19,13 +19,14 @@
   "tunnelAccountPreparationStatus": "prepared_prior_to_wave",
   "relayStatus": "stopped_deferred_to_p0.1",
   "requestedLeaderModel": "gpt-6.1-sol",
-  "requestedLeaderReasoningEffort": "xhigh",
+  "requestedLeaderReasoningEffort": "high",
   "actualLeaderModel": null,
   "actualLeaderReasoningEffort": null,
   "modelVerificationStatus": "not_reverified_for_p0.1",
   "repairCounts": {
     "P01-MEDIA-AGENT-001": 1,
-    "P01-TEST-001": 1
+    "P01-TEST-001": 1,
+    "P01-DB-MIG-001": 1
   },
   "maxRepairRoundsPerTask": 2,
   "maxRepairRoundsForWave": 6,
@@ -48,7 +49,7 @@
   "remainingBudgetSeconds": 28152,
   "storageBoundaryConfirmed": true,
   "revisedPlanApproved": true,
-  "latestUserInstruction": "Resume after accidental interruption; Mac read-only contract evidence supplied",
+  "latestUserInstruction": "Continue P0.1 with Leader high reasoning; preserve previous implementation override",
   "sourcePolicy": {
     "public_sample": "local",
     "upload": "mac",
@@ -84,7 +85,7 @@
   "resumedAt": "2026-10-13T13:12:51+08:00",
   "specSourceSha": "07eea66203680a7421b79c5d3ed8a1d4de968822",
   "glmToolSmokeStatus": "passed_not_product_acceptance",
-  "resumedAfterInterruptionAt": "2026-10-13T14:08:42.280740+08:00",
+  "resumedAfterInterruptionAt": "2026-10-13T16:48:10.673136+08:00",
   "isolatedPostgres": {
     "status": "ready",
     "version": "17.11",
@@ -111,9 +112,17 @@
   "testHarnessReviewStatus": "glm_executed_leader_rejected_unsupported_total_pass",
   "publicSamplePreparationStatus": "two_real_files_hashed_decoded_visually_verified_not_seeded",
   "deploymentConfigurationStatus": "cloud_nginx_and_compose_syntax_passed_not_deployed",
-  "repairRoundsUsed": 2,
+  "repairRoundsUsed": 3,
   "lastCheckpointAt": "2026-10-13T16:29:28.595696+08:00",
   "databaseSourceSha": "4d61ff02c5c14803063ba38a3b64d1ef019a483c",
   "independentMigrationStatus": "passed_real_postgresql_synthetic",
-  "independentMacAgentStatus": "passed_windows_synthetic_old_commit_repair_required"
+  "independentMacAgentStatus": "passed_windows_synthetic_old_commit_repair_required",
+  "leaderEffortOverride": {
+    "authorizedBy": "direct_user_instruction",
+    "recordedAt": "2026-10-13T16:48:10.673136+08:00",
+    "previous": "xhigh",
+    "requested": "high",
+    "reason": "User interrupted xhigh run for speed",
+    "actual": null
+  }
 }
