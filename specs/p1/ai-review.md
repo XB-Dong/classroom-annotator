@@ -34,7 +34,7 @@ run状态 queued/running/completed/stale/failed/cancelled；job继续既有终�
 
 全量PUT /annotations由服务端对照当前快照与不可变provenance映射，不依赖客户端source/candidateId/runId声明：保留的AI框坐标变化同步adjusted，删除同步rejected，新普通框只准manual。AI框ID↔原candidate/run归属在删除后仍保留tombstone，合法撤销删除仅能恢复同帧、同原映射的ID并重算accepted/adjusted；不得以旧ID绑定另一候选或跨帧恢复。映射、正式框、候选决策、revision、操作者审计在同一事务更新。所有写入路径必须调用同一服务端规则，拒绝伪造AI来源或重置风险。
 
-API建议：POST /api/v1/frames/{id}/preannotations（expectedRevision + Idempotency-Key）返回202/jobId；GET /frames/{id}/review返回统一revision、当前run、候选、正式框、图片问题；PUT /frames/{id}/review携带expectedRevision、decisions与问题确认，在同一事务生效。批次 POST /batches/{id}/preannotations 输入最多20个frameId，每帧捕获独立revision，返回批次job，逐帧结果可见。参数/字段在执行R0与OpenAPI同步冻结。
+冻结业务接口（具体字段以specs/contracts/openapi.yaml 2.0.0为准）：POST /api/v1/frames/{id}/preannotations（expectedRevision + Idempotency-Key）返回202/jobId；GET /frames/{id}/review返回统一revision、当前run、候选、正式框、图片问题；PUT /frames/{id}/review携带expectedRevision、decisions与问题确认，在同一事务生效。批次 POST /batches/{id}/preannotations 输入最多20个frameId，每帧捕获独立revision，返回批次job，逐帧结果可见。参数/字段在执行R0与OpenAPI同步冻结。
 
 所有保存共用鉴权/CAS/合法provenance校验；只有请求将图片设为completed时应用pending/未解决风险门禁。in_progress下允许人工保存、补框和逐项复核，即使还有pending。普通PUT /annotations也不能绕过完成门禁，导出独立再验证。更改阈值生成新run，不悄悄删除旧候选。
 
@@ -46,13 +46,14 @@ P1只允许一个任务调度实例，通过PG advisory锁维护scheduler单例�
 
 ## 3. 高风险规则
 
-所有候选都需要人工决策；高风险仅表示优先处理及禁止一键批量接受，不代表其他框自动正确。
+所有候选都需要人工决策；高风险的接受、调整、拒绝均需逐项检查和提交，不代表其他框自动正确。
 
 | 级别 | reasonCode | 初始规则 |
 | --- | --- | --- |
 | 框 | LOW_CONFIDENCE | 0.25≤score<0.55 |
 | 框 | SMALL_HEAD | 映射原图后 min(width,height)<12px |
 | 框 | CLIPPED_BOX | 原模型框逆映射后超出图片边界并发生裁剪 |
+| 框 | TILE_BOUNDARY | 同一精确Nano权重分块推理时头框靠近分块边缘，需人工核查 |
 | 框 | POSSIBLE_DUPLICATE | NMS后仍存在IoU≥0.35的候选对 |
 | 框 | OVERLAP_EXISTING | 新候选与已有正式框IoU≥0.35，必须明确处理，避免重复接受 |
 | 图片 | NO_DETECTIONS | 有效推理返回0个候选 |

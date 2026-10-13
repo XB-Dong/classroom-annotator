@@ -16,7 +16,7 @@ export function ImportPanel({
   onVideo: (v: Video) => void;
   onJob: (j: Job) => void;
 }) {
-  const [tab, setTab] = useState<'local' | Exclude<SourceKind, 'mac'>>('public_sample');
+  const [tab, setTab] = useState<'local' | Exclude<SourceKind, 'mac' | 'local_directory'>>('public_sample');
   const [status, setStatus] = useState<MediaStorageStatus>();
   const [file, setFile] = useState<File>();
   const [busy, setBusy] = useState(false);

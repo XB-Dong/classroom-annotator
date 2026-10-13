@@ -54,10 +54,10 @@
   "planApproved": true,
   "maxRepairRoundsForWave": 8,
   "round": "R1",
-  "lastCheckpointAt": "2026-10-13T19:47:45.144Z",
+  "lastCheckpointAt": "2026-10-13T19:55:15.038Z",
   "approvedPlanCommit": "5fcb41d9f2950235293992e2bd1707684b69ef1e",
   "taskRepairCounts": {
-    "P1-FRONT-001": 1,
+    "P1-FRONT-001": 2,
     "P1-HELP-001": 1,
     "P1-AUTH-CAS-001": 1,
     "P1-AI-SERVICE-001": 1,
@@ -83,7 +83,8 @@
     "aiReview": "5499893",
     "scheduler": "7fd047f",
     "metricsAndJobResults": "007d10a",
-    "independentTests": "9e6d390"
+    "independentTests": "9e6d390",
+    "jobResultUI": "72ed944"
   },
   "modelProbe": {
     "sha256": "a5ece478fc918787258afccd0b313e54319f8f39aeb1ceca11f27dbd269e78bc",
@@ -133,9 +134,10 @@
     {
       "round": 5,
       "rootTasks": [
-        "P1-TEST-001"
+        "P1-TEST-001",
+        "P1-FRONT-001"
       ],
-      "reason": "old HTTP test incorrectly expected private media hash in public JSON; assert persisted byte hash/size and hidden response fields instead",
+      "reason": "old HTTP test incorrectly expected private media hash in public JSON; assert persisted byte hash/size and hidden response fields instead; align frontend local_directory discriminator and its visible source label with frozen backend contract",
       "evidence": "runtime/p1-preparation/ci-38456555129/11_Common verification.txt; r5-test-compile.txt; PG rerun pending"
     }
   ],
@@ -160,5 +162,12 @@
     "race": "not_run",
     "browser": "not_run"
   },
-  "schemaVersion": 8
+  "schemaVersion": 8,
+  "cloudReleasePreparation": {
+    "status": "reviewed_helpers_python310_compatible_not_deployed",
+    "evidence": "runtime/p1-release-preparation/handoff.json",
+    "requestedModel": "gpt-6.1-sol",
+    "requestedEffort": "high",
+    "actualModel": null
+  }
 }

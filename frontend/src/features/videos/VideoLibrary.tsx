@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import type { Video } from '../../shared/api/types';
-const sourceLabels = {
+const sourceLabels: Record<NonNullable<Video['sourceKind']>, string> = {
   public_sample: '公共示例',
   mac: '历史远端素材',
   upload: '本地上传',
   dataset: '公司接口',
   legacy: '历史素材',
+  local_directory: '同机素材',
 };
 export function VideoLibrary({
   videos,

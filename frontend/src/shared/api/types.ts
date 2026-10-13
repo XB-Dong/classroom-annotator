@@ -108,7 +108,7 @@ export interface Video {
   durationSeconds: number;
   status: string;
   createdAt: string;
-  sourceKind?: 'public_sample' | 'mac' | 'upload' | 'dataset' | 'legacy';
+  sourceKind?: SourceKind | 'legacy';
   storageProvider?: 'local' | 'mac';
 }
 export interface PublicSample {
@@ -139,7 +139,7 @@ export interface MacSourcePage {
   items: MacSource[];
   nextCursor: string | null;
 }
-export type SourceKind = 'public_sample' | 'mac' | 'upload' | 'dataset';
+export type SourceKind = 'public_sample' | 'mac' | 'upload' | 'dataset' | 'local_directory';
 export interface Availability {
   available: boolean;
   reasonCode: string | null;
