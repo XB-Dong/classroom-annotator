@@ -105,8 +105,8 @@
               }
             }
           },
-          "503": {
-            "description": "Safe error",
+          "502": {
+            "description": "Invalid/upstream failure",
             "content": {
               "application/json": {
                 "schema": {
@@ -115,8 +115,8 @@
               }
             }
           },
-          "502": {
-            "description": "Invalid/upstream failure",
+          "503": {
+            "description": "Safe error",
             "content": {
               "application/json": {
                 "schema": {
@@ -229,8 +229,8 @@
               }
             }
           },
-          "503": {
-            "description": "Safe error",
+          "502": {
+            "description": "Invalid/upstream failure",
             "content": {
               "application/json": {
                 "schema": {
@@ -239,8 +239,8 @@
               }
             }
           },
-          "502": {
-            "description": "Invalid/upstream failure",
+          "503": {
+            "description": "Safe error",
             "content": {
               "application/json": {
                 "schema": {
@@ -366,8 +366,8 @@
               }
             }
           },
-          "503": {
-            "description": "Safe error",
+          "502": {
+            "description": "Invalid/upstream failure",
             "content": {
               "application/json": {
                 "schema": {
@@ -376,8 +376,8 @@
               }
             }
           },
-          "502": {
-            "description": "Invalid/upstream failure",
+          "503": {
+            "description": "Safe error",
             "content": {
               "application/json": {
                 "schema": {
@@ -504,8 +504,8 @@
               }
             }
           },
-          "503": {
-            "description": "Safe error",
+          "502": {
+            "description": "Invalid/upstream failure",
             "content": {
               "application/json": {
                 "schema": {
@@ -514,8 +514,8 @@
               }
             }
           },
-          "502": {
-            "description": "Invalid/upstream failure",
+          "503": {
+            "description": "Safe error",
             "content": {
               "application/json": {
                 "schema": {
@@ -639,8 +639,8 @@
               }
             }
           },
-          "503": {
-            "description": "Safe error",
+          "502": {
+            "description": "Invalid/upstream failure",
             "content": {
               "application/json": {
                 "schema": {
@@ -649,8 +649,8 @@
               }
             }
           },
-          "502": {
-            "description": "Invalid/upstream failure",
+          "503": {
+            "description": "Safe error",
             "content": {
               "application/json": {
                 "schema": {
@@ -770,8 +770,8 @@
               }
             }
           },
-          "503": {
-            "description": "Safe error",
+          "502": {
+            "description": "Invalid/upstream failure",
             "content": {
               "application/json": {
                 "schema": {
@@ -780,8 +780,8 @@
               }
             }
           },
-          "502": {
-            "description": "Invalid/upstream failure",
+          "503": {
+            "description": "Safe error",
             "content": {
               "application/json": {
                 "schema": {
@@ -887,8 +887,8 @@
               }
             }
           },
-          "503": {
-            "description": "Safe error",
+          "502": {
+            "description": "Invalid/upstream failure",
             "content": {
               "application/json": {
                 "schema": {
@@ -897,8 +897,8 @@
               }
             }
           },
-          "502": {
-            "description": "Invalid/upstream failure",
+          "503": {
+            "description": "Safe error",
             "content": {
               "application/json": {
                 "schema": {
@@ -1004,8 +1004,8 @@
               }
             }
           },
-          "503": {
-            "description": "Safe error",
+          "502": {
+            "description": "Invalid/upstream failure",
             "content": {
               "application/json": {
                 "schema": {
@@ -1014,8 +1014,8 @@
               }
             }
           },
-          "502": {
-            "description": "Invalid/upstream failure",
+          "503": {
+            "description": "Safe error",
             "content": {
               "application/json": {
                 "schema": {
@@ -1131,8 +1131,8 @@
               }
             }
           },
-          "503": {
-            "description": "Safe error",
+          "502": {
+            "description": "Invalid/upstream failure",
             "content": {
               "application/json": {
                 "schema": {
@@ -1141,8 +1141,8 @@
               }
             }
           },
-          "502": {
-            "description": "Invalid/upstream failure",
+          "503": {
+            "description": "Safe error",
             "content": {
               "application/json": {
                 "schema": {
@@ -1246,8 +1246,8 @@
               }
             }
           },
-          "503": {
-            "description": "Safe error",
+          "502": {
+            "description": "Invalid/upstream failure",
             "content": {
               "application/json": {
                 "schema": {
@@ -1256,8 +1256,8 @@
               }
             }
           },
-          "502": {
-            "description": "Invalid/upstream failure",
+          "503": {
+            "description": "Safe error",
             "content": {
               "application/json": {
                 "schema": {
@@ -1374,8 +1374,8 @@
               }
             }
           },
-          "503": {
-            "description": "Safe error",
+          "502": {
+            "description": "Invalid/upstream failure",
             "content": {
               "application/json": {
                 "schema": {
@@ -1384,8 +1384,8 @@
               }
             }
           },
-          "502": {
-            "description": "Invalid/upstream failure",
+          "503": {
+            "description": "Safe error",
             "content": {
               "application/json": {
                 "schema": {
@@ -1532,8 +1532,8 @@
               }
             }
           },
-          "503": {
-            "description": "Safe error",
+          "502": {
+            "description": "Invalid/upstream failure",
             "content": {
               "application/json": {
                 "schema": {
@@ -1542,8 +1542,8 @@
               }
             }
           },
-          "502": {
-            "description": "Invalid/upstream failure",
+          "503": {
+            "description": "Safe error",
             "content": {
               "application/json": {
                 "schema": {
@@ -1649,8 +1649,8 @@
               }
             }
           },
-          "503": {
-            "description": "Safe error",
+          "502": {
+            "description": "Invalid/upstream failure",
             "content": {
               "application/json": {
                 "schema": {
@@ -1659,8 +1659,8 @@
               }
             }
           },
-          "502": {
-            "description": "Invalid/upstream failure",
+          "503": {
+            "description": "Safe error",
             "content": {
               "application/json": {
                 "schema": {
@@ -1778,8 +1778,8 @@
               }
             }
           },
-          "503": {
-            "description": "Safe error",
+          "502": {
+            "description": "Invalid/upstream failure",
             "content": {
               "application/json": {
                 "schema": {
@@ -1788,8 +1788,8 @@
               }
             }
           },
-          "502": {
-            "description": "Invalid/upstream failure",
+          "503": {
+            "description": "Safe error",
             "content": {
               "application/json": {
                 "schema": {
@@ -1898,8 +1898,8 @@
               }
             }
           },
-          "503": {
-            "description": "Safe error",
+          "502": {
+            "description": "Invalid/upstream failure",
             "content": {
               "application/json": {
                 "schema": {
@@ -1908,8 +1908,8 @@
               }
             }
           },
-          "502": {
-            "description": "Invalid/upstream failure",
+          "503": {
+            "description": "Safe error",
             "content": {
               "application/json": {
                 "schema": {
@@ -2006,8 +2006,8 @@
               }
             }
           },
-          "503": {
-            "description": "Safe error",
+          "502": {
+            "description": "Invalid/upstream failure",
             "content": {
               "application/json": {
                 "schema": {
@@ -2016,8 +2016,8 @@
               }
             }
           },
-          "502": {
-            "description": "Invalid/upstream failure",
+          "503": {
+            "description": "Safe error",
             "content": {
               "application/json": {
                 "schema": {
@@ -2180,7 +2180,7 @@
       "post": {
         "operationId": "importPublicSample",
         "responses": {
-          "201": {
+          "200": {
             "description": "Success",
             "content": {
               "application/json": {
@@ -2190,7 +2190,7 @@
               }
             }
           },
-          "200": {
+          "201": {
             "description": "Success",
             "content": {
               "application/json": {
@@ -3207,7 +3207,8 @@
               "upload",
               "mac",
               "dataset",
-              "legacy"
+              "legacy",
+              "local_directory"
             ]
           },
           "storageProvider": {
@@ -3266,6 +3267,23 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "AI job claim time; omitted before execution."
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "AI terminal time; omitted until finalized."
+          },
+          "partialResults": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "$ref": "#/components/schemas/JobPartialResult"
+            }
           }
         }
       },
@@ -3829,7 +3847,8 @@
               "public_sample",
               "mac",
               "upload",
-              "dataset"
+              "dataset",
+              "local_directory"
             ]
           },
           "available": {
@@ -4165,6 +4184,13 @@
             "items": {
               "$ref": "#/components/schemas/ReviewIssue"
             }
+          },
+          "activeRunId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Published run supplying current candidates and image issues. currentRun is the latest attempted run; these may differ after stale or cancelled attempts."
           }
         },
         "required": [
@@ -4417,6 +4443,42 @@
           },
           "durationSeconds": {
             "type": "number"
+          }
+        }
+      },
+      "JobPartialResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "frameId",
+          "runId",
+          "status",
+          "applied"
+        ],
+        "properties": {
+          "frameId": {
+            "type": "string"
+          },
+          "runId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "completed",
+              "failed",
+              "stale",
+              "cancelled"
+            ]
+          },
+          "applied": {
+            "type": "boolean",
+            "description": "True only when this completed run is currently active for its frame."
+          },
+          "errorCode": {
+            "type": "string"
           }
         }
       }

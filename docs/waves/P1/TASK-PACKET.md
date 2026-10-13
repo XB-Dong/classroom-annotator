@@ -1,8 +1,8 @@
 # P1实施任务包
 
-状态：review_draft，未派发开发。需求/规范用中文审阅；下面的执行指令按英文交接。
+状态：running，用户已于2026-10-14授权启动P1计划0.2.0。需求/规范用中文审阅；下面的执行指令按英文交接。
 
-> Load P1-PLAN.md, specs/p1/*.md, this packet, AGENTS.md, the assigned role and verified memory. User approval is required before implementation. Keep all runtime/media/models/secrets/caches/worktrees outside code. Never use a tunnel. Stop at 2026-10-14T08:30:00+08:00. A task handoff is not proof of release acceptance.
+> Load P1-PLAN.md, specs/p1/*.md, this packet, AGENTS.md, the assigned role and verified memory. P1 implementation is explicitly authorized by the user; execute within the approved boundaries. Keep all runtime/media/models/secrets/caches/worktrees outside code. Never use a tunnel. Stop at 2026-10-14T08:30:00+08:00. A task handoff is not proof of release acceptance.
 
 ## Shared ownership and task steps
 

@@ -28,12 +28,12 @@
   "nativeWorkerLimit": 3,
   "localHeavyProcessLimit": 1,
   "tunnelPolicy": "retire_during_authorized_p1_no_tunnel_runtime_dependency",
-  "productAcceptanceStatus": "not_run",
+  "productAcceptanceStatus": "pending_full_ci_pg_browser",
   "deploymentStatus": "not_run",
   "realApiVerificationStatus": "bounded_help_provider_timeouts_windows_and_cloud",
   "macRealDeploymentStatus": "not_run_deferred",
   "planReviewStatus": "previous_readonly_architecture_review_plus_leader_help_addendum_self_review_not_product_verification",
-  "reportRef": null,
+  "reportRef": "docs/audit/reports/report-20261014T033000+0800.md",
   "preparedAt": "2026-10-14T01:24:44.359872+08:00",
   "reviewDispositionRef": "docs/waves/P1/PLAN-REVIEW-DISPOSITION.md",
   "preparationReportRef": "docs/audit/reports/report-20261014T012444+0800.md",
@@ -54,7 +54,7 @@
   "planApproved": true,
   "maxRepairRoundsForWave": 8,
   "round": "R1",
-  "lastCheckpointAt": "2026-10-14T02:49:30.396146+08:00",
+  "lastCheckpointAt": "2026-10-13T19:25:17.994Z",
   "approvedPlanCommit": "5fcb41d9f2950235293992e2bd1707684b69ef1e",
   "taskRepairCounts": {
     "P1-FRONT-001": 1,
@@ -76,7 +76,13 @@
   "integratedSlices": {
     "auth": "d783dc8",
     "frontend": "4774167",
-    "aiService": "3930bcd"
+    "aiService": "3930bcd",
+    "frontendReview": "9616c6e",
+    "localSources": "be7d836",
+    "aiReview": "5499893",
+    "scheduler": "7fd047f",
+    "metricsAndJobResults": "007d10a",
+    "independentTests": "9e6d390"
   },
   "modelProbe": {
     "sha256": "a5ece478fc918787258afccd0b313e54319f8f39aeb1ceca11f27dbd269e78bc",
@@ -133,5 +139,6 @@
       "frontend58test_type_lint_build"
     ],
     "fixVerification": "local_compile_narrow_contract_tests_pass_not_full_CI"
-  }
+  },
+  "schemaVersion": 8
 }

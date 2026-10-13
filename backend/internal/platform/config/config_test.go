@@ -6,6 +6,35 @@ import (
 	"testing"
 )
 
+func TestOptionalAIConfigurationRejectsUnsafeOriginsAndCheckoutSecrets(t *testing.T) {
+	root := t.TempDir()
+	checkout := filepath.Join(root, "checkout")
+	if err := os.MkdirAll(checkout, 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(checkout, ".git"), []byte("gitdir: external"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	for _, item := range []struct {
+		url, token string
+		rejected   bool
+	}{
+		{"", "", false},
+		{"http://ai:8090", filepath.Join(root, "ai-token"), false},
+		{"http://user:secret@ai:8090", "", true},
+		{"http://ai:8090/v1/detections", "", true},
+		{"http://ai:8090?secret=x", "", true},
+		{"http://ai:8090", "relative-secret", true},
+		{"http://ai:8090", filepath.Join(checkout, "token"), true},
+	} {
+		values := map[string]string{"APP_DATA_DIR": filepath.Join(root, "data"), "APP_DATABASE_URL": "postgres://localhost/test", "APP_AI_URL": item.url, "APP_AI_TOKEN_FILE": item.token}
+		_, err := Load(func(k string) string { return values[k] })
+		if (err != nil) != item.rejected {
+			t.Fatalf("AI configuration rejection=%v, expected=%v", err != nil, item.rejected)
+		}
+	}
+}
+
 func TestConfigRequiresExternalDataAndPositiveLimits(t *testing.T) {
 	get := func(string) string { return "" }
 	if _, err := Load(get); err == nil {

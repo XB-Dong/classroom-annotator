@@ -13,6 +13,7 @@ import (
 )
 
 type Config struct {
+	AIURL, AITokenFile                                                               string
 	LocalSourceDirs                                                                  []string
 	AuthInviteCode                                                                   string
 	AuthTrustedOrigins, AuthTrustedProxies                                           []string
@@ -32,6 +33,16 @@ type Config struct {
 func Load(get func(string) string) (Config, error) {
 	c := Config{DataDir: get("APP_DATA_DIR"), Addr: value(get, "APP_ADDR", ":8080"), Version: value(get, "APP_VERSION", "dev"), FFmpeg: value(get, "APP_FFMPEG", "ffmpeg"), FFprobe: value(get, "APP_FFPROBE", "ffprobe"), DatasetAPIURL: get("APP_DATASET_API_URL"), DatasetAPIKey: get("APP_DATASET_API_KEY")}
 	c.AuthInviteCode = get("APP_AUTH_INVITE_CODE")
+	c.AIURL, c.AITokenFile = get("APP_AI_URL"), get("APP_AI_TOKEN_FILE")
+	if c.AIURL != "" {
+		ai, err := url.Parse(c.AIURL)
+		if err != nil || ai.Host == "" || ai.User != nil || ai.RawQuery != "" || ai.Fragment != "" || (ai.Path != "" && ai.Path != "/") || (ai.Scheme != "http" && ai.Scheme != "https") {
+			return c, errors.New("invalid AI service origin")
+		}
+	}
+	if c.AITokenFile != "" && (!filepath.IsAbs(c.AITokenFile) || insideCheckout(c.AITokenFile)) {
+		return c, errors.New("APP_AI_TOKEN_FILE must be absolute and outside a source checkout")
+	}
 	c.AuthCookieSecure = true
 	if raw := get("APP_AUTH_COOKIE_SECURE"); raw != "" {
 		var e error
