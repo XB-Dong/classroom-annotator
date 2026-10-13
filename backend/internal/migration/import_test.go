@@ -134,3 +134,26 @@ func TestImportRejectsUnknownLegacySchemaVersion(t *testing.T) {
 		t.Fatal("unknown SQLite schema version accepted")
 	}
 }
+
+func TestImportRejectsPrepopulatedNewBusinessTable(t *testing.T) {
+	source := sourceFixture(t)
+	target, err := sql.Open("pgx", testdb.URL(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer target.Close()
+	fingerprint := "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	if _, err := target.Exec(`INSERT INTO media_operations(operation_id,operation_type,provider,request_fingerprint,status,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7)`, "existing", "extraction", "mac", fingerprint, "queued", "2026-01-01T00:00:00Z", "2026-01-01T00:00:00Z"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := migration.Import(context.Background(), source, target); err == nil {
+		t.Fatal("populated media_operations table accepted")
+	}
+	var count int
+	if err := target.QueryRow(`SELECT count(*) FROM videos`).Scan(&count); err != nil || count != 0 {
+		t.Fatal("legacy rows partially imported", count, err)
+	}
+	if err := target.QueryRow(`SELECT count(*) FROM media_operations`).Scan(&count); err != nil || count != 1 {
+		t.Fatal("existing new-table row changed", count, err)
+	}
+}

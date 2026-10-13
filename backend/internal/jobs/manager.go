@@ -12,6 +12,7 @@ import (
 )
 
 var ErrQueue = errors.New("JOB_QUEUE_FULL")
+var ErrRemoteCleanupPending = errors.New("REMOTE_CLEANUP_PENDING")
 
 type task struct {
 	job  domain.Job
@@ -95,6 +96,8 @@ func (m *Manager) run(t task) {
 	if e != nil {
 		if errors.Is(e, media.ErrCleanup) {
 			code = "CLEANUP_FAILED"
+		} else if errors.Is(e, ErrRemoteCleanupPending) {
+			code = "REMOTE_CLEANUP_PENDING"
 		} else if ctx.Err() == context.DeadlineExceeded {
 			code = "TIMEOUT"
 		} else if e.Error() == "FRAME_UNAVAILABLE" {

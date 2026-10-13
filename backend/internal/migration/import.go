@@ -77,12 +77,21 @@ func Import(ctx context.Context, source string, target *sql.DB) (Report, error) 
 		return report, errors.New("begin PostgreSQL import failed")
 	}
 	defer tx.Rollback()
-	if _, err = tx.ExecContext(ctx, `LOCK TABLE videos,jobs,batches,frames,annotations IN ACCESS EXCLUSIVE MODE`); err != nil {
+	if _, err = tx.ExecContext(ctx, `LOCK TABLE videos,jobs,batches,frames,annotations,public_samples,media_operations IN ACCESS EXCLUSIVE MODE`); err != nil {
 		return report, errors.New("lock PostgreSQL target failed")
 	}
 	for _, table := range legacyTables {
 		var count int64
 		if err := tx.QueryRowContext(ctx, "SELECT count(*) FROM "+table.name).Scan(&count); err != nil {
+			return report, errors.New("check PostgreSQL target failed")
+		}
+		if count != 0 {
+			return report, errors.New("PostgreSQL target business tables must be empty")
+		}
+	}
+	for _, table := range []string{"public_samples", "media_operations"} {
+		var count int64
+		if err := tx.QueryRowContext(ctx, "SELECT count(*) FROM "+table).Scan(&count); err != nil {
 			return report, errors.New("check PostgreSQL target failed")
 		}
 		if count != 0 {
