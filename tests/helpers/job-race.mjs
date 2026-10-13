@@ -2,7 +2,14 @@ import assert from 'node:assert/strict';
 import { waitFor } from './process.mjs';
 
 const waitingOn = async (pool, pid) => (await pool.query(
-  'SELECT pid,query FROM pg_stat_activity WHERE datname=current_database() AND pg_blocking_pids(pid) @> ARRAY[$1::integer]', [pid])).rows;
+  `WITH RECURSIVE waiting AS (
+    SELECT pid,query,ARRAY[pid] AS visited FROM pg_stat_activity
+      WHERE datname=current_database() AND $1::integer=ANY(pg_blocking_pids(pid))
+    UNION ALL
+    SELECT activity.pid,activity.query,waiting.visited||activity.pid FROM pg_stat_activity activity
+      JOIN waiting ON waiting.pid=ANY(pg_blocking_pids(activity.pid))
+      WHERE activity.datname=current_database() AND NOT activity.pid=ANY(waiting.visited)
+  ) SELECT DISTINCT pid,query FROM waiting`, [pid])).rows;
 
 async function assertPublished(pool, job, status, count) {
   const row = (await pool.query('SELECT status FROM jobs WHERE id=$1', [job.id])).rows[0];
@@ -21,15 +28,24 @@ export async function cancelPublishRace(http, pool, bridge, videoId) {
     await locker.query('BEGIN');
     await locker.query('SELECT id FROM jobs WHERE id=$1 FOR UPDATE', [job.id]);
     const cancel = http.json(`/api/v1/jobs/${job.id}/cancel`, http.body({}));
-    await waitFor(async () => (await waitingOn(pool, lockerPid)).length >= 1, 3_000, 'Cancellation blocked on held PostgreSQL job row');
+    // Observe rejection immediately while the deliberate database barrier is held.
+    // Awaiting the original promise below still propagates the real request failure.
+    void cancel.catch(() => {});
+    await waitFor(async () => (await waitingOn(pool, lockerPid)).some(row => /FROM jobs .*FOR UPDATE/i.test(row.query)), 3_000, 'Cancellation blocked on held PostgreSQL job row');
     bridge.complete(operation.operationId);
-    await waitFor(async () => (await waitingOn(pool, lockerPid)).length >= 2, 3_000, 'Bridge completion also blocked behind cancellation');
+    await waitFor(async () => (await waitingOn(pool, lockerPid)).length >= 2, 3_000, 'Remote worker and cancellation both blocked on held PostgreSQL job row');
     await locker.query('COMMIT');
     await cancel;
     const terminal = await http.terminal(job.id);
-    assert.equal(terminal.status, 'cancelled', 'Cancellation queued first must prevent publication');
-    await assertPublished(pool, job, 'cancelled', 0);
-    evidence.cancelFirst = { jobId: job.id, terminal: terminal.status, observedBlockedClients: 2, publishedFrames: 0 };
+    assert.equal(terminal.status, 'failed', 'Prepared immutable output without cleanup confirmation must remain failed');
+    assert.equal(terminal.error, 'REMOTE_CLEANUP_PENDING');
+    await assertPublished(pool, job, 'failed', 0);
+    const prepared = bridge.inspect(operation.operationId);
+    assert.equal(prepared.status, 'completed', 'Cancelling must preserve prepared immutable outputs');
+    assert.equal(prepared.publicationStatus, 'unpublished');
+    assert.equal(prepared.manifest.frames.length, 3);
+    evidence.cancelFirst = { jobId: job.id, terminal: terminal.status, error: terminal.error,
+      observedBlockedClients: 2, publishedFrames: 0, preparedOutputsRetained: true };
   } finally { await locker.query('ROLLBACK'); locker.release(); }
 
   // A database-only trigger pauses INSERT after the product transaction locks
@@ -51,6 +67,7 @@ export async function cancelPublishRace(http, pool, bridge, videoId) {
     const publication = await waitFor(async () => (await waitingOn(pool, advisoryPid)).find(row => /INSERT INTO batches/i.test(row.query)), 4_000,
       'Product publication holds job row and waits at dedicated batch trigger');
     const cancel = http.json(`/api/v1/jobs/${job.id}/cancel`, http.body({}));
+    void cancel.catch(() => {});
     await waitFor(async () => (await waitingOn(pool, Number(publication.pid))).length >= 1, 3_000,
       'Cancellation blocked on the product publication transaction');
     await advisory.query('SELECT pg_advisory_unlock($1)', [lockKey]);

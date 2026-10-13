@@ -22,11 +22,13 @@ test('P01-SAMPLE-003 default public browser entry displays attribution and compl
   const job = await (await submitted).json(); expect((await terminalJob(request, job.id)).status).toBe('completed');
   const frames = (await (await request.get(`/api/v1/videos/${video.id}/frames?batchId=${job.batchId}`)).json()).frames;
   expect(frames).toHaveLength(3);
+  await page.getByRole('combobox', { name: '抽帧批次', exact: true }).selectOption(job.batchId);
   await page.getByTestId(`frame-item-${frames[0].id}`).click();
   await expect(page.getByTestId('annotation-canvas').locator('.konvajs-content')).toBeVisible();
   await page.getByTestId('complete-frame').click();
   await expect.poll(async () => (await snapshot(request, frames[0].id)).status).toBe('completed');
   await page.reload(); await page.getByTestId('video-select').selectOption(video.id);
+  await page.getByRole('combobox', { name: '抽帧批次', exact: true }).selectOption(job.batchId);
   await page.getByTestId(`frame-item-${frames[0].id}`).click();
   expect((await snapshot(request, frames[0].id)).annotations).toEqual([]);
   const download = page.waitForEvent('download'); await page.getByTestId('export-zip').click();

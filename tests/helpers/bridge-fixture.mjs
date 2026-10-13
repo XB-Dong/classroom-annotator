@@ -3,6 +3,9 @@ import http from 'node:http';
 import { createHash, randomUUID } from 'node:crypto';
 import { waitFor } from './process.mjs';
 
+const canonical = value => Array.isArray(value) ? value.map(canonical)
+  : value && typeof value === 'object' ? Object.fromEntries(Object.keys(value).sort().map(key => [key, canonical(value[key])])) : value;
+
 // Synthetic bridge barriers are controlled only by the acceptance process.
 // No product-only routes or hooks are required to order cancellation/publish.
 export async function bridgeFixture(token, jpeg, version) {
@@ -31,12 +34,13 @@ export async function bridgeFixture(token, jpeg, version) {
         const bytes = Buffer.concat(chunks); const input = JSON.parse(bytes.toString());
         assert.ok(Array.isArray(input.timestampsMs) && input.timestampsMs.length > 0);
         const operation = { contractVersion: '1.0.0', operationId: input.operationId, operationType: 'extraction',
-          jobId: input.jobId, resourceId: input.batchId, requestFingerprint: createHash('sha256').update(bytes).digest('hex'),
+          jobId: input.jobId, resourceId: input.batchId, requestFingerprint: createHash('sha256').update(JSON.stringify(canonical(input))).digest('hex'),
           publicationStatus: 'unpublished', publicationRevision: null, status: 'running', progress: 0, errorCode: null,
           manifest: { batchId: input.batchId, frames: input.timestampsMs.map(timestampMs => ({ frameId: randomUUID(), timestampMs,
             width: 320, height: 240, mediaKey: randomUUID(), sha256, sizeBytes: jpeg.length })) } };
         operations.set(input.operationId, operation); events.push({ kind: 'submitted', operationId: input.operationId, jobId: input.jobId });
-        return json(response, 202, { operationId: input.operationId, status: 'running' });
+        const { manifest, ...accepted } = operation;
+        return json(response, 202, accepted);
       }
       const match = /^\/bridge\/v1\/operations\/([^/]+)(?:\/(cancel|renew|ack))?$/.exec(url.pathname);
       if (match) {
@@ -63,6 +67,7 @@ export async function bridgeFixture(token, jpeg, version) {
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   return { origin: `http://127.0.0.1:${server.address().port}`, events,
+    inspect: id => structuredClone(operations.get(id)),
     operationForJob: id => waitFor(() => [...operations.values()].find(operation => operation.jobId === id), 10_000, 'Synthetic bridge received extraction'),
     complete: id => { const operation = operations.get(id); assert.ok(operation && operation.status === 'running'); operation.status = 'completed'; operation.progress = 1; events.push({ kind: 'barrierReleased', operationId: id }); },
     stop: async () => { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); },

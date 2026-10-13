@@ -17,6 +17,7 @@ export default defineConfig({
   },
   projects: [
     { name: 'api', testMatch: /integration\/.*\.spec\.mjs/ },
-    { name: 'chromium', testMatch: /e2e\/.*\.spec\.mjs/, use: { browserName: 'chromium', viewport: { width: 1280, height: 900 } } },
+    { name: 'chromium', testMatch: /e2e\/.*\.spec\.mjs/, use: { browserName: 'chromium',
+      channel: process.env.P01_BROWSER_CHANNEL || undefined, viewport: { width: 1280, height: 900 } } },
   ],
 });
