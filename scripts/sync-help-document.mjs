@@ -1,0 +1,10 @@
+import { readFile, mkdir, writeFile } from 'node:fs/promises';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const content = await readFile(resolve(root, 'docs/product/ANNOTATOR-GUIDE.zh.md'));
+if (!content.length || content.length > 32768) throw new Error('User manual must be 1–32768 bytes');
+const destination = resolve(root, 'backend/internal/help/resources/ANNOTATOR-GUIDE.zh.md');
+await mkdir(dirname(destination), { recursive: true });
+await writeFile(destination, content);
+console.log('Canonical user manual synchronized for Go embedding');

@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Classroom Annotator API",
-    "version": "1.1.0"
+    "version": "2.0.0"
   },
   "servers": [
     {
@@ -249,7 +249,17 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
       }
     },
     "/api/v1/videos/{id}/extractions": {
@@ -376,7 +386,17 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
       }
     },
     "/api/v1/videos/{id}/batches": {
@@ -1004,7 +1024,17 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
       }
     },
     "/api/v1/frames/{id}/annotations": {
@@ -1236,7 +1266,17 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
       }
     },
     "/api/v1/exports": {
@@ -1354,7 +1394,17 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
       }
     },
     "/api/v1/dataset/lessons": {
@@ -1619,7 +1669,17 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
       }
     },
     "/health/live": {
@@ -1738,7 +1798,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/health/ready": {
@@ -1857,7 +1918,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/metrics": {
@@ -2239,7 +2301,17 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
       }
     },
     "/api/v1/media-sources/mac": {
@@ -2487,7 +2559,17 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
       }
     },
     "/api/v1/media-storage/status": {
@@ -2580,6 +2662,495 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "responses": {
+          "201": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  },
+                  "required": [
+                    "user"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "inviteCode": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "username",
+                  "password",
+                  "inviteCode"
+                ]
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSession"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "username",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSession"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "responses": {
+          "204": {
+            "description": "Session revoked"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/help/document": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HelpDocument"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/help/questions": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HelpAnswer"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "question": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "question"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/frames/{id}/review": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewSnapshot"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "put": {
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewSnapshot"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewWrite"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/frames/{id}/preannotations": {
+      "post": {
+        "responses": {
+          "202": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "expectedRevision": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "expectedRevision"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/batches/{id}/preannotations": {
+      "post": {
+        "responses": {
+          "202": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "frameIds": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 20,
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "frameIds"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/videos/{id}/review-stats": {
+      "get": {
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "batchId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current-run review statistics; undefined ratios are null",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewStats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sources/local": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Configured same-host authorized source catalog",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/LocalSource"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sources/local/{sourceId}/imports": {
+      "post": {
+        "parameters": [
+          {
+            "name": "sourceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Local import queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
                 }
               }
             }
@@ -2803,7 +3374,18 @@
             }
           },
           "source": {
-            "const": "manual"
+            "const": "manual",
+            "enum": [
+              "manual",
+              "ai",
+              "ai_corrected"
+            ]
+          },
+          "candidateId": {
+            "type": "string"
+          },
+          "runId": {
+            "type": "string"
           }
         }
       },
@@ -3276,7 +3858,575 @@
             }
           }
         }
+      },
+      "User": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "annotator"
+            ]
+          },
+          "workspaceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "displayName",
+          "role",
+          "workspaceId"
+        ]
+      },
+      "AuthSession": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "csrfToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "user",
+          "csrfToken"
+        ]
+      },
+      "HelpSection": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "anchor": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "anchor"
+        ]
+      },
+      "HelpReference": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "sectionId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "anchor": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sectionId",
+          "title",
+          "anchor"
+        ]
+      },
+      "HelpDocument": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "documentVersion": {
+            "type": "string"
+          },
+          "documentSHA256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "content": {
+            "type": "string"
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HelpSection"
+            }
+          }
+        },
+        "required": [
+          "documentVersion",
+          "documentSHA256",
+          "content",
+          "sections"
+        ]
+      },
+      "HelpAnswer": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "answer": {
+            "type": "string",
+            "maxLength": 1500
+          },
+          "references": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HelpReference"
+            }
+          },
+          "documentVersion": {
+            "type": "string"
+          },
+          "documentSHA256": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "answer",
+          "references",
+          "documentVersion",
+          "documentSHA256"
+        ]
+      },
+      "ReviewIssue": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "reasonCode": {
+            "type": "string"
+          },
+          "resolved": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "reasonCode",
+          "resolved"
+        ]
+      },
+      "AICandidate": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "runId": {
+            "type": "string"
+          },
+          "bbox": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 4,
+            "maxItems": 4
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "reviewState": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "accepted",
+              "adjusted",
+              "rejected"
+            ]
+          },
+          "riskReasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "annotationId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "runId",
+          "bbox",
+          "confidence",
+          "reviewState",
+          "riskReasons"
+        ]
+      },
+      "AIRun": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "completed",
+              "stale",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "modelId": {
+            "type": "string"
+          },
+          "modelSHA256": {
+            "type": "string"
+          },
+          "pipelineVersion": {
+            "type": "string"
+          },
+          "baseRevision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "modelId",
+          "modelSHA256",
+          "pipelineVersion",
+          "baseRevision"
+        ]
+      },
+      "ReviewSnapshot": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "frameId": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "status": {
+            "$ref": "#/components/schemas/FrameStatus"
+          },
+          "annotations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Annotation"
+            }
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AICandidate"
+            }
+          },
+          "currentRun": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AIRun"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReviewIssue"
+            }
+          }
+        },
+        "required": [
+          "frameId",
+          "revision",
+          "status",
+          "annotations",
+          "candidates",
+          "currentRun",
+          "issues"
+        ]
+      },
+      "ReviewDecision": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "candidateId": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "adjusted",
+              "rejected"
+            ]
+          },
+          "bbox": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 4,
+            "maxItems": 4
+          },
+          "reasonCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "candidateId",
+          "decision"
+        ]
+      },
+      "ReviewWrite": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "decisions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReviewDecision"
+            }
+          },
+          "issueResolutions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "resolution": {
+                  "type": "string",
+                  "enum": [
+                    "manual_checked"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "resolution"
+              ]
+            }
+          }
+        },
+        "required": [
+          "expectedRevision",
+          "decisions",
+          "issueResolutions"
+        ]
+      },
+      "ReviewStats": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "validImages",
+          "suspiciousImages",
+          "failedImages",
+          "candidates",
+          "pending",
+          "accepted",
+          "adjusted",
+          "rejected",
+          "riskyCandidates",
+          "unresolvedRiskCandidates",
+          "unresolvedRiskImages",
+          "manualAdded",
+          "rates"
+        ],
+        "properties": {
+          "validImages": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "suspiciousImages": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "failedImages": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "candidates": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "pending": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "accepted": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "adjusted": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "rejected": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "riskyCandidates": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "unresolvedRiskCandidates": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "unresolvedRiskImages": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "manualAdded": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "rates": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "acceptedUnchanged",
+              "adjusted",
+              "rejected",
+              "suspiciousCandidates",
+              "suspiciousImages",
+              "reviewed"
+            ],
+            "properties": {
+              "acceptedUnchanged": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1
+              },
+              "adjusted": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1
+              },
+              "rejected": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1
+              },
+              "suspiciousCandidates": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1
+              },
+              "suspiciousImages": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1
+              },
+              "reviewed": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 1
+              }
+            }
+          }
+        }
+      },
+      "LocalSource": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sourceId",
+          "title",
+          "sizeBytes",
+          "sha256",
+          "width",
+          "height",
+          "durationSeconds"
+        ],
+        "properties": {
+          "sourceId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "width": {
+            "type": "integer"
+          },
+          "height": {
+            "type": "integer"
+          },
+          "durationSeconds": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "CookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "cvte_session"
       }
     }
-  }
+  },
+  "security": [
+    {
+      "CookieAuth": []
+    }
+  ],
+  "x-p1-contract-stage": "Frozen P1 auth/help/review/statistics/local-source contract; server-owned provenance and CAS"
 }
