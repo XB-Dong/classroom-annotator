@@ -4,6 +4,8 @@
 
 Read `CONSTITUTION.md`, `P0-PLAN.md`, `docs/decisions/0001-confirmed-choices.md`, `docs/decisions/0003-lean-agent-roles.md`, `docs/decisions/0004-local-materials-acceptance.md`, and the active wave's specification, task packet, and handoff. The lean role/model policy is confirmed. Decision 0003 supersedes decision 0002; decision 0004 replaces choice 05 of decision 0001. P0 execution still requires the user's explicit start instruction. `NEXT-WAVES.md` is reference only and never authorizes P1/P2 work.
 
+For post-P0 demo operations, also read `docs/decisions/0006-authorized-cloud-demo.md` and `specs/cloud-demo-access.md`. The user has authorized the redacted handoff sample on the current demo cloud host. This supersedes the older Windows-only restriction for that host alone; never send real media or its access credentials to GLM. Preserve the optional password overlay during recovery/recreation.
+
 ## Scope and language
 
 - Keep code identifiers, comments, API fields, configuration keys, commit messages, and agent execution instructions in English.

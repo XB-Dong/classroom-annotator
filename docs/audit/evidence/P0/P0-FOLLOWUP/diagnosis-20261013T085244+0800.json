@@ -1,0 +1,121 @@
+{
+  "timestamp": "2026-10-13T08:52:44.247519+08:00",
+  "scope": "user_requested_post_P0_diagnosis",
+  "repositoryBaseSha": "1e2695ebd9696f556b0ba85ba8621b930894849e",
+  "deployedApplicationSha": "f2d6d083efc0a7e8d3668f2593b0b22c3614c99b",
+  "syntheticFixtureSha256": "d1b205eda41d68f1f140c307256dd925cd73967f1ad9f7c176772eaf0ed56270",
+  "reviewUploadSha256": "d1b205eda41d68f1f140c307256dd925cd73967f1ad9f7c176772eaf0ed56270",
+  "fixtureMatchesReviewUpload": true,
+  "realClassroomSample": {
+    "scope": "Windows_only",
+    "priorExtractionPassed": true,
+    "frameCount": 4,
+    "width": 1920,
+    "height": 1080,
+    "visuallyInspectedInFollowup": true,
+    "uploadedToCloudOrGLM": false
+  },
+  "relay": {
+    "priorFailure": "owned_listening_processes_with_inactive_SSH_session",
+    "repair": "restart_three_ownership_verified_forward_processes",
+    "automaticReconnectImplemented": false
+  },
+  "httpChecksAfterRepair": [
+    {
+      "url": "http://127.0.0.1:8180/health/ready",
+      "status": 200,
+      "durationMs": 2136
+    },
+    {
+      "url": "http://127.0.0.1:8180/api/v1/videos",
+      "status": 200,
+      "durationMs": 136
+    },
+    {
+      "url": "http://127.0.0.1:8180/api/v1/dataset/lessons?page=1&pageSize=1",
+      "status": 503,
+      "durationMs": 407
+    },
+    {
+      "url": "http://127.0.0.1:3000/api/health",
+      "status": 200,
+      "durationMs": 78
+    },
+    {
+      "url": "http://127.0.0.1:9090/-/healthy",
+      "status": 200,
+      "durationMs": 76
+    }
+  ],
+  "companyApi": {
+    "cloudStatus": 503,
+    "code": "DATASET_NOT_CONFIGURED",
+    "liveVerification": "not_run",
+    "serverDirectDurationSeconds": 0.000941
+  },
+  "oldGlmRun": {
+    "model": "glm-4.7-flash",
+    "processWallTimeSeconds": 600.396,
+    "toolCount": 46,
+    "toolTimeMs": 32902,
+    "singleRequestTimeoutEstablished": false,
+    "finalSummaryProduced": false,
+    "coreCheckpointsPreviouslyVerified": true
+  },
+  "currentGlmProbes": [
+    {
+      "model": "glm-4.7-flash",
+      "endpointType": "general",
+      "startedAt": "2026-10-13T00:48:04.669177+00:00",
+      "durationSeconds": 51.911313,
+      "exitCode": 1,
+      "timeout": true,
+      "response": [],
+      "errors": [],
+      "resource1113Observed": false,
+      "credentialsPersisted": false,
+      "providerErrorsFromClientLog": [
+        "AI_APICallError: 该模型当前访问量过大，请您稍后再试"
+      ],
+      "classification": "provider_busy",
+      "limitations": "Client startup and SDK retries are included in the 45-second process budget; no completed model reply. HTTP status/code not exposed by this probe."
+    },
+    {
+      "model": "glm-4.7",
+      "endpointType": "general",
+      "startedAt": "2026-10-13T00:48:04.665160+00:00",
+      "durationSeconds": 52.086489,
+      "exitCode": 1,
+      "timeout": true,
+      "response": [],
+      "errors": [],
+      "resource1113Observed": false,
+      "credentialsPersisted": false,
+      "providerErrorsFromClientLog": [
+        "AI_RetryError: Failed after 3 attempts. Last error: 余额不足或无可用资源包,请充值。",
+        "AI_APICallError: 余额不足或无可用资源包,请充值。"
+      ],
+      "classification": "general_api_resource_unavailable",
+      "limitations": "Client startup and SDK retries are included in the 45-second process budget; no completed model reply. HTTP status/code not exposed by this probe."
+    }
+  ],
+  "docker": {
+    "cloudServicesHealthy": [
+      "backend",
+      "frontend",
+      "prometheus",
+      "grafana",
+      "node-exporter"
+    ],
+    "cloudPlatform": "linux/amd64",
+    "freshCloneOneCommandDesktopDeploymentVerified": false,
+    "windowsDockerDaemonRunning": false,
+    "macDeploymentExecuted": false
+  },
+  "productSourceChanged": false,
+  "P1OrP2Started": false,
+  "pendingClarifications": [
+    "additional_cloud_permission_for_classroom_sample",
+    "company_GLM_key_resource_type"
+  ]
+}

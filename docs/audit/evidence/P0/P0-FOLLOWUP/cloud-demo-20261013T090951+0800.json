@@ -1,0 +1,87 @@
+{
+  "timestamp": "2026-10-13T09:09:51.410517+08:00",
+  "scope": "user_authorized_post_P0_cloud_demo",
+  "authorizationDecision": "0006",
+  "businessImageSha": "f2d6d083efc0a7e8d3668f2593b0b22c3614c99b",
+  "deploymentConfigSha256": {
+    "nginx.conf": "2e9ded52a258d87b8b00f6a32239aee11a267aae01e13d9474b86ecce73b84d1",
+    "password-access.conf": "08ad075fd6e58b63b7b465e9a87f3b4e8be4c940be73bea223773c7c348ab902",
+    "compose.password.yml": "24c346ecd01258ef9879f247376e68949743d20a2dfe551d281d9d5b55958454"
+  },
+  "media": {
+    "videoId": "0b9e8aa3-deab-4736-8eeb-e45142dabdeb",
+    "videoName": "channel4-20s-redacted.mp4",
+    "frameCount": 4,
+    "width": 1920,
+    "height": 1080,
+    "timestampsMs": [
+      0,
+      5000,
+      10000,
+      15000
+    ],
+    "labelsCreated": false,
+    "privateBytesCommitted": false,
+    "GLMAccessToRealMedia": false
+  },
+  "authentication": {
+    "type": "nginx_http_basic",
+    "username": "demo",
+    "credentialStoredOutsideRepository": true,
+    "missingWrongValidAndRealMediaChecks": "PASS",
+    "livenessExemption": "/health/live",
+    "overlayPersistedInExternalEnvironment": true,
+    "genericComposeUpPreservesAuthentication": true
+  },
+  "actualBrowser": {
+    "timestamp": "2026-10-13T01:00:14.994Z",
+    "authenticatedPage": true,
+    "selectedVideo": "0b9e8aa3-deab-4736-8eeb-e45142dabdeb",
+    "frameButtons": 4,
+    "canvasVisible": true,
+    "jpegFetch": 200,
+    "pageErrors": [],
+    "privateScreenshotOutsideRepository": true
+  },
+  "cloudHealth": {
+    "servicesHealthy": 5,
+    "prometheusTargetsUp": 3
+  },
+  "nativeReview": {
+    "actor": "/root/p0_frontend_review",
+    "scope": "read_only_configuration_and_test_review",
+    "firstReviewFound": [
+      "deployment_rollback_could_remove_gateway",
+      "ready_and_actual_media_denial_test_gaps",
+      "stale_Windows_only_doc"
+    ],
+    "leaderDecision": "accepted_and_fixed",
+    "secondReview": "PASS",
+    "independentCloudRetest": false
+  },
+  "GLMNewConfigurationReview": "not_run_provider_busy_or_resource_unavailable",
+  "realCompanyApiVerification": "not_run",
+  "verification": {
+    "accessChecks": "PASS",
+    "diffCheck": "PASS",
+    "nodeSyntax": "PASS",
+    "changedFilesScanned": 13,
+    "knownCredentialMatches": 0,
+    "paths": [
+      "AGENTS.md",
+      "CONSTITUTION.md",
+      "README.md",
+      "deploy\\README.md",
+      "deploy\\compose.password.yml",
+      "deploy\\nginx.conf",
+      "deploy\\password-access.conf",
+      "docs\\audit\\evidence\\P0\\P0-FOLLOWUP\\diagnosis-20261013T085244+0800.json",
+      "docs\\audit\\logs\\events-followup-20261013T085244+0800.jsonl",
+      "docs\\audit\\reports\\report-20261013T085244+0800.md",
+      "docs\\decisions\\0006-authorized-cloud-demo.md",
+      "specs\\cloud-demo-access.md",
+      "tests\\scripts\\access-check.mjs"
+    ]
+  },
+  "P1OrP2Started": false
+}
