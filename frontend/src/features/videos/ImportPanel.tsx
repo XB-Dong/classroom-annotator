@@ -8,6 +8,7 @@ import type {
   Video,
 } from '../../shared/api/types';
 import { PublicSamplePanel } from './PublicSamplePanel';
+import { LocalSourcePanel } from './LocalSourcePanel';
 export function ImportPanel({
   onVideo,
   onJob,
@@ -112,14 +113,7 @@ export function ImportPanel({
         ))}
       </div>
       {tab === 'public_sample' && <PublicSamplePanel onVideo={onVideo} />}
-      {tab === 'local' && (
-        <div role="tabpanel" aria-label="本机素材">
-          <p className="notice" role="status">
-            本机目录入口尚未接入，请先使用公开示例或上传视频。
-          </p>
-          <p className="muted">本机指平台所在的部署主机，不是浏览器电脑的目录。</p>
-        </div>
-      )}
+      {tab === 'local' && <LocalSourcePanel onJob={onJob} />}
       {tab === 'upload' && (
         <div className="upload-area" role="tabpanel" aria-label="本地上传">
           {sourceStatus('upload')?.available === false && (

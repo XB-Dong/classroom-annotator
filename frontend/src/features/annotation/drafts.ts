@@ -30,7 +30,7 @@ export function readDraft(
       d.snapshot.annotations.some(
         (a) =>
           typeof a.id !== 'string' ||
-          a.source !== 'manual' ||
+          !['manual', 'ai', 'ai_corrected'].includes(a.source) ||
           !Array.isArray(a.bbox) ||
           a.bbox.length !== 4 ||
           !normalizeBox(a.bbox, width, height),

@@ -31,3 +31,17 @@ it('restores only this account draft and ignores old unscoped data', () => {
   expect(readDraft('f', 100, 100, scope)?.baseRevision).toBe(2);
   expect(readDraft('f', 100, 100, { ...scope, userId: 'bob' })).toBeUndefined();
 });
+it('restores mixed manual and server-owned AI annotations without losing pending manual edits', () => {
+  const mixed = {
+    ...draft,
+    snapshot: {
+      ...draft.snapshot,
+      annotations: [
+        { id: 'ai-a', bbox: [1, 1, 8, 8], source: 'ai_corrected', candidateId: 'c', runId: 'r' },
+        { id: 'manual-a', bbox: [20, 20, 8, 8], source: 'manual' },
+      ],
+    },
+  };
+  localStorage.setItem(draftKey('f', scope), JSON.stringify(mixed));
+  expect(readDraft('f', 100, 100, scope)?.snapshot.annotations).toEqual(mixed.snapshot.annotations);
+});

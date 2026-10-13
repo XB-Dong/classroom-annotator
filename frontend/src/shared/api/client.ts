@@ -21,6 +21,7 @@ export async function request<T>(path: string, options?: RequestInit): Promise<T
   if (!['GET', 'HEAD'].includes(options?.method?.toUpperCase() ?? 'GET') && authSession.current)
     headers.set('X-CSRF-Token', authSession.current.csrfToken);
   const assertCurrent = () => {
+    if (path === '/auth/logout' && !authSession.current) return;
     if (generation !== authSession.generation)
       throw new ApiError(0, 'STALE_AUTH_RESPONSE', '账号已切换，已忽略旧请求。');
   };

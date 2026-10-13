@@ -733,3 +733,118 @@ progress {
     animation: none;
   }
 }
+.review-panel {
+  border-top: 1px solid var(--line);
+  margin-top: 12px;
+  padding-top: 16px;
+}
+.review-panel p {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.review-panel select {
+  width: 100%;
+}
+.candidate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 220px;
+  overflow: auto;
+  margin: 10px 0;
+}
+.candidate-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  border: 1px dashed var(--blue);
+  background: var(--blue-soft);
+  padding: 10px;
+  font-size: 14px;
+}
+.candidate-item.risky {
+  background: var(--ochre-soft);
+  border-color: var(--ochre);
+}
+.candidate-item.selected {
+  border: 2px solid var(--blue);
+  padding: 9px;
+  box-shadow: inset 3px 0 0 var(--blue);
+}
+.review-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  margin: 10px 0;
+}
+.model-hash {
+  overflow-wrap: anywhere;
+  font-size: 14px;
+}
+.review-batch-bar {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  flex: none;
+  max-height: 220px;
+  overflow: auto;
+}
+.batch-review-options {
+  padding: 8px 0;
+}
+.batch-frame-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+  gap: 4px 12px;
+  max-height: 150px;
+  overflow: auto;
+  margin: 10px 0;
+}
+.batch-frame-options label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.batch-frame-options input {
+  width: 20px;
+  margin: 0;
+}
+.review-stats {
+  margin-top: 8px;
+  font-size: 14px;
+}
+.review-stats summary {
+  cursor: pointer;
+  min-height: 32px;
+}
+.review-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.annotation-panel {
+  width: 300px;
+}
+.annotation-list {
+  flex: none;
+  max-height: 220px;
+}
+@media (max-width: 1280px) {
+  .annotation-panel {
+    width: 270px;
+  }
+}
+@media (max-width: 1023px) {
+  .annotation-panel {
+    width: auto;
+    max-height: 420px;
+  }
+  .review-panel {
+    flex: none;
+  }
+}

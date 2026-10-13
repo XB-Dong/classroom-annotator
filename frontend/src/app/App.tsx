@@ -14,6 +14,8 @@ import { AuthProvider, useAuth } from '../features/auth/AuthProvider';
 import { AuthPage } from '../features/auth/AuthPage';
 import { NotebookMark } from '../shared/ui/NotebookMark';
 import { HelpPanel } from '../features/help/HelpPanel';
+import { BatchReviewPanel } from '../features/review/BatchReviewPanel';
+import { ReviewStatsPanel } from '../features/review/ReviewStatsPanel';
 const Editor = lazy(() =>
   import('../features/annotation/Editor').then((module) => ({ default: module.Editor })),
 );
@@ -93,6 +95,7 @@ function Workspace() {
   const [framesLoading, setFramesLoading] = useState(false);
   const [batchLoading, setBatchLoading] = useState(false);
   const [batchRefresh, setBatchRefresh] = useState(0);
+  const [reviewRefresh, setReviewRefresh] = useState(0);
   const batchesVideo = useRef('');
   const controller = useRef<SaveController>(undefined);
   const [editorReady, setEditorReady] = useState(false);
@@ -261,6 +264,7 @@ function Workspace() {
     }
   }
   function saved(snapshot: Snapshot) {
+    setReviewRefresh((value) => value + 1);
     setFrames((previous) => {
       const target = previous.find((f) => f.id === snapshot.frameId);
       if (!target || (target.revision === snapshot.revision && target.status === snapshot.status))
@@ -334,6 +338,26 @@ function Workspace() {
                 if (id !== batchId) void navigate(() => setBatchId(id));
               }}
             />
+            {batchId && frames.length > 0 && (
+              <div className="review-batch-bar">
+                <BatchReviewPanel
+                  key={batchId}
+                  batchId={batchId}
+                  frames={frames}
+                  blocked={navigationBusy || !editorReady || editorState === 'conflict'}
+                  beforeStart={async () =>
+                    !!controller.current && (await controller.current.settle())
+                  }
+                  onJob={addJob}
+                />
+                <ReviewStatsPanel
+                  key={`${videoId}:${batchId}`}
+                  videoId={videoId}
+                  batchId={batchId}
+                  refresh={reviewRefresh}
+                />
+              </div>
+            )}
             {batchError && (
               <div className="notice error" role="alert">
                 {batchError}
@@ -377,6 +401,7 @@ function Workspace() {
                       onSaved={saved}
                       onController={controllerChanged}
                       onStateChange={editorChanged}
+                      onJob={addJob}
                     />
                   </Suspense>
                 )}

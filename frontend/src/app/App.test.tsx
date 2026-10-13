@@ -92,7 +92,7 @@ async function setup(
         };
       else if (url.includes('/progress'))
         value = { total: 2, notStarted: 0, inProgress: 0, completed: 2 };
-      else if (url.includes('/annotations')) {
+      else if (url.includes('/annotations') || url.endsWith('/review')) {
         const frameId = url.split('/')[4];
         if (requestOptions?.method === 'PUT') {
           const body = JSON.parse(requestOptions.body as string);
@@ -112,6 +112,9 @@ async function setup(
           value = { ...body, frameId, revision: 1 };
         } else
           value = {
+            candidates: [],
+            currentRun: null,
+            issues: [],
             frameId,
             revision: 0,
             status,

@@ -7,6 +7,24 @@ const snapshot = (revision = 0, status: Snapshot['status'] = 'not_started'): Sna
   status,
   annotations: [],
 });
+it('applies review snapshots only while clean and rejects late snapshots after manual edits', () => {
+  const state = setup(async (s) => s);
+  expect(state.controller.acceptServerSnapshot(snapshot(1), 0)).toBe(true);
+  state.controller.edit(snapshot(1, 'in_progress'));
+  expect(state.controller.acceptServerSnapshot(snapshot(2), 1)).toBe(false);
+  expect(state.controller.snapshot.status).toBe('in_progress');
+  expect(state.stored?.baseRevision).toBe(1);
+  state.controller.dispose();
+});
+it('blocks settlement and external refresh while a canvas gesture is unfinished', async () => {
+  const state = setup(async (s) => s);
+  state.controller.setInteracting(true);
+  expect(await state.controller.settle()).toBe(false);
+  expect(state.controller.acceptServerSnapshot(snapshot(1), 0)).toBe(false);
+  state.controller.setInteracting(false);
+  expect(await state.controller.settle()).toBe(true);
+  state.controller.dispose();
+});
 it('locks duplicate conflict resolutions so a late response cannot erase a new edit', async () => {
   const state = setup(async (s) => ({ ...s, revision: 8 }), {
     baseRevision: 3,

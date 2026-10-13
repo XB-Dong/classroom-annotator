@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Editor } from './Editor';
-import type { Frame, Snapshot } from '../../shared/api/types';
+import type { Frame, ReviewSnapshot } from '../../shared/api/types';
 vi.mock('./Canvas', () => ({ AnnotationCanvas: () => <div data-testid="annotation-canvas" /> }));
 const frame: Frame = {
   id: 'f',
@@ -14,7 +14,10 @@ const frame: Frame = {
   status: 'not_started',
   revision: 0,
 };
-const initial: Snapshot = {
+const initial: ReviewSnapshot = {
+  candidates: [],
+  currentRun: null,
+  issues: [],
   frameId: 'f',
   revision: 0,
   status: 'not_started',

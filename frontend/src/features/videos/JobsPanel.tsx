@@ -28,13 +28,19 @@ export function JobsPanel({
         </p>
       )}
       {jobs.length === 0 ? (
-        <p className="muted small">暂无导入或抽帧任务。</p>
+        <p className="muted small">暂无导入、抽帧或 AI 任务。</p>
       ) : (
         <div className="job-list">
           {jobs.map((j) => (
             <div className="job" key={j.id}>
               <div>
-                <strong>{j.kind === 'import' ? '视频导入' : '视频抽帧'}</strong>
+                <strong>
+                  {j.kind === 'import'
+                    ? '视频导入'
+                    : j.kind === 'extraction'
+                      ? '视频抽帧'
+                      : 'AI 预标注'}
+                </strong>
                 <span className={`badge ${j.status}`}>{labels[j.status]}</span>
               </div>
               <progress max={1} value={j.progress} />

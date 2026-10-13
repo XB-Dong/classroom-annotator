@@ -47,6 +47,7 @@ it('defaults to attributed public samples and retires the remote entrance withou
   const fetchMock = api({
     'GET /api/v1/samples': { items: [sample] },
     'GET /api/v1/media-storage/status': status,
+    'GET /api/v1/sources/local': { items: [] },
     'POST /api/v1/samples/imports': {
       id: 'public-video',
       sourceKind: 'public_sample',
@@ -69,7 +70,7 @@ it('defaults to attributed public samples and retires the remote entrance withou
   const call = fetchMock.mock.calls.find(([url]) => url.endsWith('/samples/imports'));
   expect(JSON.parse(call?.[1]?.body as string)).toEqual({ sampleId: 'public-1' });
   fireEvent.click(screen.getByRole('tab', { name: '本机素材' }));
-  expect(screen.getByText('本机目录入口尚未接入，请先使用公开示例或上传视频。')).toBeTruthy();
+  await screen.findByText('目录中暂无授权视频。');
   expect(fetchMock.mock.calls.some(([url]) => url.includes('/media-sources/mac'))).toBe(false);
   fireEvent.click(screen.getByRole('tab', { name: '公司接口' }));
   expect((screen.getByText('加载公司课节') as HTMLButtonElement).disabled).toBe(false);

@@ -27,6 +27,7 @@ export class SaveController {
   private suspended = false;
   private disposed = false;
   private resolving = false;
+  private interacting = false;
   private idleWaiters: Array<() => void> = [];
   private timer?: ReturnType<typeof setTimeout>;
   private state: SaveState = 'saved';
@@ -166,7 +167,8 @@ export class SaveController {
   async settle(): Promise<boolean> {
     clearTimeout(this.timer);
     while (!this.disposed) {
-      if (this.suspended || this.resolving || this.state === 'error') return false;
+      if (this.suspended || this.resolving || this.interacting || this.state === 'error')
+        return false;
       if (this.inFlight) {
         await new Promise<void>((resolve) => this.idleWaiters.push(resolve));
         continue;
@@ -175,6 +177,33 @@ export class SaveController {
       await this.flush();
     }
     return false;
+  }
+  get canRefresh() {
+    return (
+      !this.disposed &&
+      !this.inFlight &&
+      !this.suspended &&
+      !this.resolving &&
+      !this.interacting &&
+      this.state === 'saved' &&
+      this.sequence === this.acknowledged &&
+      !this.retainedDraft
+    );
+  }
+  setInteracting(active: boolean) {
+    this.interacting = active;
+  }
+  acceptServerSnapshot(snapshot: Snapshot, expectedRevision: number): boolean {
+    if (
+      !this.canRefresh ||
+      this.snapshot.revision !== expectedRevision ||
+      snapshot.frameId !== this.snapshot.frameId ||
+      snapshot.revision < expectedRevision
+    )
+      return false;
+    this.snapshot = structuredClone(snapshot);
+    this.emit();
+    return true;
   }
   dispose() {
     this.disposed = true;

@@ -67,7 +67,24 @@ it('allows logout revocation to finish after clearing browser identity', async (
   authSession.clear();
   expect(signal.aborted).toBe(false);
   finish(new Response(null, { status: 204 }));
-  await expect(pending).rejects.toMatchObject({ code: 'STALE_AUTH_RESPONSE' });
+  await expect(pending).resolves.toBeUndefined();
+});
+it('exposes a failed logout revocation after local identity is cleared', async () => {
+  authSession.activate({ user, csrfToken: 'current-csrf' });
+  let reject!: (e: Error) => void;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      () =>
+        new Promise<Response>((_, fail) => {
+          reject = fail;
+        }),
+    ),
+  );
+  const pending = request('/auth/logout', { method: 'POST' });
+  authSession.clear();
+  reject(new Error('offline'));
+  await expect(pending).rejects.toMatchObject({ code: 'NETWORK_ERROR' });
 });
 
 it('clears identity and aborts requests on session expiry', async () => {

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Stage, Layer, Image as CanvasImage, Rect, Transformer } from 'react-konva';
 import Konva from 'konva';
-import type { Annotation, Frame } from '../../shared/api/types';
+import type { Annotation, Candidate, Frame } from '../../shared/api/types';
 import { normalizeBox, originalPoint, type Box } from './geometry';
 import { applyNodeBox } from './nodeGeometry';
 import { authSession } from '../auth/session';
@@ -13,6 +13,12 @@ interface Props {
   disabled: boolean;
   select: (id?: string) => void;
   change: (annotations: Annotation[]) => void;
+  candidates?: Candidate[];
+  selectedCandidate?: string;
+  adjustedCandidateBox?: Box;
+  selectCandidate?: (id: string) => void;
+  changeCandidate?: (box: Box) => void;
+  interactionChanged?: (active: boolean) => void;
 }
 export function HeadBox({
   annotation,
@@ -20,12 +26,18 @@ export function HeadBox({
   enabled,
   onSelect,
   onChange,
+  candidate = false,
+  risky = false,
+  interactionChanged,
 }: {
   annotation: Annotation;
   selected: boolean;
   enabled: boolean;
   onSelect: () => void;
   onChange: (box: Box, node: Konva.Rect) => boolean;
+  candidate?: boolean;
+  risky?: boolean;
+  interactionChanged?: (active: boolean) => void;
 }) {
   const rect = useRef<Konva.Rect>(null);
   const transformer = useRef<Konva.Transformer>(null);
@@ -44,16 +56,26 @@ export function HeadBox({
         y={y}
         width={width}
         height={height}
-        stroke={selected ? '#f59e0b' : '#29d6ad'}
+        stroke={selected ? '#4c9aff' : candidate ? (risky ? '#f2bc55' : '#a6c4e8') : '#29d6ad'}
+        dash={candidate ? [6, 4] : undefined}
         strokeWidth={2}
         strokeScaleEnabled={false}
-        fill={selected ? 'rgba(245,158,11,.12)' : 'rgba(41,214,173,.07)'}
+        fill={
+          selected
+            ? 'rgba(76,154,255,.12)'
+            : candidate
+              ? 'rgba(242,188,85,.05)'
+              : 'rgba(41,214,173,.07)'
+        }
         draggable={enabled}
         onClick={onSelect}
         onTap={onSelect}
+        onDragStart={() => interactionChanged?.(true)}
+        onTransformStart={() => interactionChanged?.(true)}
         onDragEnd={(e) => {
           if (!onChange([e.target.x(), e.target.y(), width, height], rect.current!))
             e.target.position({ x, y });
+          interactionChanged?.(false);
         }}
         onTransformEnd={() => {
           const node = rect.current!;
@@ -66,6 +88,7 @@ export function HeadBox({
           node.scaleX(1);
           node.scaleY(1);
           if (!onChange(box, node)) node.position({ x, y });
+          interactionChanged?.(false);
         }}
       />
       {selected && enabled && (
@@ -75,8 +98,8 @@ export function HeadBox({
           flipEnabled={false}
           keepRatio={false}
           anchorSize={8}
-          borderStroke="#f59e0b"
-          anchorStroke="#f59e0b"
+          borderStroke="#4c9aff"
+          anchorStroke="#4c9aff"
         />
       )}
     </>
@@ -90,6 +113,12 @@ export function AnnotationCanvas({
   disabled,
   select,
   change,
+  candidates = [],
+  selectedCandidate,
+  adjustedCandidateBox,
+  selectCandidate,
+  changeCandidate,
+  interactionChanged,
 }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const stage = useRef<Konva.Stage>(null);
@@ -145,6 +174,7 @@ export function AnnotationCanvas({
     if (mode === 'draw') {
       const p = point();
       origin.current = p;
+      if (p) interactionChanged?.(true);
       if (p) setDraft([p.x, p.y, 0, 0]);
     } else if (event.target === event.target.getStage() || event.target.getClassName() === 'Image')
       select(undefined);
@@ -170,6 +200,7 @@ export function AnnotationCanvas({
       change([...annotations, { id, bbox: box, source: 'manual' }]);
       select(id);
     }
+    interactionChanged?.(false);
   }
   const preview = draft && normalizeBox(draft, frame.width, frame.height);
   return (
@@ -201,6 +232,7 @@ export function AnnotationCanvas({
             onTouchMove={move}
             onMouseUp={finish}
             onTouchEnd={finish}
+            onMouseLeave={finish}
           >
             <Layer>
               <CanvasImage image={image} width={frame.width} height={frame.height} />
@@ -210,6 +242,7 @@ export function AnnotationCanvas({
                   annotation={a}
                   selected={a.id === selected}
                   enabled={!disabled && mode === 'select'}
+                  interactionChanged={interactionChanged}
                   onSelect={() => {
                     if (mode === 'select') select(a.id);
                   }}
@@ -221,6 +254,37 @@ export function AnnotationCanvas({
                           item.id === a.id ? { ...item, bbox: normalized } : item,
                         ),
                       );
+                    return normalized !== null;
+                  }}
+                />
+              ))}
+              {candidates.map((candidate) => (
+                <HeadBox
+                  key={`candidate-${candidate.id}`}
+                  annotation={{
+                    id: candidate.id,
+                    bbox:
+                      candidate.id === selectedCandidate && adjustedCandidateBox
+                        ? adjustedCandidateBox
+                        : candidate.bbox,
+                    source: 'manual',
+                  }}
+                  candidate
+                  risky={candidate.riskReasons.length > 0}
+                  selected={candidate.id === selectedCandidate}
+                  enabled={
+                    !disabled &&
+                    mode === 'select' &&
+                    candidate.id === selectedCandidate &&
+                    !candidate.riskReasons.includes('OVERLAP_EXISTING')
+                  }
+                  interactionChanged={interactionChanged}
+                  onSelect={() => {
+                    if (!disabled && mode === 'select') selectCandidate?.(candidate.id);
+                  }}
+                  onChange={(box, node) => {
+                    const normalized = applyNodeBox(node, box, frame.width, frame.height);
+                    if (normalized) changeCandidate?.(normalized);
                     return normalized !== null;
                   }}
                 />
