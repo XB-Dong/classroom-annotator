@@ -1,6 +1,6 @@
 {
   "wave": "P1",
-  "planVersion": "0.1.0",
+  "planVersion": "0.2.0",
   "status": "prepared_awaiting_user_review",
   "executionAuthorized": false,
   "implementationStarted": false,
@@ -32,15 +32,21 @@
   "deploymentStatus": "not_run",
   "realApiVerificationStatus": "not_run",
   "macRealDeploymentStatus": "not_run_deferred",
-  "planReviewStatus": "readonly_review_completed_findings_dispositioned_by_leader_not_product_verification",
+  "planReviewStatus": "previous_readonly_architecture_review_plus_leader_help_addendum_self_review_not_product_verification",
   "reportRef": null,
-  "preparedAt": "2026-10-14T01:08:53.108555+08:00",
+  "preparedAt": "2026-10-14T01:24:44.359872+08:00",
   "reviewDispositionRef": "docs/waves/P1/PLAN-REVIEW-DISPOSITION.md",
-  "preparationReportRef": "docs/audit/reports/report-20261014T010853+0800.md",
+  "preparationReportRef": "docs/audit/reports/report-20261014T012444+0800.md",
   "preparationEvidenceRef": "runtime/p1-preparation/document-check.json",
   "reviewRequestedModel": "gpt-6-astra",
   "reviewRequestedReasoningEffort": "xhigh",
   "reviewActualModel": null,
   "reviewActualReasoningEffort": null,
-  "reviewRawSHA256": "0043947fc4d81f3a5035804547be2c563ab6fc22ccb58ad7cc7b99e2c370c272"
+  "reviewRawSHA256": "0043947fc4d81f3a5035804547be2c563ab6fc22ccb58ad7cc7b99e2c370c272",
+  "previousPreparationReportRef": "docs/audit/reports/report-20261014T010853+0800.md",
+  "helpSpecificationRef": "specs/p1/document-help.md",
+  "helpManualRef": "docs/product/ANNOTATOR-GUIDE.zh.md",
+  "helpApiStatus": "not_run",
+  "helpMode": "whole_document_context_no_vectorization",
+  "registrationAndLoginRequired": true
 }

@@ -61,9 +61,23 @@ Behavior RED: account switch draft/cache leak, conflict auto-retry overwrite, ca
 
 Checks from frontend: `npm run typecheck`, `npm run lint`, `npm test -- --run --maxWorkers=1 --no-file-parallelism`, `npm run build`. Reuse current test pool settings if command syntax requires it; do not weaken assertions to make checks pass.
 
+## P1-HELP-001 / Backend + Frontend, small independent capability
+
+Requirement: P1-HELP-001; follow specs/p1/document-help.md. Product document-grounded QA is different from ONNX detection and external OpenCode review. Send the complete versioned manual plus a single operation question directly from Go to the configured GLM HTTP endpoint. No embeddings, retrieval index, vector store, LangChain or LlamaIndex; no business data, model tools or client-side Key.
+
+Backend owns backend/internal/help/{document,provider,service,http}.go and behavior tests; Frontend owns frontend/src/features/help/{HelpPanel,DocumentView}.tsx and tests. Leader owns OpenAPI/config/dependency integration; docs/product/ANNOTATOR-GUIDE.zh.md is the sole public manual, synchronized at build/release rather than separate conflicting copies.
+
+- [ ] Backend RED: fake provider independently asserts full manual content/hash, auth/CSRF, timeout, bad/unknown citations, no credentials/data leak.
+- [ ] Backend GREEN: bounded2-slot/15s client, session/Origin checks, validated answer/reference fields and safe static document fallback.
+- [ ] Frontend behavior checks: logged-in question/reference navigation, anonymous registration manual, failure fallback, authGeneration discards late reply, closes without blocking canvas/save.
+- [ ] Real provider check: three platform questions plus an out-of-document question, record actual endpoint/model/documentSHA/answer reference/time; fake response cannot satisfy real API gate.
+- [ ] Module checks: `go test ./internal/help` from backend after package creation, normal frontend checks, Test-owned tests/integration/help.spec.mjs and browser smoke after true registration/login.
+
+Each ownership slice is max45min and shares parent P1-HELP-001 repair count. It must not take over unrelated authentication or annotation files; coordinate shared client use. No product API call or feature worker is started by this preparation packet.
+
 ## P1-TEST-001 / Test, independent
 
-Create tests/integration/{auth,collaboration,ai-review}.spec.mjs; tests/e2e/{p1-workflow,p1-conflict}.spec.mjs and helpers only as needed; scripts/p1-smoke and low-concurrency entrypoints with Windows/Linux invocation documented. Update tests/README after handoff. Leader alone adjusts common verify scripts/workflow shared files.
+Create tests/integration/{auth,collaboration,ai-review,help}.spec.mjs; tests/e2e/{p1-workflow,p1-conflict}.spec.mjs and helpers only as needed; scripts/p1-smoke and low-concurrency entrypoints with Windows/Linux invocation documented. Update tests/README after handoff. Leader alone adjusts common verify scripts/workflow shared files.
 
 Use exact acceptance.md matrix. Tests assert independent final DB/COCO state, actual browser downloads and winner/loser outcomes; do not mirror a model decoder and call it independent coordinate verification. Real AI and fake-coordinate tests are labeled separately. Keep 5 contexts/3 accounts, 20 fresh barrier CAS rounds and 10-minute mixed workload bounded. Never test destructive scenarios on production workspace.
 
@@ -89,6 +103,7 @@ Do not treat broad capability packets as a single unlimited job. Leader dispatch
 | P1-AI-REVIEW-001 | A: schema/run/idempotency/publication stale; B: provenance/decision/tombstone and risk completion rules; C: stats/COCO/AI-failure/batch races |
 | P1-FRONT-001 | A: theme/layout/auth; B: candidate/risk workflow; C: conflict/account-generation/actual viewport checks |
 | P1-TEST-001 | A: independent contracts/concurrency tests; B: browser workflow/degrade; C: low-concurrency + CI/evidence/recording checks |
+| P1-HELP-001 | A: controlled full manual/provider and contract tests; B: guide drawer/real API/reference/failure checks |
 
 Leader may split ownership only after a clean handoff and within the3-worker limit. Test designs cases early, takes a seat after AI service handoff; completed frontend/AI work frees a slot for bounded backend assistance. No more workers, repeated task-name resets, or background builds to bypass limits.
 

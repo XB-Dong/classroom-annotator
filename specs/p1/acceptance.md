@@ -9,6 +9,7 @@
 | P1-DATASET-001 | 已观察schema的合成API分页、channel4/play-url/密钥隔离导入本机通过；公司真实API未配置记not_run，不阻塞 | Backend / Test |
 | P1-UI-001 | 1440×900/1280×720/窄屏真实截图与操作，手绘外壳不挡画布；快捷键、缩放原图坐标、焦点、错误/空状态无退化 | Frontend / Test |
 | P1-AUTH-001 | 注册重复/错误邀请码/过限/登录/退出/过期；2实际账户独立会话；未登录所有API/媒体/ZIP拒绝，用户体role/userId无效，CSRF/Origin校验；草稿跨账号不泄漏 | Backend / Test |
+| P1-HELP-001 | 供应商请求包含完整正确版本手册而非片段，引用合法；实际产品GLM至少3个操作问题/1个文档外问题；注册登录后真实提问/章节跳转、API断开仍可读全文；鉴权/CSRF/限流/非法引用/超时/退出迟到结果可控，不发送业务数据或密钥 | Backend / Frontend / Test |
 | P1-AI-001 | 真实ONNX加载、至少8个真实示例JPEG推理与非零有效头候选观察；原图输出合法，模型SHA/输入SHA/耗时可追踪，不能用mock代替 | AI / Test |
 | P1-COORD-001 | 原始output/head过滤/NMS/letterbox/横竖图/裁剪/非有限值测试；已知框逆映射误差≤1原图像素，真实框与图对应 | AI / Frontend / Test |
 | P1-REVIEW-001 | pending→接受/调整/拒绝与补框、再编辑/删除/撤销同步合法provenance；重跑不清正式框，重叠不重复接受；高风险逐项定位/批量跳过/图片问题确认，pending时人工保存可用，所有写入CAS | Backend / Frontend / Test |
