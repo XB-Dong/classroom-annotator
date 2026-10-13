@@ -1,0 +1,22 @@
+{
+  "modelId": "yolov9_n_wholebody34_0100_1x3x640x640",
+  "fileName": "yolov9_n_wholebody34_0100_1x3x640x640.onnx",
+  "fileBytes": 3221705,
+  "sha256": "a5ece478fc918787258afccd0b313e54319f8f39aeb1ceca11f27dbd269e78bc",
+  "input": {"name": "images", "shape": [1, 3, 640, 640], "dtype": "float32", "color": "RGB", "range": [0, 1]},
+  "output": {"name": "output", "shape": [1, 38, 8400], "layout": "cx_cy_w_h_then_34_independent_class_scores"},
+  "headClassId": 7,
+  "license": "MIT",
+  "licenseFile": "MODEL-LICENSE",
+  "provenance": {
+    "physicalArtifact": "Recovered existing evaluated artifact by Leader; byte size and SHA independently checked",
+    "authorModelLicense": "https://github.com/PINTO0309/High-Angle_Robust_Fast_FaceAlignment/blob/main/README.md#8-references",
+    "modelDirectory": "https://github.com/PINTO0309/PINTO_model_zoo/tree/d069263de93154dba4d41052cfcb055a3bb93fb4/471_YOLO-Wholebody34",
+    "classTable": "https://github.com/PINTO0309/PINTO_model_zoo/blob/d069263de93154dba4d41052cfcb055a3bb93fb4/471_YOLO-Wholebody34/README.md",
+    "licenseSource": "https://github.com/PINTO0309/PINTO_model_zoo/blob/d069263de93154dba4d41052cfcb055a3bb93fb4/471_YOLO-Wholebody34/LICENSE",
+    "historicalDirectory455": "Obsolete author link; never used to download a model"
+  },
+  "pipelineVersion": "head-letterbox-v1-fullframe-2x2-15",
+  "pipeline": {"largeImageMinimumMaxDimension": 1280, "largeImageMode": "fullframe_plus_2x2", "tileOverlapFraction": 0.15, "maximumInvocations": 5, "confidenceThreshold": 0.25, "nmsThreshold": 0.5},
+  "evidence": {"realSamples": 8, "inputDescription": "Authorized PNG frames converted to JPEG in memory; no original JPEG claim", "status": "Partial head candidates with substantial visible omissions; precision and recall not evaluated", "runtimeEvidence": "runtime/p1-ai/r0-model-results.json and r0-tiling-results.json"}
+}
