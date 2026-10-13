@@ -32,8 +32,10 @@ type API struct {
 // Extensions receive the existing group so annotation/export capabilities can register their routes.
 type Extension func(*gin.RouterGroup, *store.Store)
 type Security struct {
-	Auth      *auth.HTTP
-	Resources auth.ResourceAuthorizer
+	Auth        *auth.HTTP
+	Resources   auth.ResourceAuthorizer
+	TaskOwner   func() bool
+	TaskContext context.Context
 }
 
 func NewWithSecurity(cfg config.Config, s *store.Store, m *jobs.Manager, v *media.Service, x *extraction.Service, d *dataset.Adapter, sources *SourceService, security Security, extensions ...Extension) (*gin.Engine, error) {
@@ -107,7 +109,7 @@ func newRouter(cfg config.Config, s *store.Store, m *jobs.Manager, v *media.Serv
 	a := &API{Cfg: cfg, Store: s, Jobs: m, Media: v, Extraction: x, Dataset: d, Sources: sources}
 	g := r.Group("/api/v1")
 	if security != nil {
-		g.Use(security.Auth.Protect(), auth.Scope(security.Resources))
+		g.Use(security.Auth.Protect(), auth.Scope(security.Resources), taskOwnerGate(security.TaskOwner, security.TaskContext))
 	}
 	g.GET("/videos", a.videos)
 	g.POST("/videos", a.upload)

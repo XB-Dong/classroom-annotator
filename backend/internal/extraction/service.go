@@ -48,7 +48,7 @@ func (s *Service) Run(ctx context.Context, j domain.Job, v domain.Video, targets
 			return e
 		}
 		frames = append(frames, domain.Frame{ID: id, VideoID: v.ID, BatchID: j.BatchID, TimestampMs: ms, Width: w, Height: h, StorageKey: filepath.Join("frames", j.BatchID, id+".jpg"), MediaSHA256: hash, MediaSizeBytes: size})
-		if e = s.Store.SetProgress(j.ID, .9*float64(i+1)/float64(len(targets))); e != nil {
+		if e = s.Store.SetProgressWithContext(ctx, j.ID, .9*float64(i+1)/float64(len(targets))); e != nil {
 			return e
 		}
 	}
@@ -59,7 +59,7 @@ func (s *Service) Run(ctx context.Context, j domain.Job, v domain.Video, targets
 	if e := os.Rename(stage, final); e != nil {
 		return e
 	}
-	if e := s.Store.PublishBatch(j, frames); e != nil {
+	if e := s.Store.PublishBatchWithContext(ctx, j, frames); e != nil {
 		if cleanupErr := os.RemoveAll(final); cleanupErr != nil {
 			return errors.Join(media.ErrCleanup, e)
 		}

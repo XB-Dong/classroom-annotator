@@ -7,7 +7,10 @@ import (
 )
 
 func (s *Store) AddJob(j domain.Job) error {
-	ctx, cancel := s.Context(context.Background())
+	return s.AddJobWithContext(context.Background(), j)
+}
+func (s *Store) AddJobWithContext(parent context.Context, j domain.Job) error {
+	ctx, cancel := s.Context(parent)
 	defer cancel()
 	_, e := s.DB.ExecContext(ctx, `INSERT INTO jobs(id,kind,video_id,batch_id,status,progress,error,created_at) VALUES($1,$2,nullif($3,''),nullif($4,''),$5,$6,$7,$8)`, j.ID, j.Kind, j.VideoID, j.BatchID, j.Status, j.Progress, j.Error, j.CreatedAt)
 	return e
@@ -20,7 +23,10 @@ func scanJob(r interface{ Scan(...any) error }) (j domain.Job, e error) {
 	return
 }
 func (s *Store) Job(id string) (domain.Job, error) {
-	ctx, cancel := s.Context(context.Background())
+	return s.JobWithContext(context.Background(), id)
+}
+func (s *Store) JobWithContext(parent context.Context, id string) (domain.Job, error) {
+	ctx, cancel := s.Context(parent)
 	defer cancel()
 	return scanJob(s.DB.QueryRowContext(ctx, jobSelect+` WHERE id=$1`, id))
 }
@@ -49,7 +55,10 @@ func (s *Store) jobsWhere(where string, args []any) ([]domain.Job, error) {
 	return out, r.Err()
 }
 func (s *Store) StartJob(id string) (bool, error) {
-	ctx, cancel := s.Context(context.Background())
+	return s.StartJobWithContext(context.Background(), id)
+}
+func (s *Store) StartJobWithContext(parent context.Context, id string) (bool, error) {
+	ctx, cancel := s.Context(parent)
 	defer cancel()
 	r, e := s.DB.ExecContext(ctx, `UPDATE jobs SET status='running' WHERE id=$1 AND status='queued'`, id)
 	if e != nil {
@@ -85,13 +94,19 @@ func (s *Store) CancelJob(id string) (domain.Job, error) {
 	return j, nil
 }
 func (s *Store) FinishJob(id, status, code string) error {
-	ctx, cancel := s.Context(context.Background())
+	return s.FinishJobWithContext(context.Background(), id, status, code)
+}
+func (s *Store) FinishJobWithContext(parent context.Context, id, status, code string) error {
+	ctx, cancel := s.Context(parent)
 	defer cancel()
 	_, e := s.DB.ExecContext(ctx, `UPDATE jobs SET status=CASE WHEN status='cancelling' AND $1 NOT IN ('CLEANUP_FAILED','REMOTE_CLEANUP_PENDING') THEN 'cancelled' ELSE $2 END,error=CASE WHEN status='cancelling' AND $3 NOT IN ('CLEANUP_FAILED','REMOTE_CLEANUP_PENDING') THEN '' ELSE $4 END WHERE id=$5 AND status IN ('running','cancelling')`, code, status, code, code, id)
 	return e
 }
 func (s *Store) SetProgress(id string, p float64) error {
-	ctx, cancel := s.Context(context.Background())
+	return s.SetProgressWithContext(context.Background(), id, p)
+}
+func (s *Store) SetProgressWithContext(parent context.Context, id string, p float64) error {
+	ctx, cancel := s.Context(parent)
 	defer cancel()
 	_, e := s.DB.ExecContext(ctx, `UPDATE jobs SET progress=GREATEST(progress,$1) WHERE id=$2 AND status='running'`, p, id)
 	return e
@@ -107,7 +122,10 @@ func requireRunning(ctx context.Context, tx *sql.Tx, id string) error {
 	return nil
 }
 func (s *Store) PublishBatch(j domain.Job, frames []domain.Frame) error {
-	ctx, cancel := s.Context(context.Background())
+	return s.PublishBatchWithContext(context.Background(), j, frames)
+}
+func (s *Store) PublishBatchWithContext(parent context.Context, j domain.Job, frames []domain.Frame) error {
+	ctx, cancel := s.Context(parent)
 	defer cancel()
 	tx, e := s.DB.BeginTx(ctx, nil)
 	if e != nil {
@@ -138,7 +156,10 @@ func publishBatchTx(ctx context.Context, tx *sql.Tx, j domain.Job, frames []doma
 	return nil
 }
 func (s *Store) PublishImport(j domain.Job, v domain.Video) error {
-	ctx, cancel := s.Context(context.Background())
+	return s.PublishImportWithContext(context.Background(), j, v)
+}
+func (s *Store) PublishImportWithContext(parent context.Context, j domain.Job, v domain.Video) error {
+	ctx, cancel := s.Context(parent)
 	defer cancel()
 	tx, e := s.DB.BeginTx(ctx, nil)
 	if e != nil {

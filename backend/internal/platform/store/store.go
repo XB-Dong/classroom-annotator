@@ -116,7 +116,10 @@ func scanVideo(r interface{ Scan(...any) error }) (v domain.Video, err error) {
 	return
 }
 func (s *Store) AddVideo(v domain.Video) error {
-	ctx, cancel := s.Context(context.Background())
+	return s.AddVideoWithContext(context.Background(), v)
+}
+func (s *Store) AddVideoWithContext(parent context.Context, v domain.Video) error {
+	ctx, cancel := s.Context(parent)
 	defer cancel()
 	_, err := s.DB.ExecContext(ctx, insertVideo, videoArgs(v)...)
 	return err
@@ -161,27 +164,66 @@ func (s *Store) Recover() error {
 
 // RecoverLocalMedia reconciles local files only. A ready sample cache may precede its video record.
 func (s *Store) RecoverLocalMedia() error {
-	ctx, cancel := s.Context(context.Background())
+	return s.recoverLocalMedia(context.Background(), nil)
+}
+
+// RecoverLocalMediaWithContext requires the held scheduler session in production.
+func (s *Store) RecoverLocalMediaWithContext(parent context.Context, conn *sql.Conn) error {
+	if err := parent.Err(); err != nil {
+		return err
+	}
+	if conn == nil {
+		return errors.New("scheduler connection required")
+	}
+	return s.recoverLocalMedia(parent, conn)
+}
+
+func (s *Store) recoverLocalMedia(parent context.Context, conn *sql.Conn) error {
+	ctx, cancel := s.Context(parent)
 	defer cancel()
+	var query interface {
+		QueryRowContext(context.Context, string, ...any) *sql.Row
+	} = s.DB
+	if conn != nil {
+		query = conn
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	for _, kind := range []string{"staging", "frames", "videos"} {
 		entries, err := os.ReadDir(filepath.Join(s.Root, kind))
 		if err != nil {
 			return err
 		}
 		for _, entry := range entries {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
 			n := 0
 			if kind == "frames" {
-				err = s.DB.QueryRowContext(ctx, `SELECT count(*) FROM frames WHERE batch_id=$1 AND storage_provider='local'`, entry.Name()).Scan(&n)
+				err = query.QueryRowContext(ctx, `SELECT count(*) FROM frames WHERE batch_id=$1 AND storage_provider='local'`, entry.Name()).Scan(&n)
 			}
 			if kind == "videos" {
 				legacyKey := filepath.Join("videos", entry.Name())
 				canonicalKey := path.Join("videos", entry.Name())
-				err = s.DB.QueryRowContext(ctx, `SELECT (SELECT count(*) FROM videos WHERE storage_provider='local' AND (storage_key=$1 OR storage_key=$2 OR starts_with(storage_key,$3) OR starts_with(storage_key,$4))) + (SELECT count(*) FROM public_samples WHERE cache_status='ready' AND (storage_key=$1 OR storage_key=$2 OR starts_with(storage_key,$3) OR starts_with(storage_key,$4)))`, legacyKey, canonicalKey, legacyKey+`\`, canonicalKey+"/").Scan(&n)
+				err = query.QueryRowContext(ctx, `SELECT (SELECT count(*) FROM videos WHERE storage_provider='local' AND (storage_key=$1 OR storage_key=$2 OR starts_with(storage_key,$3) OR starts_with(storage_key,$4))) + (SELECT count(*) FROM public_samples WHERE cache_status='ready' AND (storage_key=$1 OR storage_key=$2 OR starts_with(storage_key,$3) OR starts_with(storage_key,$4)))`, legacyKey, canonicalKey, legacyKey+`\`, canonicalKey+"/").Scan(&n)
 			}
 			if err != nil {
 				return err
 			}
 			if n == 0 {
+				if err := ctx.Err(); err != nil {
+					return err
+				}
+				// Staging has no metadata query; verify the held session before every removal.
+				if conn != nil {
+					if err := conn.PingContext(ctx); err != nil {
+						return err
+					}
+					if err := ctx.Err(); err != nil {
+						return err
+					}
+				}
 				if err := os.RemoveAll(filepath.Join(s.Root, kind, entry.Name())); err != nil {
 					return err
 				}

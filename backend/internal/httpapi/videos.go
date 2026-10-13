@@ -112,7 +112,7 @@ func (a *API) upload(c *gin.Context) {
 		return
 	}
 	v.SourceKind = "upload"
-	if e = a.Store.AddVideo(v); e != nil {
+	if e = a.Store.AddVideoWithContext(guard.ctx, v); e != nil {
 		failure(c, errors.Join(e, a.Media.Remove(v)))
 		return
 	}
