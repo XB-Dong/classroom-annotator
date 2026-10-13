@@ -9,10 +9,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
+	"unicode"
 )
 
 type Digest struct {
@@ -40,6 +41,21 @@ var legacyTables = []struct {
 	{"annotations", []string{"id", "frame_id", "x", "y", "width", "height", "source"}},
 }
 
+// These digests pin sqlite_master SQL produced by P0's store/schema.sql. They
+// cover table CHECK, NOT NULL, UNIQUE, PRIMARY KEY, and FOREIGN KEY clauses as
+// well as named indexes. SQLite-generated autoindexes have NULL SQL and are
+// implied by the pinned table definitions.
+var legacyDDL = map[string]string{
+	"index:annotations_frame": "ea18fd73ac85eb48c40191e81178bb764a8925c696822a25f54b3626ff4547cd",
+	"index:frames_batch":      "6d2bdd81c43d44a767a356956f054789103bf000c1be492122d54e1680a425ef",
+	"table:annotations":       "1b1f4cf92c24ad97f8b9d9bcb8b51308f1e76a79529a2b8be083f4ce09934b90",
+	"table:batches":           "9fa4caa21410e30482497bb2c4cebf13797634a4c50e61de30bf237a5d038b2d",
+	"table:frames":            "a319e3316442f8e5f6b5662de0194d028d16b18f19d47477c69e9951b90ff607",
+	"table:jobs":              "fbebe9fce0413f3682aeccc2ba1269359dd9e8c78d411578158b395c63f9d69f",
+	"table:schema_version":    "82c2124a1ec884c03eca690d2625dd197f3f098d5cec66907b5a3085db974c9d",
+	"table:videos":            "f7e825eb04b536d1567430bc95ead2e2db6fcefebd60518e5459e94aa2c9176e",
+}
+
 // Import reads an offline SQLite backup and atomically copies the five P0 tables.
 func Import(ctx context.Context, source string, target *sql.DB) (Report, error) {
 	var report Report
@@ -51,16 +67,14 @@ func Import(ctx context.Context, source string, target *sql.DB) (Report, error) 
 	if err != nil || !stat.Mode().IsRegular() {
 		return report, errors.New("SQLite backup must be a regular file")
 	}
-	if _, err = os.Stat(abs + "-wal"); err == nil {
-		return report, errors.New("SQLite backup has an unresolved WAL")
-	} else if !errors.Is(err, os.ErrNotExist) {
-		return report, errors.New("cannot inspect SQLite WAL")
+	if err := rejectSidecars(abs); err != nil {
+		return report, err
 	}
 	before, err := fileSHA256(abs)
 	if err != nil {
 		return report, fmt.Errorf("hash SQLite backup: %w", err)
 	}
-	src, err := sql.Open("sqlite", "file:"+filepath.ToSlash(abs)+"?mode=ro")
+	src, err := sql.Open("sqlite", sqliteBackupURI(abs))
 	if err != nil {
 		return report, errors.New("open SQLite backup failed")
 	}
@@ -100,7 +114,7 @@ func Import(ctx context.Context, source string, target *sql.DB) (Report, error) 
 	}
 	for _, table := range legacyTables {
 		columns := strings.Join(table.columns, ",")
-		rows, err := src.QueryContext(ctx, "SELECT "+columns+" FROM "+table.name+" ORDER BY id")
+		rows, err := src.QueryContext(ctx, "SELECT "+columns+" FROM "+table.name+" ORDER BY id COLLATE BINARY")
 		if err != nil {
 			return report, fmt.Errorf("read SQLite %s failed: %w", table.name, err)
 		}
@@ -148,11 +162,33 @@ func Import(ctx context.Context, source string, target *sql.DB) (Report, error) 
 	if err != nil || before != after {
 		return report, errors.New("SQLite backup changed during import")
 	}
+	if err := rejectSidecars(abs); err != nil {
+		return report, err
+	}
 	if err := tx.Commit(); err != nil {
 		return report, errors.New("commit PostgreSQL import failed")
 	}
 	report.BackupSHA256 = before
 	return report, nil
+}
+
+func sqliteBackupURI(abs string) string {
+	parts := strings.Split(filepath.ToSlash(abs), "/")
+	for i := range parts {
+		parts[i] = url.PathEscape(parts[i])
+	}
+	return "file:" + strings.Join(parts, "/") + "?mode=ro&immutable=1"
+}
+
+func rejectSidecars(abs string) error {
+	for _, suffix := range []string{"-wal", "-shm"} {
+		if _, err := os.Stat(abs + suffix); err == nil {
+			return errors.New("SQLite backup has a sidecar file")
+		} else if !errors.Is(err, os.ErrNotExist) {
+			return errors.New("cannot inspect SQLite backup sidecars")
+		}
+	}
+	return nil
 }
 
 func validateLegacy(ctx context.Context, db *sql.DB) error {
@@ -175,60 +211,66 @@ func validateLegacy(ctx context.Context, db *sql.DB) error {
 		return errors.New("SQLite foreign key check failed")
 	}
 	rows.Close()
-	rows, err = db.QueryContext(ctx, `SELECT name FROM sqlite_master WHERE type='table' ORDER BY name`)
+	rows, err = db.QueryContext(ctx, `SELECT type,name,sql FROM sqlite_master WHERE sql IS NOT NULL ORDER BY type,name`)
 	if err != nil {
 		return errors.New("SQLite schema inspection failed")
 	}
 	actual := map[string]bool{}
 	for rows.Next() {
-		var name string
-		if err := rows.Scan(&name); err != nil {
+		var kind, name, definition string
+		if err := rows.Scan(&kind, &name, &definition); err != nil {
 			rows.Close()
 			return errors.New("SQLite schema inspection failed")
 		}
-		actual[name] = true
+		key := kind + ":" + name
+		want, known := legacyDDL[key]
+		digest := sha256.Sum256([]byte(canonicalDDL(definition)))
+		if !known || fmt.Sprintf("%x", digest) != want {
+			rows.Close()
+			return errors.New("unexpected SQLite schema definition")
+		}
+		actual[key] = true
 	}
 	if err := rows.Err(); err != nil {
 		rows.Close()
 		return errors.New("SQLite schema inspection failed")
 	}
 	rows.Close()
-	if len(actual) != len(legacyTables)+1 || !actual["schema_version"] {
-		return errors.New("unexpected SQLite tables")
+	if len(actual) != len(legacyDDL) {
+		return errors.New("incomplete SQLite schema")
 	}
 	var versionCount, minVersion, maxVersion int64
 	if err := db.QueryRowContext(ctx, `SELECT count(*),coalesce(min(version),0),coalesce(max(version),0) FROM schema_version`).Scan(&versionCount, &minVersion, &maxVersion); err != nil || versionCount != 1 || minVersion != 1 || maxVersion != 1 {
 		return errors.New("unsupported SQLite schema version")
 	}
-	for _, table := range legacyTables {
-		if !actual[table.name] {
-			return fmt.Errorf("missing SQLite %s table", table.name)
-		}
-		rows, err := db.QueryContext(ctx, "PRAGMA table_info("+table.name+")")
-		if err != nil {
-			return errors.New("SQLite schema inspection failed")
-		}
-		columns := []string{}
-		for rows.Next() {
-			var cid, notNull, pk int
-			var name, typ string
-			var defaultValue sql.NullString
-			if err := rows.Scan(&cid, &name, &typ, &notNull, &defaultValue, &pk); err != nil {
-				rows.Close()
-				return errors.New("SQLite schema inspection failed")
+	return nil
+}
+
+func canonicalDDL(definition string) string {
+	var out strings.Builder
+	var closing rune
+	for _, r := range definition {
+		if closing != 0 {
+			out.WriteRune(r)
+			if r == closing {
+				closing = 0
 			}
-			columns = append(columns, name)
+			continue
 		}
-		if err := rows.Err(); err != nil {
-			rows.Close()
-			return errors.New("SQLite schema inspection failed")
-		}
-		rows.Close()
-		if !reflect.DeepEqual(columns, table.columns) {
-			return fmt.Errorf("unexpected SQLite %s columns", table.name)
+		switch r {
+		case '\'', '"', '`':
+			closing = r
+			out.WriteRune(r)
+		case '[':
+			closing = ']'
+			out.WriteRune(r)
+		default:
+			if !unicode.IsSpace(r) {
+				out.WriteRune(r)
+			}
 		}
 	}
-	return nil
+	return out.String()
 }
 
 type queryer interface {
@@ -236,7 +278,7 @@ type queryer interface {
 }
 
 func digestQuery(ctx context.Context, q queryer, table, columns string, width int) (Digest, error) {
-	rows, err := q.QueryContext(ctx, "SELECT "+columns+" FROM "+table+" ORDER BY id")
+	rows, err := q.QueryContext(ctx, "SELECT "+columns+" FROM "+table+` ORDER BY id COLLATE "C"`)
 	if err != nil {
 		return Digest{}, fmt.Errorf("read PostgreSQL %s failed: %w", table, err)
 	}

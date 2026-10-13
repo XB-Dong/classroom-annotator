@@ -8,6 +8,7 @@ import (
 	_ "modernc.org/sqlite"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -155,5 +156,175 @@ func TestImportRejectsPrepopulatedNewBusinessTable(t *testing.T) {
 	}
 	if err := target.QueryRow(`SELECT count(*) FROM media_operations`).Scan(&count); err != nil || count != 1 {
 		t.Fatal("existing new-table row changed", count, err)
+	}
+}
+
+func TestOfflineWALBackupDoesNotCreateSourceSidecars(t *testing.T) {
+	source := sourceFixture(t)
+	backup, err := sql.Open("sqlite", source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var mode string
+	if err := backup.QueryRow(`PRAGMA journal_mode=WAL`).Scan(&mode); err != nil {
+		backup.Close()
+		t.Fatal(err)
+	}
+	if mode != "wal" {
+		backup.Close()
+		t.Fatal("fixture did not enter WAL mode", mode)
+	}
+	if err := backup.Close(); err != nil {
+		t.Fatal(err)
+	}
+	for _, suffix := range []string{"-wal", "-shm"} {
+		if _, err := os.Stat(source + suffix); !os.IsNotExist(err) {
+			t.Fatal("source sidecar present before import", suffix, err)
+		}
+	}
+	before, err := os.ReadFile(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	target, err := sql.Open("pgx", testdb.URL(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer target.Close()
+	if _, err := migration.Import(context.Background(), source, target); err != nil {
+		t.Fatal(err)
+	}
+	after, err := os.ReadFile(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(before) != string(after) {
+		t.Fatal("source backup changed")
+	}
+	for _, suffix := range []string{"-wal", "-shm"} {
+		if _, err := os.Stat(source + suffix); !os.IsNotExist(err) {
+			t.Fatal("import created source sidecar", suffix, err)
+		}
+	}
+}
+
+func TestImportRejectsUnconstrainedLegacyLookalike(t *testing.T) {
+	source := sourceFixture(t)
+	backup, err := sql.Open("sqlite", source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := backup.Exec(`ALTER TABLE annotations RENAME TO annotations_old; CREATE TABLE annotations AS SELECT * FROM annotations_old; DROP TABLE annotations_old;`); err != nil {
+		backup.Close()
+		t.Fatal(err)
+	}
+	if err := backup.Close(); err != nil {
+		t.Fatal(err)
+	}
+	target, err := sql.Open("pgx", testdb.URL(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer target.Close()
+	if _, err := migration.Import(context.Background(), source, target); err == nil {
+		t.Fatal("unconstrained legacy lookalike accepted")
+	}
+	var count int
+	if err := target.QueryRow(`SELECT count(*) FROM videos`).Scan(&count); err != nil || count != 0 {
+		t.Fatal("target changed before rejecting unknown source", count, err)
+	}
+}
+
+func TestImportEscapesSpecialBackupPath(t *testing.T) {
+	source := sourceFixture(t)
+	name := "backup #%25.sqlite"
+	if runtime.GOOS != "windows" {
+		name = "backup ?#%25.sqlite"
+	}
+	special := filepath.Join(t.TempDir(), name)
+	if err := os.Rename(source, special); err != nil {
+		t.Fatal(err)
+	}
+	target, err := sql.Open("pgx", testdb.URL(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer target.Close()
+	if _, err := migration.Import(context.Background(), special, target); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestImportRejectsPreexistingSQLiteSidecars(t *testing.T) {
+	for _, suffix := range []string{"-wal", "-shm"} {
+		t.Run(suffix, func(t *testing.T) {
+			source := sourceFixture(t)
+			if err := os.WriteFile(source+suffix, []byte("stale"), 0600); err != nil {
+				t.Fatal(err)
+			}
+			target, err := sql.Open("pgx", testdb.URL(t))
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer target.Close()
+			if _, err := migration.Import(context.Background(), source, target); err == nil {
+				t.Fatal("source sidecar accepted")
+			}
+			var count int
+			if err := target.QueryRow(`SELECT count(*) FROM videos`).Scan(&count); err != nil || count != 0 {
+				t.Fatal("target changed", count, err)
+			}
+		})
+	}
+}
+
+func TestImportDigestUsesSameBytewiseIDOrderAcrossDatabases(t *testing.T) {
+	source := sourceFixture(t)
+	backup, err := sql.Open("sqlite", source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := backup.Exec(`INSERT INTO annotations VALUES('B','f',1,1,2,2,'manual'); INSERT INTO annotations VALUES('b','f',2,2,2,2,'manual')`); err != nil {
+		backup.Close()
+		t.Fatal(err)
+	}
+	if err := backup.Close(); err != nil {
+		t.Fatal(err)
+	}
+	target, err := sql.Open("pgx", testdb.URL(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer target.Close()
+	if _, err := migration.Import(context.Background(), source, target); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestImportRejectsChangedCheckLiteralWithWhitespace(t *testing.T) {
+	source := sourceFixture(t)
+	backup, err := sql.Open("sqlite", source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = backup.Exec(`DROP TABLE annotations; CREATE TABLE annotations(id TEXT PRIMARY KEY,frame_id TEXT NOT NULL REFERENCES frames(id) ON DELETE CASCADE,x REAL NOT NULL CHECK(x>=0),y REAL NOT NULL CHECK(y>=0),width REAL NOT NULL CHECK(width>0),height REAL NOT NULL CHECK(height>0),source TEXT NOT NULL CHECK(source='man ual')); CREATE INDEX annotations_frame ON annotations(frame_id)`)
+	if err != nil {
+		backup.Close()
+		t.Fatal(err)
+	}
+	if err := backup.Close(); err != nil {
+		t.Fatal(err)
+	}
+	target, err := sql.Open("pgx", testdb.URL(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer target.Close()
+	if _, err := migration.Import(context.Background(), source, target); err == nil {
+		t.Fatal("changed CHECK literal accepted")
+	}
+	var count int
+	if err := target.QueryRow(`SELECT count(*) FROM videos`).Scan(&count); err != nil || count != 0 {
+		t.Fatal("target changed", count, err)
 	}
 }

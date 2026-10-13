@@ -24,8 +24,16 @@
 | 文件 | SHA-256 |
 | --- | --- |
 | `server.exe` | `4E8C9773F8A16E88876295893B313612EE7077EA27310085A53041CF6A9BA083` |
-| `migrate.exe` | `7D64C6239FA09F90BACC0E95899D2735713698D48E84F6A43E83C6A33ECA3351` |
-| `import-sqlite.exe` | `B9B3878FA26864A0D1F1015979490951C41FBE616B2228CEFB52F38CBDC4C22D` |
+| `migrate.exe`（R1 重建） | `F60DF6A7CE77CD7A921406C4281425D530E796ECAEF355823A66F19E03E670AE` |
+| `import-sqlite.exe`（R1 修复后） | `FC3BDB11DA501A7C47E54C02C5D8A15371F47006536B8CE19B06B933B117BC78` |
+
+## R1 独立审核修复（2026-10-13，数据库修复 1/2）
+
+独立审核在主体提交上实测发现：仅 `mode=ro` 读取 WAL 模式的离线备份会新建 `-wal`/`-shm`；只核验列名会接受保留数据但丢失约束的 `CREATE TABLE AS SELECT`。本次修复使用分段 URL 转义构造 `file:` URI，指定 `mode=ro&immutable=1`，并在导入前后拒绝已有或新生的 WAL/SHM sidecar；仍要求来源是停止写入、已完成 checkpoint 的备份。来源结构现将 `sqlite_master` 的六张表和两条显式索引定义与冻结 P0 `backend/internal/platform/store/schema.sql` 的签名逐项核对，覆盖主键、外键、唯一、NOT NULL、CHECK 与索引。格式空白只在 SQL 字符串字面量之外忽略；改变 CHECK 字面量即拒绝。集成工作树的 `tests/fixtures/legacy-schema.sql` 以独立 SQLite 内存库生成的八项定义签名与 P0 schema 比对，结果一致。
+
+审核的可选排序探针随后在目标库 `en_US.utf8` 实测发现合法 ID `B`/`b` 的来源和目标默认排序不同，导致摘要误判；本轮仅在导入 SQL 中固定 SQLite `COLLATE BINARY` 与 PostgreSQL `COLLATE "C"`，不改变 ID 或数值。测试中的超 32 位时间戳/revision、亚像素坐标继续逐字段一致。
+
+验证：新增的 WAL sidecar、无约束表、特殊路径、预存 sidecar、不同数据库排序、CHECK 字面量六组行为测试均先在旧实现观察到预期失败，修复后 `go test -p 1 ./internal/migration -count=1` 在真实独立 PostgreSQL schema 上 exit 0；审核 overlay 的三项测试也 exit 0。`go vet -p 1 ./...` exit 0；`go build -p 1 -o D:/Project/cvte/runtime/p01-db-binaries/ ./cmd/server ./cmd/migrate ./cmd/import-sqlite` exit 0，表中为重建后的 SHA。R1 只改 `internal/migration/import.go`、`import_test.go` 与本文。Windows 实测特殊文件名为 `#/%`；`?` 文件名仅在非 Windows 分支测试。
 
 后续：Leader 合入依赖 manifest 后，Source Worker 在同包新增 `public_samples.go`、`media_operations.go`，不要改此提交的既有 store 文件或已执行 SQL 迁移。独立 Test 角色须演练目标非空拒绝、备份/恢复到新库、版本 4 与服务二进制一致性、失联恢复、取消/发布竞争及完整 API/ZIP。实际生产 SQLite 备份导入和演示切换尚未执行。
 
