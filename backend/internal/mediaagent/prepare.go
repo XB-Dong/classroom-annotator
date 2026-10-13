@@ -154,7 +154,9 @@ func (a *Agent) upload(w http.ResponseWriter, r *http.Request) {
 	defer stopRequest()
 	r.Body = http.MaxBytesReader(w, r.Body, a.cfg.MaxUploadBytes+a.cfg.MaxControlBytes)
 	controller := http.NewResponseController(w)
+	bodyStopped := make(chan struct{})
 	stopBody := context.AfterFunc(ctx, func() {
+		defer close(bodyStopped)
 		// A net/http body may hold its mutex while blocked in a network Read.
 		// Expire the connection read first so Close can then finish the cleanup.
 		if err := controller.SetReadDeadline(time.Now().Add(-time.Second)); err != nil {
@@ -166,7 +168,12 @@ func (a *Agent) upload(w http.ResponseWriter, r *http.Request) {
 		}
 		_ = r.Body.Close()
 	})
-	defer stopBody()
+	defer func() {
+		if !stopBody() {
+			// ResponseController belongs to this handler until the callback ends.
+			<-bodyStopped
+		}
+	}()
 	reader, e := r.MultipartReader()
 	if e != nil {
 		a.fail(w, 400, "INVALID_REQUEST")
