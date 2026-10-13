@@ -1,77 +1,61 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
-import { setTimeout as delay } from 'node:timers/promises';
-import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
+import { acceptance, externalPath, dedicatedConnection, openPostgres, businessRows, mediaReferenceRows } from '../helpers/postgres.mjs';
+import { dedicatedServer, waitFor } from '../helpers/process.mjs';
 import { unusedLoopbackPort } from '../helpers/runtime.mjs';
+import { api } from '../helpers/http.mjs';
+import { inspectExport } from '../helpers/zip.mjs';
 
-// Dedicated process only. Never restart an arbitrary existing/cloud deployment.
-const root = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
-const binary = process.env.P0_BACKEND_BINARY;
-const dataDir = process.env.P0_RESTART_DATA_DIR;
-const fixtureDir = process.env.P0_FIXTURE_DIR;
-assert.ok(binary && dataDir && fixtureDir, 'Set P0_BACKEND_BINARY, P0_RESTART_DATA_DIR and P0_FIXTURE_DIR.');
-const resolved = path.resolve(dataDir);
-const relative = path.relative(root, resolved);
-assert.ok(relative.startsWith('..') || path.isAbsolute(relative), 'Restart data must be outside repository');
-assert.ok(!fs.existsSync(resolved), 'Restart check requires a new dedicated external data directory');
-const port = process.env.P0_RESTART_PORT || await unusedLoopbackPort();
-const origin = `http://127.0.0.1:${port}`;
-let child;
-const environment = {
-  ...process.env, APP_ADDR: `127.0.0.1:${port}`, APP_DATA_DIR: resolved,
-  APP_VERSION: 'synthetic-restart-check', APP_MAX_FRAMES: '1000',
-  APP_FFMPEG: process.env.FFMPEG_PATH || 'ffmpeg', APP_FFPROBE: process.env.FFPROBE_PATH || 'ffprobe',
-};
-async function waitFor(predicate, timeout = 30_000) {
-  const deadline = Date.now() + timeout;
-  while (Date.now() < deadline) {
-    try { const result = await predicate(); if (result) return result; } catch {}
-    await delay(100);
-  }
-  throw new Error('Dedicated restart check timed out');
-}
-async function start() {
-  child = spawn(binary, [], { env: environment, stdio: ['ignore', 'ignore', 'ignore'] });
-  child.on('error', error => { console.error(error.message); });
-  await waitFor(async () => (await fetch(`${origin}/health/ready`)).ok);
-}
-async function stop() {
-  if (!child || child.exitCode !== null) return;
-  const exited = new Promise(resolve => child.once('exit', resolve));
-  child.kill('SIGKILL');
-  await exited;
-}
-async function json(route, options) {
-  const response = await fetch(`${origin}/api/v1${route}`, options);
-  assert.ok(response.ok, `HTTP ${response.status} on ${route}`);
-  return response.json();
-}
-function post(body) { return { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }; }
-try {
-  await start();
-  const form = new FormData();
-  form.set('file', new Blob([fs.readFileSync(path.join(fixtureDir, 'classroom.mp4'))], { type: 'video/mp4' }), 'classroom.mp4');
-  const video = await json('/videos', { method: 'POST', body: form });
-  const finished = await json(`/videos/${video.id}/extractions`, post({ intervalSeconds: 1, endSeconds: 1 }));
-  await waitFor(async () => (await json(`/jobs/${finished.id}`)).status === 'completed');
-  const { frames } = await json(`/videos/${video.id}/frames?batchId=${finished.batchId}`);
-  const annotation = { id: crypto.randomUUID(), bbox: [1, 2, 30, 40], source: 'manual' };
-  const saved = await json(`/frames/${frames[0].id}/annotations`, {
-    ...post({ expectedRevision: 0, status: 'completed', annotations: [annotation] }), method: 'PUT',
-  });
-  const interrupted = await json(`/videos/${video.id}/extractions`, post({ intervalSeconds: 0.004, endSeconds: 3 }));
-  await waitFor(async () => (await json(`/jobs/${interrupted.id}`)).status === 'running');
-  await stop();
-  await start();
-  assert.deepEqual(await json(`/frames/${frames[0].id}/annotations`), saved, 'saved annotation survives restart');
-  const recovered = await json(`/jobs/${interrupted.id}`);
-  assert.equal(recovered.status, 'failed');
-  assert.ok(recovered.error.includes('INTERRUPTED'));
-  const batches = await json(`/videos/${video.id}/batches`);
-  assert.ok(!batches.batches.some(batch => batch.id === interrupted.batchId));
-  const unpublished = await json(`/videos/${video.id}/frames`);
-  assert.ok(!unpublished.frames.some(frame => frame.batchId === interrupted.batchId));
-  console.log('P0-SAVE/JOB restart: saved snapshot persisted, running job failed INTERRUPTED, partial batch absent.');
-} finally { await stop(); }
+// Own-process only: this script never restarts an existing deployment.
+await acceptance(async () => {
+  const file = externalPath(process.env.P0_RESTORE_BASELINE, 'P0_RESTORE_BASELINE');
+  const baseline = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const connection = dedicatedConnection();
+  assert.equal(baseline.database, connection.database, 'Restart baseline belongs to another isolated database');
+  assert.equal(baseline.dataType, 'synthetic', 'Restart only synthetic acceptance data');
+  assert.equal(baseline.deployedSHA, process.env.P0_EXPECTED_SHA, 'Restart binary source SHA differs from baseline');
+  const root = externalPath(baseline.dataDir, 'Baseline media directory');
+  assert.ok(file.startsWith(`${root}${path.sep}`), 'Baseline must belong to the synthetic media directory');
+  const pool = await openPostgres();
+  const origin = `http://127.0.0.1:${await unusedLoopbackPort()}`;
+  const environment = { APP_DATABASE_URL: connection.connectionString, APP_DATA_DIR: root,
+    APP_VERSION: baseline.deployedSHA, APP_MAX_FRAMES: '1000', APP_FFMPEG: process.env.FFMPEG_PATH,
+    APP_FFPROBE: process.env.FFPROBE_PATH };
+  let server;
+  try {
+    server = await dedicatedServer(process.env.P0_BACKEND_BINARY, environment, origin);
+    const http = api(origin);
+    const interrupted = await http.json(`/api/v1/videos/${baseline.videoId}/extractions`, http.body({ intervalSeconds: 0.004, startSeconds: 0, endSeconds: 3 }), 202);
+    await waitFor(async () => (await http.json(`/api/v1/jobs/${interrupted.id}`)).status === 'running', 30_000, 'Interrupted extraction running');
+    await server.stop();
+    server = await dedicatedServer(process.env.P0_BACKEND_BINARY, environment, origin);
+    const recovered = await http.json(`/api/v1/jobs/${interrupted.id}`);
+    assert.equal(recovered.status, 'failed');
+    assert.match(recovered.error, /INTERRUPTED/);
+    assert.equal(Number((await pool.query('SELECT count(*) AS count FROM batches WHERE id=$1', [interrupted.batchId])).rows[0].count), 0);
+    assert.equal(Number((await pool.query('SELECT count(*) AS count FROM frames WHERE batch_id=$1', [interrupted.batchId])).rows[0].count), 0);
+    assert.deepEqual(await http.json(`/api/v1/videos/${baseline.videoId}/progress?batchId=${baseline.batchId}`), baseline.progress);
+    const expected = [];
+    for (const frame of baseline.frames) {
+      assert.deepEqual(await http.snapshot(frame.id), frame.snapshot, 'Saved revision/status/boxes changed after actual process restart');
+      const response = await http.request(frame.imageUrl);
+      assert.equal(response.status, 200);
+      const bytes = Buffer.from(await response.arrayBuffer());
+      assert.equal(createHash('sha256').update(bytes).digest('hex'), frame.imageSHA256, 'Immutable JPEG changed after process restart');
+      if (frame.snapshot.status === 'completed') expected.push({ ...frame, annotations: frame.snapshot.annotations, imageBytes: bytes });
+    }
+    const response = await http.request('/api/v1/exports', http.body({ videoId: baseline.videoId, batchId: baseline.batchId }));
+    assert.equal(response.status, 200);
+    assert.deepEqual(inspectExport(Buffer.from(await response.arrayBuffer()), expected), baseline.coco, 'Export semantics changed after process restart');
+    baseline.businessRows = await businessRows(pool);
+    baseline.mediaReferenceRows = await mediaReferenceRows(pool);
+    baseline.observedAt = new Date().toISOString();
+    fs.writeFileSync(file, JSON.stringify(baseline, null, 2));
+    fs.writeFileSync(path.join(root, 'restart-evidence.json'), JSON.stringify({ sourceSHA: baseline.deployedSHA, observedAt: new Date().toISOString(),
+      interruptedJob: { id: interrupted.id, status: recovered.status, error: recovered.error }, frameCount: baseline.frames.length,
+      savedSnapshotsUnchanged: true, immutableJPEGsUnchanged: true, progressUnchanged: true, cocoUnchanged: true }, null, 2));
+    console.log('P01-DB-005 restart passed: actual PostgreSQL saved snapshots and original JPEG/COCO survive; interrupted extraction is failed with no published batch.');
+  } finally { if (server) await server.stop(); await pool.end(); }
+});

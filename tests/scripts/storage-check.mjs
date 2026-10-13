@@ -1,40 +1,46 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { DatabaseSync } from 'node:sqlite';
+import { createHash } from 'node:crypto';
 import jpeg from 'jpeg-js';
-import { fileURLToPath } from 'node:url';
+import { acceptance, externalPath, openPostgres } from '../helpers/postgres.mjs';
 
-// Read-only verification after the dedicated acceptance process has stopped.
-const repository = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
-const root = path.resolve(process.env.P0_STORAGE_DATA_DIR || '');
-assert.ok(process.env.P0_STORAGE_DATA_DIR, 'Set dedicated external P0_STORAGE_DATA_DIR');
-const relative = path.relative(repository, root);
-assert.ok(relative.startsWith('..') || path.isAbsolute(relative), 'Storage must be outside repository');
-const db = new DatabaseSync(path.join(root, 'app.sqlite'), { readOnly: true });
-try {
-  assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check, 'ok');
-  assert.equal(db.prepare('PRAGMA foreign_key_check').all().length, 0);
-  const videos = db.prepare('SELECT storage_key FROM videos').all();
-  const frames = db.prepare('SELECT storage_key,width,height FROM frames').all();
-  const batches = db.prepare('SELECT batches.id,jobs.status FROM batches JOIN jobs ON batches.job_id=jobs.id').all();
-  assert.ok(batches.every(batch => batch.status === 'completed'), 'only completed jobs publish batches');
-  function mediaPath(key) {
-    const resolved = path.resolve(root, ...key.split(/[\\/]/));
-    const within = path.relative(root, resolved);
-    assert.ok(!path.isAbsolute(within) && within.split(path.sep)[0] !== '..', 'storage key escapes root');
-    return resolved;
-  }
-  for (const video of videos) assert.ok(fs.statSync(mediaPath(video.storage_key)).isFile());
-  for (const frame of frames) {
-    const image = jpeg.decode(fs.readFileSync(mediaPath(frame.storage_key)), { useTArray: true, maxMemoryUsageInMB: 64 });
-    assert.deepEqual([image.width, image.height], [frame.width, frame.height]);
-  }
-  const files = directory => fs.existsSync(directory) ? fs.readdirSync(directory, { recursive: true, withFileTypes: true }).filter(entry => entry.isFile()).map(entry => path.resolve(entry.parentPath, entry.name)) : [];
-  const expected = [...videos, ...frames].map(item => mediaPath(item.storage_key)).sort();
-  const actual = [...files(path.join(root, 'videos')), ...files(path.join(root, 'frames'))].sort();
-  assert.deepEqual(actual, expected, 'unmanaged or missing immutable media');
-  const staging = path.join(root, 'staging');
-  assert.equal(fs.readdirSync(staging).length, 0, 'staging remains after terminal jobs/process stop');
-  console.log(`Read-only SQLite integrity/media reconciliation passed: ${videos.length} videos, ${batches.length} batches, ${frames.length} decoded JPEGs, no staging/orphans.`);
-} finally { db.close(); }
+// Read-only PG/file reconciliation. No media may be created or removed here.
+await acceptance(async () => {
+  const root = externalPath(process.env.P0_STORAGE_DATA_DIR, 'P0_STORAGE_DATA_DIR');
+  const pool = await openPostgres();
+  try {
+    const videos = (await pool.query('SELECT storage_provider,storage_key,media_sha256,media_size_bytes FROM videos')).rows;
+    const frames = (await pool.query('SELECT storage_provider,storage_key,width,height,media_sha256,media_size_bytes FROM frames')).rows;
+    const batches = (await pool.query('SELECT b.id,j.status FROM batches b JOIN jobs j ON b.job_id=j.id')).rows;
+    assert.ok(batches.every(batch => batch.status === 'completed'), 'Noncompleted jobs published batches');
+    const inconsistent = (await pool.query('SELECT f.id FROM frames f JOIN videos v ON v.id=f.video_id WHERE f.storage_provider<>v.storage_provider')).rows;
+    assert.deepEqual(inconsistent, [], 'Frame provider differs from its video');
+    const mediaPath = key => {
+      const resolved = path.resolve(root, ...key.split(/[\\/]/));
+      const relative = path.relative(root, resolved);
+      assert.ok(relative && !path.isAbsolute(relative) && relative.split(path.sep)[0] !== '..', 'Storage key escapes media root');
+      return resolved;
+    };
+    const expected = [];
+    for (const record of [...videos, ...frames]) {
+      if (record.storage_provider === 'mac') continue;
+      assert.equal(record.storage_provider, 'local');
+      const filename = mediaPath(record.storage_key);
+      const bytes = fs.readFileSync(filename);
+      expected.push(filename);
+      if (record.media_sha256) assert.equal(createHash('sha256').update(bytes).digest('hex'), record.media_sha256);
+      if (record.media_sha256 || Number(record.media_size_bytes) > 0) assert.equal(bytes.length, Number(record.media_size_bytes));
+      if (record.width !== undefined) {
+        const image = jpeg.decode(bytes, { useTArray: true, maxMemoryUsageInMB: 64 });
+        assert.deepEqual([image.width, image.height], [record.width, record.height]);
+      }
+    }
+    const files = directory => fs.existsSync(directory) ? fs.readdirSync(directory, { recursive: true, withFileTypes: true })
+      .filter(entry => entry.isFile()).map(entry => path.resolve(entry.parentPath, entry.name)) : [];
+    const actual = [...files(path.join(root, 'videos')), ...files(path.join(root, 'frames'))].sort();
+    assert.deepEqual(actual, expected.sort(), 'Local immutable media is missing or orphaned');
+    assert.equal(files(path.join(root, 'staging')).length, 0, 'Terminal dedicated process retained staging media');
+    console.log(`PostgreSQL read-only storage reconciliation passed: ${videos.length} videos, ${batches.length} batches, ${frames.length} JPEG references; local identities verified. Mac physical-file/no-cloud-payload gate requires mac-media evidence separately.`);
+  } finally { await pool.end(); }
+});

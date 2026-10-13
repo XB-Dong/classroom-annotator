@@ -20,9 +20,11 @@ export function dedicatedConnection(fileVariable = 'P01_DATABASE_URL_FILE') {
   let parsed;
   try { parsed = new URL(connectionString); } catch { throw new Error('Invalid dedicated PostgreSQL connection file'); }
   assert.ok(['postgres:', 'postgresql:'].includes(parsed.protocol), 'A real PostgreSQL target is mandatory');
+  assert.ok(['127.0.0.1', 'localhost', '[::1]'].includes(parsed.hostname), 'Acceptance requires the isolated loopback PostgreSQL forward');
+  assert.match(decodeURIComponent(parsed.username), /^p01_test_[a-z0-9_]+$/, 'Refusing a PostgreSQL account outside the isolated test namespace');
   const database = decodeURIComponent(parsed.pathname.slice(1));
   assert.match(database, /^p01_test_[a-z0-9_]+$/, 'Refusing a database outside the p01_test_ namespace');
-  assert.ok(!parsed.searchParams.has('options'), 'Connection-file options cannot change the isolated search path');
+  assert.ok([...parsed.searchParams.keys()].every(key => key === 'sslmode'), 'Connection-file parameters cannot override the isolated target');
   return { connectionString, database };
 }
 
@@ -69,6 +71,15 @@ export async function businessRows(pool) {
 export async function assertEmptyBusiness(pool) {
   const rows = await businessRows(pool);
   assert.ok(Object.values(rows).every(value => value.length === 0), 'Use a fresh isolated PostgreSQL business database');
+}
+
+export async function mediaReferenceRows(pool) {
+  const out = {};
+  for (const [table, columns] of Object.entries({
+    videos: 'id,source_kind,source_id,storage_provider,storage_key,media_sha256,media_size_bytes',
+    frames: 'id,video_id,batch_id,storage_provider,storage_key,media_sha256,media_size_bytes',
+  })) out[table] = (await pool.query(`SELECT ${columns} FROM ${table} ORDER BY id`)).rows;
+  return out;
 }
 
 export function sanitizedFailure(error) {

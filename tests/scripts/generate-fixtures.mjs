@@ -18,4 +18,17 @@ const result = spawnSync(process.env.FFMPEG_PATH || 'ffmpeg', [
 if (result.error) throw result.error;
 if (result.status !== 0) throw new Error(`FFmpeg exit ${result.status}: ${result.stderr}`);
 fs.writeFileSync(path.join(output, 'corrupt.mp4'), 'synthetic invalid media');
+const longVideo = spawnSync(process.env.FFMPEG_PATH || 'ffmpeg', [
+  '-nostdin', '-hide_banner', '-loglevel', 'error', '-y', '-f', 'lavfi', '-i',
+  'testsrc2=s=320x240:r=25:d=20', '-an', '-c:v', 'mpeg4', '-q:v', '3', '-threads', '1', path.join(output, 'classroom20.mp4'),
+], { encoding: 'utf8' });
+if (longVideo.error) throw longVideo.error;
+if (longVideo.status !== 0) throw new Error(`20s FFmpeg exit ${longVideo.status}: ${longVideo.stderr}`);
+const image = spawnSync(process.env.FFMPEG_PATH || 'ffmpeg', [
+  '-nostdin', '-hide_banner', '-loglevel', 'error', '-y', '-i', path.join(output, 'classroom20.mp4'),
+  '-frames:v', '1', '-threads', '1', path.join(output, 'source-image.jpg'),
+], { encoding: 'utf8' });
+if (image.error) throw image.error;
+if (image.status !== 0) throw new Error(`JPEG FFmpeg exit ${image.status}: ${image.stderr}`);
 console.log('Generated synthetic 320x240 / 4s / 25fps fixtures outside the repository.');
+console.log('Generated additional 20s / 25fps video and JPEG for Mac media acceptance.');

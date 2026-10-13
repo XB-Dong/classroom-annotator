@@ -8,6 +8,24 @@ import { command } from '../helpers/process.mjs';
 
 const hash = value => createHash('sha256').update(value).digest('hex');
 
+async function schemaTypes(pool) {
+  const integer = new Set(['width', 'height']);
+  const bigint = new Set(['timestamp_ms', 'revision']);
+  const floating = new Set(['x', 'y', 'duration_seconds', 'progress']);
+  const evidence = {};
+  for (const [table, columns] of Object.entries(businessColumns)) {
+    const actual = (await pool.query('SELECT column_name,data_type FROM information_schema.columns WHERE table_schema=current_schema() AND table_name=$1', [table])).rows;
+    const byName = new Map(actual.map(row => [row.column_name, row.data_type]));
+    for (const column of columns) {
+      const type = table === 'annotations' && ['width', 'height'].includes(column) ? 'double precision'
+        : integer.has(column) ? 'integer' : bigint.has(column) ? 'bigint' : floating.has(column) ? 'double precision' : 'text';
+      assert.equal(byName.get(column), type, `Unexpected PostgreSQL field type: ${table}.${column}`);
+    }
+    evidence[table] = Object.fromEntries(columns.map(column => [column, byName.get(column)]));
+  }
+  return evidence;
+}
+
 function legacyFixture(filename) {
   const db = new DatabaseSync(filename);
   try {
@@ -74,6 +92,8 @@ await acceptance(async () => {
       await assertEmptyBusiness(pool);
       const version = (await pool.query('SELECT version_id,is_applied FROM goose_db_version ORDER BY id')).rows;
       assert.ok(version.some(row => Number(row.version_id) >= 2 && row.is_applied), 'Expected provider schema migration not applied');
+      evidence.schemaTypes = await schemaTypes(pool);
+      evidence.schemaVersion = Number(version.filter(row => row.is_applied).at(-1).version_id);
       evidence.commands.push(await command(process.env.P01_MIGRATE_BINARY, ['up'], environment));
       assert.deepEqual((await pool.query('SELECT version_id,is_applied FROM goose_db_version ORDER BY id')).rows, version, 'Repeated migration changed installed versions');
       evidence.commands.push(await command(process.env.P01_MIGRATE_BINARY, ['status'], environment));

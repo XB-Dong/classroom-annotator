@@ -4,13 +4,41 @@ import path from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 import AdmZip from 'adm-zip';
-import { acceptance, externalPath, dedicatedConnection, openPostgres, assertEmptyBusiness } from '../helpers/postgres.mjs';
+import { acceptance, externalPath, dedicatedConnection, openPostgres, assertEmptyBusiness, businessRows, mediaReferenceRows } from '../helpers/postgres.mjs';
 import { command, dedicatedServer, waitFor } from '../helpers/process.mjs';
 import { api } from '../helpers/http.mjs';
 import { unusedLoopbackPort } from '../helpers/runtime.mjs';
 import { inspectExport } from '../helpers/zip.mjs';
+import { postgresProxy } from '../helpers/postgres-proxy.mjs';
 
 const box = (id, x = 10) => ({ id, bbox: [x, 20, 30, 40], source: 'manual' });
+
+async function databaseAvailability(http, pool, relay, frame) {
+  await waitFor(() => relay.stats().active <= 2, 3_000, 'Default product pool idle bound');
+  assert.ok(relay.stats().peak > 1 && relay.stats().peak <= 5, 'Default product pool must use concurrent bounded connections');
+  const schema = (await pool.query('SELECT id,version_id FROM goose_db_version WHERE is_applied ORDER BY id DESC LIMIT 1')).rows[0];
+  try {
+    await pool.query('UPDATE goose_db_version SET version_id=0 WHERE id=$1', [schema.id]);
+    const response = await http.request('/health/ready');
+    assert.equal(response.status, 503, 'Unexpected schema must make readiness fail');
+    const value = await response.json();
+    assert.equal(value.code, 'NOT_READY');
+  } finally { await pool.query('UPDATE goose_db_version SET version_id=$1 WHERE id=$2', [schema.version_id, schema.id]); }
+  assert.equal((await http.request('/health/ready')).status, 200);
+  const before = await http.snapshot(frame.id);
+  relay.disconnect();
+  const started = Date.now();
+  try {
+    const ready = await http.request('/health/ready');
+    assert.equal(ready.status, 503);
+    const request = await http.put(frame.id, { expectedRevision: before.revision, status: 'completed', annotations: [box(randomUUID())] });
+    assert.ok(request.status >= 500 && request.status < 600, 'Disconnected DB must refuse business writes safely');
+    assert.ok(Date.now() - started < 15_000, 'Disconnected DB request exceeded bounded timeout');
+  } finally { relay.reconnect(); }
+  await waitFor(async () => (await http.request('/health/ready')).status === 200, 15_000, 'DB reconnect readiness');
+  assert.deepEqual(await http.snapshot(frame.id), before, 'Failed disconnected write changed saved snapshot');
+  return { schemaMismatchReadiness: 503, disconnectedReadiness: 503, failedWriteUnchanged: true, requestElapsedMs: Date.now() - started, pool: relay.stats() };
+}
 
 async function assertDatabaseSnapshot(pool, frameId, snapshot) {
   const frame = (await pool.query('SELECT revision,status FROM frames WHERE id=$1', [frameId])).rows[0];
@@ -78,6 +106,7 @@ async function snapshotRace(http, pool, frames) {
     const saved = await http.put(frame.id, { expectedRevision: current.revision, status: frame.id === unfinished.id ? 'in_progress' : 'completed', annotations: frame.id === zero.id || frame.id === unfinished.id ? [] : [box(randomUUID(), 10)] });
     assert.equal(saved.status, 200);
   }
+  const initialSnapshot = await http.snapshot(annotated[0].id);
   const imageBytes = new Map(await Promise.all(frames.map(async frame => {
     const response = await http.request(frame.imageUrl);
     assert.equal(response.status, 200);
@@ -104,6 +133,10 @@ async function snapshotRace(http, pool, frames) {
   let exported = 0;
   try {
     for (; exported < 100; exported++) {
+      const snapshot = await http.snapshot(annotated[0].id);
+      assert.equal(snapshot.annotations.length, 1);
+      assert.equal(snapshot.annotations[0].bbox[0], (snapshot.revision - initialSnapshot.revision) % 2 ? 100 : 10,
+        'Annotation read mixed a revision and boxes from separately committed PostgreSQL snapshots');
       const response = await http.request('/api/v1/exports', http.body({ frameIds: frames.map(frame => frame.id) }));
       assert.equal(response.status, 200);
       const bytes = Buffer.from(await response.arrayBuffer());
@@ -119,7 +152,7 @@ async function snapshotRace(http, pool, frames) {
   } finally { stop = true; await writer; }
   if (writerError) throw writerError;
   assert.ok(transitions >= 20, 'Export test did not overlap enough real PostgreSQL writes');
-  return { exports: exported, atomicWriterCommits: transitions, annotatedFrames: annotated.length, zeroHeadFrameIncluded: true, unfinishedFrameExcluded: true };
+  return { exports: exported, annotationSnapshots: exported, atomicWriterCommits: transitions, annotatedFrames: annotated.length, zeroHeadFrameIncluded: true, unfinishedFrameExcluded: true };
 }
 
 await acceptance(async () => {
@@ -130,7 +163,8 @@ await acceptance(async () => {
   const bytes = fs.readFileSync(fixture);
   const connection = dedicatedConnection();
   const pool = await openPostgres();
-  const environment = { APP_DATABASE_URL: connection.connectionString, APP_DATA_DIR: root,
+  const relay = await postgresProxy(connection.connectionString);
+  const environment = { APP_DATABASE_URL: relay.connectionString, APP_DATA_DIR: root,
     APP_VERSION: process.env.P0_EXPECTED_SHA, APP_FFMPEG: process.env.FFMPEG_PATH,
     APP_FFPROBE: process.env.FFPROBE_PATH, APP_MAX_FRAMES: '1000' };
   let server;
@@ -153,8 +187,21 @@ await acceptance(async () => {
     const evidence = { sourceSHA: process.env.P0_EXPECTED_SHA, observedAt: new Date().toISOString(), dataType: 'synthetic',
       sameRevision: await sameRevision(http, pool, frames[0]),
       crossFrame: await crossFrameRace(http, pool, frames.slice(1, 3)),
-      exportSnapshot: await snapshotRace(http, pool, frames) };
+      exportSnapshot: await snapshotRace(http, pool, frames),
+      databaseAvailability: await databaseAvailability(http, pool, relay, frames[0]) };
+    const snapshots = await Promise.all(frames.map(async frame => ({ ...frame, snapshot: await http.snapshot(frame.id),
+      imageSHA256: createHash('sha256').update(Buffer.from(await (await http.request(frame.imageUrl)).arrayBuffer())).digest('hex') })));
+    const exportResponse = await http.request('/api/v1/exports', http.body({ videoId, batchId: job.batchId }));
+    assert.equal(exportResponse.status, 200);
+    const exportBytes = Buffer.from(await exportResponse.arrayBuffer());
+    const coco = JSON.parse(new AdmZip(exportBytes).readAsText('annotations.json'));
+    const baseline = { observedAt: new Date().toISOString(), deployedSHA: process.env.P0_EXPECTED_SHA, dataType: 'synthetic',
+      dataDir: root, database: connection.database, videoId, batchId: job.batchId, coco, businessRows: await businessRows(pool),
+      mediaReferenceRows: await mediaReferenceRows(pool),
+      zipSHA256: createHash('sha256').update(exportBytes).digest('hex'), frames: snapshots,
+      progress: await http.json(`/api/v1/videos/${videoId}/progress?batchId=${job.batchId}`) };
+    fs.writeFileSync(path.join(root, 'restore-baseline.json'), JSON.stringify(baseline, null, 2));
     fs.writeFileSync(path.join(root, 'postgres-evidence.json'), JSON.stringify(evidence, null, 2));
     console.log('P01-DB-003/004 passed: real PostgreSQL 20-writer CAS, opposite-ID cross-frame race, concurrent atomic-snapshot exports and original JPEG verification.');
-  } finally { if (server) await server.stop(); await pool.end(); }
+  } finally { if (server) await server.stop(); await relay.stop(); await pool.end(); }
 });

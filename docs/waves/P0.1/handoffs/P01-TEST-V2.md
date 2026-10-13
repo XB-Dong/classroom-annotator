@@ -42,3 +42,18 @@ Leader正在准备真实隔离PG和仓库外DSN；未收到前数据库门槛均
 Leader给定冻结规格SHA：`07eea66203680a7421b79c5d3ed8a1d4de968822`。registry实际核验pg8.16.3及其dist.integrity；精确版本写入授权的package.json/lock，npm install exit=0（25packages，0vulnerabilities）。新增helpers/{postgres,process,http}.mjs、fixtures/legacy-schema.sql、scripts/{migration-check,postgres-check}.mjs；注册npm migration/postgres入口。`npm run check`和`npm test`均完成，组合命令exit=0，6个原ZIP/contract单测通过、0skip；git diff --check无错误。这只证明准备脚本语法/原独立单测，不是新PG行为Green。
 
 DSN环境文件名已获Leader认可：P01_DATABASE_URL_FILE（API）、P01_IMPORT_DATABASE_URL_FILE、P01_ROLLBACK_DATABASE_URL_FILE、P01_RESTORE_DATABASE_URL_FILE；对应独立p01_test_数据库。当前API脚本只声称DB003/004：20请求CAS；PG行锁+pg_stat_activity确认两个跨帧writer实际阻塞；反向两个新ID竞态；30张真实合成抽帧组成100次导出与两帧以上原子cohort写入竞争。DB002故障/readiness、DB005取消发布和DB007恢复仍须补齐后实际运行，未跳过当通过。
+
+## 续跑准备检查（2026-10-13T14:25:23+08:00）
+
+已保留并检查此前未提交的postgres helper/postgres-check/restart/storage修改；没有覆盖原证据或改产品源码。沿用冻结规格SHA `07eea66203680a7421b79c5d3ed8a1d4de968822`、running授权及21:02:03截止。repairCount仍为0；实际model字段仍不可核验，不把请求配置当实际模型证据。
+
+- Leader提供4个仓库外DSN文件及受限专用角色。只读连接核验exit=0：目标`p01_test_api`、角色`p01_test_owner`、实际PostgreSQL17.11；未读取/打印凭证，未访问演示业务库。只读连接成功不是DB业务门槛Green。
+- DB002脚本准备了仅影响自己server连接的loopback TCP relay，检查默认并发池上限5/空闲上限2、运行时schema mismatch readiness503、断连请求有限超时/安全错误且保存值不变、恢复后ready200。DB004新增100次标注读取，revision必须与同一原子事务的bbox cohort对应；保留100次导出、零框完成帧、未完成排除和原JPEG字节检查。
+- DB005新增`job-race-check`与synthetic bridge barrier：取消先排队时实际job行锁观察双方等待；发布先获得job锁时临时专用DB batch trigger/advisory lock阻塞发布，再观察取消等待该产品事务。测试不添加产品端点或hook，finally移除trigger/function。该脚本尚未在产品二进制上运行。
+- DB007改为对新独立restore库启动自己server，先比较五表逐字段值，再核对保存快照/revision、进度、JPEG摘要和独立COCO语义。Leader负责受限`pg_dump -Fc`/`pg_restore --exit-on-error --no-owner --no-privileges`；外部dump通过PGDMP头和SHA核对。dump/restore尚未执行。
+- 固定保留原4秒夹具，另生成20秒320×240/25fps视频和JPEG供Mac测试；所有文件在`D:/Project/cvte/runtime/p01-test-v2/fixtures`。source fixture精确使用当前只读服务字段`id/url/size_bytes/content_type/sha256`与`/v1/media/{id}`，9个opaque object id分2视频/7图片，不把id直接当sourceId。独立company API/media origins继续检查分页/channel4/play-url及Key隔离。fixture smoke exit=0，认证Range206返回16原字节；这是合成夹具自检，不是Mac产品门槛。
+- 2026-10-13T14:20之后`npm run check`、`npm test`和`git diff --check`组合exit=0；6个独立ZIP/contract单测通过、0skip。原始日志在`D:/Project/cvte/runtime/p01-test-v2/harness-20261013T142000/{check,unit}.log`。此后新增job-race脚本又执行`npm run check`/`git diff --check` exit=0；提交前再次完整验证。
+
+待接收migration/import/server实际二进制及构建SHA后依次执行迁移/并发/故障/重启/取消发布/恢复。真实Mac、实际新Mac payload落盘范围、GLM代码与浏览器、云端运维、CI仍为not_run，不以准备脚本或旧P0结果填passed。前端四入口与sample selector尚待冻结；原P0画/移/缩/删、旧ack/冲突/零框/ZIP断言全部保留。
+
+续补：`mac-media-check.mjs`已准备独立原生Go Agent过程，使用外部源服务与公司API合成夹具，断言9素材类型/sourceId映射、登记摘要/幂等、Range206/416、实际FFmpeg10帧、ack重放/冲突、未ack完成资源跨重启保留、原JPEG与COCO零框导出、API/media认证隔离；尚未运行该产品脚本，明确不代表真实Mac或Go→PG完整公司链路。新增迁移字段类型核对及restore的source/provider/媒体引用摘要比较。`npm run check`、`npm test`、`git diff --check`最新组合exit=0，6pass/0skip；本次只提交验收准备工件。

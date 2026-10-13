@@ -34,7 +34,7 @@ export async function waitFor(predicate, timeout = 30_000, label = 'Acceptance c
   throw new Error(`${label} timed out`);
 }
 
-export async function dedicatedServer(binary, environment, origin) {
+export async function dedicatedServer(binary, environment, origin, readinessRoute = '/health/ready') {
   const child = spawn(externalPath(binary, 'P0_BACKEND_BINARY'), [], {
     env: { ...process.env, ...environment, APP_ADDR: origin.replace('http://', '') },
     stdio: ['ignore', 'ignore', 'ignore'],
@@ -51,8 +51,8 @@ export async function dedicatedServer(binary, environment, origin) {
     await waitFor(async () => {
       if (startupError) throw startupError;
       assert.equal(child.exitCode, null, 'Dedicated server exited during startup');
-      try { return (await fetch(`${origin}/health/ready`, { signal: AbortSignal.timeout(1000) })).ok; } catch { return false; }
-    }, 30_000, 'Dedicated PostgreSQL server readiness');
+      try { return (await fetch(`${origin}${readinessRoute}`, { signal: AbortSignal.timeout(1000) })).ok; } catch { return false; }
+    }, 30_000, 'Dedicated acceptance process readiness');
     return { stop, child };
   } catch (error) { await stop(); throw error; }
 }

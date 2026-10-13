@@ -6,6 +6,8 @@
     "test": "node --test unit/*.test.mjs",
     "check": "node scripts/check.mjs",
     "postgres": "node scripts/postgres-check.mjs",
+    "job-race": "node scripts/job-race-check.mjs",
+    "mac-media": "node scripts/mac-media-check.mjs",
     "migration": "node scripts/migration-check.mjs",
     "fixtures": "node scripts/generate-fixtures.mjs",
     "restart": "node scripts/restart-check.mjs",
