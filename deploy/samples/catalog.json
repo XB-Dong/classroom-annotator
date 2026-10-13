@@ -1,0 +1,41 @@
+{
+  "catalogVersion": "1.0.0",
+  "items": [
+    {
+      "sampleId": "public-classroom-01",
+      "version": "1",
+      "name": "German lesson in Dikome Balue",
+      "description": "Public classroom teaching video, 320\u00d7240 original resolution.",
+      "creator": "Frosch79618",
+      "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:DeutschunterrichDikome2014.webm",
+      "licenseName": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/1/19/DeutschunterrichDikome2014.webm",
+      "sha256": "3a13190bba07a74e82b0cfb5675e1c15412f656bf95f766e404e03136a61f841",
+      "sizeBytes": 5776493,
+      "width": 320,
+      "height": 240,
+      "durationSeconds": 86.2,
+      "retrievedAt": "2026-10-13T14:07:24.897773+08:00",
+      "sourceFile": "public-classroom-01.webm"
+    },
+    {
+      "sampleId": "public-classroom-02",
+      "version": "1",
+      "name": "Classroom acrobatics in 2009",
+      "description": "Public classroom activity video, 320\u00d7240 original resolution.",
+      "creator": "H3lla3x",
+      "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:Acrobatics_at_school,_2009.webm",
+      "licenseName": "CC0 1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/2/2e/Acrobatics_at_school%2C_2009.webm",
+      "sha256": "7d64250e27455368a4bc8e5f95a14bb700149ab1d9d3abdb4d812dab571b68c3",
+      "sizeBytes": 2706383,
+      "width": 320,
+      "height": 240,
+      "durationSeconds": 42.433,
+      "retrievedAt": "2026-10-13T14:07:32.594773+08:00",
+      "sourceFile": "public-classroom-02.webm"
+    }
+  ]
+}

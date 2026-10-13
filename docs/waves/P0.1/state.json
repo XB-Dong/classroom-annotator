@@ -3,14 +3,14 @@
   "planVersion": "0.2.0",
   "status": "running",
   "executionAuthorized": true,
-  "implementationStarted": false,
+  "implementationStarted": true,
   "startedAt": "2026-10-13T12:36:15+08:00",
   "deadline": "2026-10-13T21:02:03+08:00",
   "timezone": "Asia/Shanghai",
   "proposalBudgetHours": 8,
   "baselineSourceSha": "d848d3517cb985e68eea513424f56f75fc2cc1e0",
-  "specStatus": "v0.2_user_approved_r0_review_in_progress",
-  "databaseMigrationStatus": "not_started",
+  "specStatus": "v0.2_frozen_after_architecture_review",
+  "databaseMigrationStatus": "isolated_postgresql_tests_prepared_implementation_in_progress",
   "macIntegrationStatus": "not_started",
   "cloudMediaDiskCheckStatus": "not_run_for_p0.1",
   "glmCodeReviewStatus": "not_run_for_p0.1",
@@ -30,7 +30,7 @@
   "reportRef": null,
   "preparedAt": "2026-10-13T12:19:35.3082690+08:00",
   "preparationReportRef": "docs/audit/reports/report-20261013T130854+0800.md",
-  "round": "R0",
+  "round": "R1",
   "authorizationText": "启动P0.1",
   "authorizationRecordedAt": "2026-10-13T13:13:53.943537+08:00",
   "previousExecutionWindow": {
@@ -45,7 +45,7 @@
   "remainingBudgetSeconds": 28152,
   "storageBoundaryConfirmed": true,
   "revisedPlanApproved": true,
-  "latestUserInstruction": "Pause P0.1 and prepare the four-source revision for review",
+  "latestUserInstruction": "Resume after accidental interruption; Mac read-only contract evidence supplied",
   "sourcePolicy": {
     "public_sample": "local",
     "upload": "mac",
@@ -58,17 +58,53 @@
     "architecture": "arm64",
     "ffmpegVersion": "7.1",
     "videoDecodeStatus": "reported_pass",
-    "ffmpegPathStatus": "available_outside_default_PATH",
-    "ffprobePathStatus": "not_found_in_default_PATH",
+    "ffmpegPathStatus": "absolute_path_supplied_execution_reported_pass",
+    "ffprobePathStatus": "not_found_in_reported_search_locations",
     "listenAddress": "127.0.0.1:19090",
     "apiPathVersion": "v1",
     "contractVersion": null,
     "mediaIdField": "id",
     "sourceIdField": "absent",
     "mediaCount": 9,
-    "mediaKindCounts": "not_provided",
+    "mediaKindCounts": {
+      "video": 1,
+      "image": 8
+    },
     "hashHeadNoStoreStatus": "reported_pass",
-    "cloudConnectivityStatus": "not_verified"
+    "cloudConnectivityStatus": "not_verified",
+    "reportedAt": "2026-10-13T13:42:00+08:00",
+    "mediaListPath": "/v1/media",
+    "mediaReadPath": "/v1/media/{id}",
+    "mediaIdMeaning": "allowlisted_object_identifier_not_sourceId_or_company_id",
+    "rangeStatus": "reported_206_for_bytes_0_31"
   },
-  "resumedAt": "2026-10-13T13:12:51+08:00"
+  "resumedAt": "2026-10-13T13:12:51+08:00",
+  "specSourceSha": "07eea66203680a7421b79c5d3ed8a1d4de968822",
+  "glmToolSmokeStatus": "passed_not_product_acceptance",
+  "resumedAfterInterruptionAt": "2026-10-13T14:08:42.280740+08:00",
+  "isolatedPostgres": {
+    "status": "ready",
+    "version": "17.11",
+    "loopbackPort": 15432,
+    "memoryLimitMiB": 512,
+    "maxConnections": 20,
+    "liveApplicationUntouched": true,
+    "evidenceRef": "runtime/p01-test-config/setup-result.json"
+  },
+  "implementationRoleModelOverride": {
+    "authorizedBy": "direct_user_reply",
+    "recordedAt": "2026-10-13T14:54:03.591380+08:00",
+    "requestedModel": "gpt-6-sol",
+    "requestedReasoningEffort": "high",
+    "reason": "gpt-6.1-sol/high worker capacity failures",
+    "scope": [
+      "Backend",
+      "Frontend"
+    ],
+    "leaderUnchanged": true,
+    "glmUnchanged": true
+  },
+  "testHarnessReviewStatus": "glm_executed_leader_rejected_unsupported_total_pass",
+  "publicSamplePreparationStatus": "two_real_files_hashed_decoded_visually_verified_not_seeded",
+  "deploymentConfigurationStatus": "cloud_nginx_and_compose_syntax_passed_not_deployed"
 }

@@ -2,10 +2,29 @@
   "platform": "linux/amd64",
   "verification": "Leader verified registry manifest, layer digest and diffID before offline archive transfer on 2026-10-13; actual daemon RepoDigests may differ after docker-load and belong in release evidence.",
   "images": [
-    { "tag": "debian:bookworm-slim", "sourceDigest": "sha256:a4672c0cb26fbdde88e38fa2dfb6c681942306680e41e4378b28770b6e79ee91" },
-    { "tag": "nginx:1.28.0", "sourceDigest": "sha256:3b03dfd827515a07ccf4946000f0bbdd2a4fb6aca7499249fcb6b1f9726823d6" },
-    { "tag": "prom/prometheus:v3.2.1", "sourceDigest": "sha256:5d34817348f69ddb956be509cafa4d4c2b5ecbbb5b786dd99d5a62e686b2ece4" },
-    { "tag": "grafana/grafana:11.6.0", "sourceDigest": "sha256:b739cda4b61ba3b90707578b643a22cd851fecf4498e6c6ec2d8f9d622a5d0b2" },
-    { "tag": "prom/node-exporter:v1.9.1", "sourceDigest": "sha256:863b62ff9f392b6f472e22b4b670ad1cabb66b3042502ebd4b2cd192733e1bce" }
+    {
+      "tag": "debian:bookworm-slim",
+      "sourceDigest": "sha256:a4672c0cb26fbdde88e38fa2dfb6c681942306680e41e4378b28770b6e79ee91"
+    },
+    {
+      "tag": "nginx:1.28.0",
+      "sourceDigest": "sha256:3b03dfd827515a07ccf4946000f0bbdd2a4fb6aca7499249fcb6b1f9726823d6"
+    },
+    {
+      "tag": "prom/prometheus:v3.2.1",
+      "sourceDigest": "sha256:5d34817348f69ddb956be509cafa4d4c2b5ecbbb5b786dd99d5a62e686b2ece4"
+    },
+    {
+      "tag": "grafana/grafana:11.6.0",
+      "sourceDigest": "sha256:b739cda4b61ba3b90707578b643a22cd851fecf4498e6c6ec2d8f9d622a5d0b2"
+    },
+    {
+      "tag": "prom/node-exporter:v1.9.1",
+      "sourceDigest": "sha256:863b62ff9f392b6f472e22b4b670ad1cabb66b3042502ebd4b2cd192733e1bce"
+    },
+    {
+      "tag": "postgres:17.11-bookworm",
+      "sourceDigest": "sha256:66aafa11cf15800a3c94763f7e11d1e7b2e37e5e84bc4ce027cb6e1e4bfaf4df"
+    }
   ]
 }
