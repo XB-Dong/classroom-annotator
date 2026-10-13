@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
+	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
@@ -20,6 +21,7 @@ const DefaultWorkspaceID = "00000000-0000-4000-8000-000000000001"
 var ErrRegistration = errors.New("registration failed")
 var ErrCredentials = errors.New("invalid credentials")
 var ErrUnauthenticated = errors.New("authentication required")
+var ErrUnavailable = errors.New("authentication storage unavailable")
 var ErrPassword = errors.New("invalid password")
 
 type User struct {
@@ -108,7 +110,13 @@ func (s *Service) Authenticate(ctx context.Context, token string) (Session, erro
 		return Session{}, ErrUnauthenticated
 	}
 	session, e := s.repo.SessionByDigest(ctx, digest(token))
-	if e != nil || !s.now().Before(session.ExpiresAt) || session.User.WorkspaceID != DefaultWorkspaceID {
+	if e != nil {
+		if errors.Is(e, sql.ErrNoRows) || errors.Is(e, ErrUnauthenticated) {
+			return Session{}, ErrUnauthenticated
+		}
+		return Session{}, ErrUnavailable
+	}
+	if !s.now().Before(session.ExpiresAt) || session.User.WorkspaceID != DefaultWorkspaceID {
 		return Session{}, ErrUnauthenticated
 	}
 	return session, nil

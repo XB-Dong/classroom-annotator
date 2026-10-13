@@ -63,6 +63,16 @@ func (c Client) Detect(ctx context.Context, image []byte, width, height int, req
 		return DetectionResult{}, ErrInvalidDetection
 	}
 	dec := json.NewDecoder(bytes.NewReader(raw))
+	var fields map[string]json.RawMessage
+	if json.Unmarshal(raw, &fields) != nil {
+		return DetectionResult{}, ErrInvalidDetection
+	}
+	for _, name := range []string{"contractVersion", "modelId", "modelSHA256", "pipelineVersion", "image", "detections", "timingMs"} {
+		value, ok := fields[name]
+		if !ok || bytes.Equal(bytes.TrimSpace(value), []byte("null")) {
+			return DetectionResult{}, ErrInvalidDetection
+		}
+	}
 	dec.DisallowUnknownFields()
 	var result DetectionResult
 	if dec.Decode(&result) != nil {
@@ -72,7 +82,7 @@ func (c Client) Detect(ctx context.Context, image []byte, width, height int, req
 	if dec.Decode(&extra) != io.EOF {
 		return DetectionResult{}, ErrInvalidDetection
 	}
-	if result.ContractVersion != "1.0.0" || result.ModelSHA256 != ModelSHA256 || result.PipelineVersion != PipelineVersion || result.Image.Width != width || result.Image.Height != height || len(result.Detections) > MaxCandidates || !finite(result.TimingMs) || result.TimingMs < 0 {
+	if result.ContractVersion != "1.0.0" || result.ModelID == "" || result.ModelSHA256 != ModelSHA256 || result.PipelineVersion != PipelineVersion || result.Image.Width != width || result.Image.Height != height || len(result.Detections) > MaxCandidates || !finite(result.TimingMs) || result.TimingMs < 0 {
 		return DetectionResult{}, ErrInvalidDetection
 	}
 	for _, d := range result.Detections {

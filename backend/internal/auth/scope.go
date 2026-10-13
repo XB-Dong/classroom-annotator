@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"io"
 	"strings"
@@ -25,6 +26,10 @@ func Scope(r ResourceAuthorizer) gin.HandlerFunc {
 				return true
 			}
 			if e := r.AuthorizeResource(c.Request.Context(), u, kind, id); e != nil {
+				if errors.Is(e, ErrUnavailable) {
+					authError(c, 503, "AUTH_UNAVAILABLE", "Authorization temporarily unavailable")
+					return false
+				}
 				authError(c, 403, "WORKSPACE_FORBIDDEN", "Resource is not in your workspace")
 				return false
 			}

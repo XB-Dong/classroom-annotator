@@ -129,7 +129,7 @@ func respondError(c *gin.Context, err error) {
 	case errors.Is(err, ErrMixedProviders):
 		httpapi.Error(c, 422, "MIXED_MEDIA_PROVIDERS", "Selected frames use different media providers")
 	case errors.Is(err, ErrRetired):
-		httpapi.Error(c, 503, "REMOTE_STORAGE_RETIRED", "Historical remote media storage has been retired")
+		httpapi.Error(c, 410, "REMOTE_STORAGE_RETIRED", "Historical remote media storage has been retired")
 	case errors.Is(err, ErrBackfill):
 		httpapi.Error(c, 409, "MEDIA_BACKFILL_REQUIRED", "Media integrity metadata requires verified backfill")
 	case errors.Is(err, ErrChanged):

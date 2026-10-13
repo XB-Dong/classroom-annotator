@@ -53,5 +53,5 @@ class Detector:
             raise
         finally:
             timer.cancel()
-        return {"contractVersion": "1.0", "modelId": MODEL_ID, "modelSHA256": MODEL_SHA256,
+        return {"contractVersion": "1.0.0", "modelId": MODEL_ID, "modelSHA256": MODEL_SHA256,
                 **result, "timingMs": round((time.perf_counter() - start) * 1000, 3)}

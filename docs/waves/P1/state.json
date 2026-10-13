@@ -19,7 +19,7 @@
   "proposedP1MaxRepairRounds": 8,
   "maxRepairRoundsPerTask": 2,
   "repairBudgetApproved": true,
-  "repairRoundsUsed": 0,
+  "repairRoundsUsed": 3,
   "requestedLeaderModel": "gpt-6.1-sol",
   "requestedLeaderReasoningEffort": "high",
   "actualLeaderModel": null,
@@ -46,7 +46,7 @@
   "previousPreparationReportRef": "docs/audit/reports/report-20261014T010853+0800.md",
   "helpSpecificationRef": "specs/p1/document-help.md",
   "helpManualRef": "docs/product/ANNOTATOR-GUIDE.zh.md",
-  "helpApiStatus": "blocked_vendor_latency_not_product_verified",
+  "helpApiStatus": "provider_unavailable_observed_timeouts_and_real_429_1305_not_product_success",
   "helpMode": "whole_document_context_no_vectorization",
   "registrationAndLoginRequired": true,
   "authorizationText": "P1启动。",
@@ -54,9 +54,16 @@
   "planApproved": true,
   "maxRepairRoundsForWave": 8,
   "round": "R1",
-  "lastCheckpointAt": "2026-10-14T02:07:56.226962+08:00",
+  "lastCheckpointAt": "2026-10-14T02:49:30.396146+08:00",
   "approvedPlanCommit": "5fcb41d9f2950235293992e2bd1707684b69ef1e",
-  "taskRepairCounts": {},
+  "taskRepairCounts": {
+    "P1-FRONT-001": 1,
+    "P1-HELP-001": 1,
+    "P1-AUTH-CAS-001": 1,
+    "P1-AI-SERVICE-001": 1,
+    "P1-AI-REVIEW-001": 1,
+    "P1-BASE-001": 1
+  },
   "localBuildPolicy": "one_heavy_process_use_named_mutex",
   "specStatus": "approved_design_runtime_contract_freeze_in_r0",
   "remainingSecondsAtStart": 25094,
@@ -79,5 +86,52 @@
     "realModelTests": 30,
     "deploymentStatus": "not_run",
     "recall": "not_measured_visible_misses"
+  },
+  "repairRounds": [
+    {
+      "round": 1,
+      "rootTasks": [
+        "P1-FRONT-001"
+      ],
+      "reason": "independent review logout failure visibility",
+      "evidence": "runtime/p1-front-review/ + P1-FRONT-001-B handoff"
+    },
+    {
+      "round": 2,
+      "rootTasks": [
+        "P1-HELP-001"
+      ],
+      "reason": "first Linux CI gofmt gate",
+      "evidence": "runtime/p1-preparation/ci-38446796562"
+    },
+    {
+      "round": 3,
+      "rootTasks": [
+        "P1-AUTH-CAS-001",
+        "P1-AI-SERVICE-001",
+        "P1-AI-REVIEW-001",
+        "P1-BASE-001"
+      ],
+      "reason": "coordinated R1 contract and failure-classification integration fixes",
+      "evidence": "runtime/p1-preparation/auth-outage-red.txt; ai-contract-red.txt; runtime/p1-review/architecture-contract-red.txt; retirement pre-fix static410/503 mismatch"
+    }
+  ],
+  "cloudRetirement": {
+    "relay": "stopped_restart_disabled",
+    "dedicatedTunnelAccount": "login_and_forwarding_revoked",
+    "administratorSSH": "preserved",
+    "macProcesses": "not_inspected_not_uninstalled"
+  },
+  "tlsStatus": "trusted_ip_certificate_issued_nginx_installation_not_run",
+  "latestCI": {
+    "sha": "e683ecbbab26a5ad93baae8a86d4c85cbb90190b",
+    "runId": 38446796562,
+    "status": "failed_gofmt_before_go_pg_checks",
+    "passedSlices": [
+      "python28unit",
+      "pinned_real_ONNX_synthetic",
+      "frontend58test_type_lint_build"
+    ],
+    "fixVerification": "local_compile_narrow_contract_tests_pass_not_full_CI"
   }
 }

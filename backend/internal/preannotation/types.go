@@ -22,11 +22,11 @@ type Detection struct {
 
 func (d *Detection) UnmarshalJSON(raw []byte) error {
 	var wire struct {
-		BBox         *[]float64 `json:"bbox"`
-		Confidence   *float64   `json:"confidence"`
-		ClassID      *int       `json:"classId"`
-		Clipped      bool       `json:"clipped"`
-		TileBoundary bool       `json:"tileBoundary"`
+		BBox         *[]*float64 `json:"bbox"`
+		Confidence   *float64    `json:"confidence"`
+		ClassID      *int        `json:"classId"`
+		Clipped      bool        `json:"clipped"`
+		TileBoundary bool        `json:"tileBoundary"`
 	}
 	dec := json.NewDecoder(bytes.NewReader(raw))
 	dec.DisallowUnknownFields()
@@ -37,7 +37,14 @@ func (d *Detection) UnmarshalJSON(raw []byte) error {
 	if dec.Decode(&extra) != io.EOF || wire.BBox == nil || len(*wire.BBox) != 4 || wire.Confidence == nil || wire.ClassID == nil {
 		return ErrInvalidDetection
 	}
-	*d = Detection{BBox: [4]float64(*wire.BBox), Confidence: *wire.Confidence, ClassID: *wire.ClassID, Clipped: wire.Clipped, TileBoundary: wire.TileBoundary}
+	var bbox [4]float64
+	for i, n := range *wire.BBox {
+		if n == nil {
+			return ErrInvalidDetection
+		}
+		bbox[i] = *n
+	}
+	*d = Detection{BBox: bbox, Confidence: *wire.Confidence, ClassID: *wire.ClassID, Clipped: wire.Clipped, TileBoundary: wire.TileBoundary}
 	return nil
 }
 

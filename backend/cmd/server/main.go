@@ -7,6 +7,7 @@ import (
 	"github.com/XB-Dong/classroom-annotator/backend/internal/dataset"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/exports"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/extraction"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/help"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/httpapi"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/jobs"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/media"
@@ -63,13 +64,22 @@ func main() {
 	if authErr != nil {
 		log.Fatal("authentication configuration failed")
 	}
+	helpService, helpErr := help.ConfiguredService(os.Getenv)
+	if helpService == nil {
+		log.Fatal("user manual initialization failed")
+	}
+	if helpErr != nil {
+		log.Print("optional document help provider unavailable")
+	}
 	r, e := httpapi.NewWithSecurity(cfg, s, m, v, x, d, sourceService, httpapi.Security{Auth: authHTTP, Resources: authRepo}, func(g *gin.RouterGroup, s *store.Store) {
 		annotations.Register(g, s, m.Metrics.Registry)
 		exports.Register(g, s, m.Metrics.Registry, cfg.MaxFrames)
+		helpService.Register(g)
 	})
 	if e != nil {
 		log.Fatal("secure router initialization failed")
 	}
+	helpService.RegisterDocument(r)
 	server := &http.Server{Addr: cfg.Addr, Handler: r, ReadHeaderTimeout: 10 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 1024 * 1024}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

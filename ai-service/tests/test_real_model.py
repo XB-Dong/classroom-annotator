@@ -50,6 +50,7 @@ def test_pinned_real_model_with_eight_actual_jpegs_and_png_http():
             request_ms=(time.perf_counter()-request_start)*1000
             assert response.status_code==200
             result=response.json()
+            assert result["contractVersion"] == "1.0.0"
             assert result["image"]=={"width":width,"height":height}
             assert result["modelSHA256"]==MODEL_SHA256
             assert result["pipelineVersion"]=="classroom-head-v1-fullframe-2x2-15"

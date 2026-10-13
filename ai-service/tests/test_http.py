@@ -14,7 +14,7 @@ AUTH = {"Authorization": f"Bearer {TOKEN}", "X-Request-ID": "test-request"}
 class Engine:
     ready = True
     def infer(self, data, confidence, nms):
-        return {"contractVersion": "1.0", "modelId": "test-engine",
+        return {"contractVersion": "1.0.0", "modelId": "test-engine",
                 "pipelineVersion": "classroom-head-v1-fullframe-2x2-15",
                 "modelSHA256": "a" * 64, "image": {"width": 100, "height": 50},
                 "detections": [], "timingMs": 1.0}

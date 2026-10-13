@@ -165,5 +165,5 @@ func (s *SourceService) storageStatus(c *gin.Context) {
 	c.JSON(200, gin.H{"providers": []providerAvailability{{"local", availability{local, reason(localReason)}}, {"mac", availability{false, reason("REMOTE_STORAGE_RETIRED")}}}, "sources": []sourceAvailability{{"public_sample", availability{public, reason(publicReason)}}, {"local_directory", availability{directory, reason(directoryReason)}}, {"upload", availability{local, reason(localReason)}}, {"dataset", availability{datasetReady, reason(datasetReason)}}}})
 }
 func retiredStorage(c *gin.Context) {
-	Error(c, 503, "REMOTE_STORAGE_RETIRED", "Historical remote media storage has been retired")
+	Error(c, 410, "REMOTE_STORAGE_RETIRED", "Historical remote media storage has been retired")
 }

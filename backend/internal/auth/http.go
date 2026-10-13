@@ -79,6 +79,10 @@ func (h *HTTP) Protect() gin.HandlerFunc {
 		}
 		session, e := h.service.Authenticate(c.Request.Context(), token)
 		if e != nil {
+			if errors.Is(e, ErrUnavailable) {
+				authError(c, 503, "AUTH_UNAVAILABLE", "Authentication temporarily unavailable")
+				return
+			}
 			authError(c, 401, "AUTH_REQUIRED", "Authentication required")
 			return
 		}

@@ -106,6 +106,9 @@ func (r *PGRepository) AuthorizeResource(ctx context.Context, u User, kind, id s
 	}
 	var workspace string
 	if e := r.db.QueryRowContext(ctx, query, id).Scan(&workspace); e != nil {
+		if !errors.Is(e, sql.ErrNoRows) {
+			return ErrUnavailable
+		}
 		return ErrForbidden
 	}
 	if workspace != u.WorkspaceID {
