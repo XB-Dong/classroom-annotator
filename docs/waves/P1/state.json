@@ -1,7 +1,7 @@
 {
   "wave": "P1",
   "planVersion": "0.2.0",
-  "status": "running",
+  "status": "awaiting_user_budget_exception",
   "executionAuthorized": true,
   "implementationStarted": true,
   "timezone": "Asia/Shanghai",
@@ -28,12 +28,12 @@
   "nativeWorkerLimit": 3,
   "localHeavyProcessLimit": 1,
   "tunnelPolicy": "retire_during_authorized_p1_no_tunnel_runtime_dependency",
-  "productAcceptanceStatus": "core_real_PG_races_passed_R7_harness_rerun_pending",
-  "deploymentStatus": "not_run",
+  "productAcceptanceStatus": "module_PG_race_and19_API_checks_passed_three_legacy_export_fixture_checks_failed_full_CI_blocked",
+  "deploymentStatus": "protected_P0_preserved_P1_not_deployed",
   "realApiVerificationStatus": "bounded_help_provider_timeouts_windows_and_cloud",
   "macRealDeploymentStatus": "not_run_deferred",
   "planReviewStatus": "previous_readonly_architecture_review_plus_leader_help_addendum_self_review_not_product_verification",
-  "reportRef": "docs/audit/reports/report-20261014T042619+0800.md",
+  "reportRef": "docs/audit/reports/report-20261014T044733+0800.md",
   "preparedAt": "2026-10-14T01:24:44.359872+08:00",
   "reviewDispositionRef": "docs/waves/P1/PLAN-REVIEW-DISPOSITION.md",
   "preparationReportRef": "docs/audit/reports/report-20261014T012444+0800.md",
@@ -46,15 +46,15 @@
   "previousPreparationReportRef": "docs/audit/reports/report-20261014T010853+0800.md",
   "helpSpecificationRef": "specs/p1/document-help.md",
   "helpManualRef": "docs/product/ANNOTATOR-GUIDE.zh.md",
-  "helpApiStatus": "real_provider_200_10.75s_valid_risk_reference_product_routes_pending",
+  "helpApiStatus": "actual_provider_probe_200_product_route_verification_prepared_not_run",
   "helpMode": "whole_document_context_no_vectorization",
   "registrationAndLoginRequired": true,
   "authorizationText": "P1启动。",
   "authorizationRecordedAt": "2026-10-14T01:31:45.886062+08:00",
   "planApproved": true,
   "maxRepairRoundsForWave": 8,
-  "round": "R1",
-  "lastCheckpointAt": "2026-10-14T04:26:19.183381+08:00",
+  "round": "R7_verification_failed",
+  "lastCheckpointAt": "2026-10-14T04:47:33.235256+08:00",
   "approvedPlanCommit": "5fcb41d9f2950235293992e2bd1707684b69ef1e",
   "taskRepairCounts": {
     "P1-FRONT-001": 2,
@@ -166,20 +166,27 @@
   },
   "tlsStatus": "issued_certificate_bundle_copied_nginx_not_installed",
   "latestCI": {
-    "sha": "0aa5ed1db183783a719be01b1868a542009d39ca",
-    "runId": 38459938533,
-    "status": "Go_PG_race_HTTP20_CAS_restart_passed_then_duplicate_public_fixture_seed_failed",
+    "sha": "dcf046e2ca4bf916d0faa83aaaa55c7d86d51932",
+    "runId": 38463091137,
+    "status": "failed",
     "passedSlices": [
       "Python28",
       "true_ONNX",
-      "frontend_type_lint_tests_build",
+      "frontend19_test_files_type_lint_build",
       "Go_all_real_PG_vet_build_race",
       "Node11",
       "schema8_faithful_migration_import_rollback",
       "HTTP20_barrier_CAS",
       "readiness_DB_recovery",
-      "restart_JPEG_COCO_interrupted_extraction"
+      "restart_JPEG_COCO_interrupted_extraction",
+      "19_actual_API_checks"
     ],
+    "failedChecks": [
+      "P0-EXP-001_mixed_video_frames",
+      "P0-EXP-001_batch_without_video",
+      "P0-EXP-001_mixed_batch_frames"
+    ],
+    "reason": "Nonexistent synthetic resource IDs fail workspace authorization403 before invalid-selector400 assertions",
     "browser": "not_run",
     "multiarchContainers": "not_run"
   },
@@ -203,5 +210,24 @@
       "repairBudgetReset": false
     }
   ],
-  "riskImageIndexStatus": "initial_approved_requirement_implemented_component_red_green_real_PG_pending"
+  "riskImageIndexStatus": "integrated_real_PG_unit_and_race_CI_passed_browser_pending",
+  "pendingApproval": {
+    "kind": "explicit_test_root_budget_exception",
+    "requestedWaveRound": 8,
+    "waveLimitUnchanged": 8,
+    "testRootUsed": 2,
+    "testRootCurrentLimit": 2,
+    "proposedTestRootLimit": 3,
+    "approved": false,
+    "patch": "D:\\Project\\cvte\\runtime\\p1-preparation\\R8-owned-export-fixtures.proposed.patch",
+    "patchSHA256": "14bc58c80922c7857b5e03aa73ac8806a8e1daa6e9653f4fca49f15d882a253a",
+    "patchApplied": false,
+    "scope": "Only existing invalid export-selector tests use actual owned resource IDs; preserve400 assertions",
+    "sourceRule": "P1-PLAN.md section8: each root task maximum2 repair rounds"
+  },
+  "publicationStatus": {
+    "codeSha": "dcf046e2ca4bf916d0faa83aaaa55c7d86d51932",
+    "branch": "p1/leader",
+    "remoteMainChanged": false
+  }
 }
