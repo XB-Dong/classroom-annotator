@@ -23,15 +23,20 @@ await acceptance(async () => {
   const aiTokenFile = path.join(root, 'ai-token');
   fs.writeFileSync(aiTokenFile, 'synthetic-ci-internal-token-with-enough-entropy', { mode: 0o600 });
   const fixtureVideo = fs.readFileSync(path.join(process.env.P0_FIXTURE_DIR, 'classroom.mp4'));
-  fs.writeFileSync(path.join(root, 'synthetic-public.mp4'), fixtureVideo);
+  const publicFixtures = [
+    { bytes: fixtureVideo, sourceFile: 'synthetic-public-1.mp4', durationSeconds: 4 },
+    { bytes: fs.readFileSync(path.join(process.env.P0_FIXTURE_DIR, 'classroom20.mp4')), sourceFile: 'synthetic-public-2.mp4', durationSeconds: 20 },
+  ];
+  assert.notEqual(createHash('sha256').update(publicFixtures[0].bytes).digest('hex'), createHash('sha256').update(publicFixtures[1].bytes).digest('hex'), 'Independent publisher sample identities require distinct generated media');
+  for (const item of publicFixtures) fs.writeFileSync(path.join(root, item.sourceFile), item.bytes);
   const catalogFile = path.join(root, 'sample-catalog.json');
   fs.writeFileSync(catalogFile, JSON.stringify({ catalogVersion: '1.0.0', items: [1, 2].map(index => ({
     sampleId: `ci-synthetic-${index}`, version: '1', name: `Synthetic public fixture ${index}`,
     description: 'FFmpeg-generated shapes; no classroom pixels', creator: 'Classroom Annotator CI',
     sourcePageUrl: 'https://github.com/XB-Dong/classroom-annotator', licenseName: 'CC0-1.0',
-    licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/', sha256: createHash('sha256').update(fixtureVideo).digest('hex'),
-    sizeBytes: fixtureVideo.length, width: 320, height: 240, durationSeconds: 4,
-    retrievedAt: new Date().toISOString(), sourceFile: 'synthetic-public.mp4' })) }));
+    licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/', sha256: createHash('sha256').update(publicFixtures[index - 1].bytes).digest('hex'),
+    sizeBytes: publicFixtures[index - 1].bytes.length, width: 320, height: 240, durationSeconds: publicFixtures[index - 1].durationSeconds,
+    retrievedAt: new Date().toISOString(), sourceFile: publicFixtures[index - 1].sourceFile })) }));
   const backendOrigin = `http://127.0.0.1:${await unusedLoopbackPort()}`;
   const frontendOrigin = `http://127.0.0.1:${await unusedLoopbackPort()}`;
   const pythonOrigin = `http://127.0.0.1:${await unusedLoopbackPort()}`;

@@ -4406,6 +4406,14 @@
                 "maximum": 1
               }
             }
+          },
+          "unresolvedRiskFrameIds": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "Frame IDs scoped to video/batch, with an unresolved image issue or pending risky candidate in the current active published run. Always emitted as an array by the server; additive optional client compatibility."
           }
         }
       },

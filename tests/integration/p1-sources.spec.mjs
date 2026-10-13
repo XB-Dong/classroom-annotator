@@ -45,8 +45,10 @@ test('P1-LOCAL-001 directory import preserves content identity and never exposes
     headers: { 'Idempotency-Key': key } });
   expect(retry.status()).toBe(202);
   expect((await retry.json()).id).toBe(job.id);
-  expect((await terminalJob(request, job.id)).status).toBe('completed');
-  const video = (await (await request.get('/api/v1/videos')).json()).videos.find(video => video.id === job.videoId);
+  const completed = await terminalJob(request, job.id);
+  expect(completed.status).toBe('completed');
+  expect(completed.videoId).toBeTruthy();
+  const video = (await (await request.get('/api/v1/videos')).json()).videos.find(video => video.id === completed.videoId);
   expect(video.storageProvider).toBe('local');
   expect((await extract(request, video.id)).frames).toHaveLength(3);
 });

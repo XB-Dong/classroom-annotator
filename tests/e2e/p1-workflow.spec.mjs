@@ -100,11 +100,21 @@ test('P1-LOWCONC-001 five independent browser sessions, three accounts, ten minu
             expect(reviewed.status()).toBe(200); review = await reviewed.json();
             return review.currentRun?.status;
           }, { timeout: 40_000 }).toBe('completed');
-          const resolved = await record.context.request.put(`/api/v1/frames/${frames[5].id}/review`, {
-            headers: record.headers, data: { expectedRevision: review.revision,
-              decisions: review.candidates.map(candidate => ({ candidateId: candidate.id, decision: 'rejected' })),
-              issueResolutions: review.issues.filter(issue => !issue.resolved).map(issue => ({ id: issue.id, resolution: 'manual_checked' })) } });
-          expect(resolved.status()).toBe(200); record.reviews = 1;
+          for (const candidate of review.candidates) {
+            const resolved = await record.context.request.put(`/api/v1/frames/${frames[5].id}/review`, {
+              headers: record.headers, data: { expectedRevision: review.revision,
+                decisions: [{ candidateId: candidate.id, decision: 'rejected' }], issueResolutions: [] } });
+            expect(resolved.status()).toBe(200);
+            review = await resolved.json();
+          }
+          const unresolvedIssues = review.issues.filter(issue => !issue.resolved);
+          if (unresolvedIssues.length) {
+            const resolved = await record.context.request.put(`/api/v1/frames/${frames[5].id}/review`, {
+              headers: record.headers, data: { expectedRevision: review.revision, decisions: [],
+                issueResolutions: unresolvedIssues.map(issue => ({ id: issue.id, resolution: 'manual_checked' })) } });
+            expect(resolved.status()).toBe(200);
+          }
+          record.reviews = 1;
         }
         await record.page.waitForTimeout(5000);
       }

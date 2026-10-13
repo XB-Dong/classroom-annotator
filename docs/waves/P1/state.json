@@ -19,7 +19,7 @@
   "proposedP1MaxRepairRounds": 8,
   "maxRepairRoundsPerTask": 2,
   "repairBudgetApproved": true,
-  "repairRoundsUsed": 6,
+  "repairRoundsUsed": 7,
   "requestedLeaderModel": "gpt-6.1-sol",
   "requestedLeaderReasoningEffort": "high",
   "actualLeaderModel": null,
@@ -28,12 +28,12 @@
   "nativeWorkerLimit": 3,
   "localHeavyProcessLimit": 1,
   "tunnelPolicy": "retire_during_authorized_p1_no_tunnel_runtime_dependency",
-  "productAcceptanceStatus": "real_pg_modules_pass_http_test_fixture_repair_full_race_browser_pending",
+  "productAcceptanceStatus": "core_real_PG_races_passed_R7_harness_rerun_pending",
   "deploymentStatus": "not_run",
   "realApiVerificationStatus": "bounded_help_provider_timeouts_windows_and_cloud",
   "macRealDeploymentStatus": "not_run_deferred",
   "planReviewStatus": "previous_readonly_architecture_review_plus_leader_help_addendum_self_review_not_product_verification",
-  "reportRef": "docs/audit/reports/report-20261014T040245+0800.md",
+  "reportRef": "docs/audit/reports/report-20261014T042619+0800.md",
   "preparedAt": "2026-10-14T01:24:44.359872+08:00",
   "reviewDispositionRef": "docs/waves/P1/PLAN-REVIEW-DISPOSITION.md",
   "preparationReportRef": "docs/audit/reports/report-20261014T012444+0800.md",
@@ -54,7 +54,7 @@
   "planApproved": true,
   "maxRepairRoundsForWave": 8,
   "round": "R1",
-  "lastCheckpointAt": "2026-10-13T20:04:13.225Z",
+  "lastCheckpointAt": "2026-10-14T04:26:19.183381+08:00",
   "approvedPlanCommit": "5fcb41d9f2950235293992e2bd1707684b69ef1e",
   "taskRepairCounts": {
     "P1-FRONT-001": 2,
@@ -63,7 +63,7 @@
     "P1-AI-SERVICE-001": 1,
     "P1-AI-REVIEW-001": 2,
     "P1-BASE-001": 1,
-    "P1-TEST-001": 1
+    "P1-TEST-001": 2
   },
   "localBuildPolicy": "one_heavy_process_use_named_mutex",
   "specStatus": "approved_design_runtime_contract_freeze_in_r0",
@@ -84,7 +84,8 @@
     "scheduler": "7fd047f",
     "metricsAndJobResults": "007d10a",
     "independentTests": "9e6d390",
-    "jobResultUI": "72ed944"
+    "jobResultUI": "72ed944",
+    "riskImageIndex": "991eabf"
   },
   "modelProbe": {
     "sha256": "a5ece478fc918787258afccd0b313e54319f8f39aeb1ceca11f27dbd269e78bc",
@@ -147,6 +148,14 @@
       ],
       "reason": "enhanced annotation409 omitted frozen common error requestId",
       "evidence": "ci-38457705392; r6-conflict-red.txt/green.txt"
+    },
+    {
+      "round": 7,
+      "rootTasks": [
+        "P1-TEST-001"
+      ],
+      "reason": "Independent harness correction: distinct actual public fixture bytes, completed import video identity, individual risky review decisions; production rules and all workload assertions retained",
+      "evidence": "runtime/p1-preparation/ci-38459938533/11_Common verification.txt; runtime/p1-harness-preflight/preflight-20261014.md; actual Linux rerun pending"
     }
   ],
   "cloudRetirement": {
@@ -157,17 +166,19 @@
   },
   "tlsStatus": "issued_certificate_bundle_copied_nginx_not_installed",
   "latestCI": {
-    "sha": "7899b2bc1c3e6f1fef2623e03b8130da6fce261b",
-    "runId": 38457705392,
-    "status": "go_all_pg_and_race_passed_then_HTTP_error_contract_failed",
+    "sha": "0aa5ed1db183783a719be01b1868a542009d39ca",
+    "runId": 38459938533,
+    "status": "Go_PG_race_HTTP20_CAS_restart_passed_then_duplicate_public_fixture_seed_failed",
     "passedSlices": [
-      "python28",
+      "Python28",
       "true_ONNX",
-      "frontend79_type_lint_build",
-      "Go_vet_build_all_real_PG_tests",
-      "Go_internal_race",
+      "frontend_type_lint_tests_build",
+      "Go_all_real_PG_vet_build_race",
       "Node11",
-      "schema8_migration_faithful_import_rollback"
+      "schema8_faithful_migration_import_rollback",
+      "HTTP20_barrier_CAS",
+      "readiness_DB_recovery",
+      "restart_JPEG_COCO_interrupted_extraction"
     ],
     "browser": "not_run",
     "multiarchContainers": "not_run"
@@ -179,5 +190,18 @@
     "requestedModel": "gpt-6.1-sol",
     "requestedEffort": "high",
     "actualModel": null
-  }
+  },
+  "deferredDefects": [
+    {
+      "id": "P1-DIAGNOSTIC-001",
+      "severity": "P3",
+      "path": "backend/internal/preannotation/http.go",
+      "description": "Enhanced review409 JSON omits requestId; common response X-Request-ID remains present, 409/currentRevision/CAS enforced",
+      "disposition": "deferred_nonblocking_diagnostic_after_AI_Review_root_budget_2_of_2",
+      "evidence": "runtime/p1-harness-preflight/preflight-20261014.md",
+      "dataIntegrityImpact": "none_found",
+      "repairBudgetReset": false
+    }
+  ],
+  "riskImageIndexStatus": "initial_approved_requirement_implemented_component_red_green_real_PG_pending"
 }
