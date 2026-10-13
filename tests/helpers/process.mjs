@@ -41,11 +41,20 @@ export async function dedicatedServer(binary, environment, origin, readinessRout
   });
   let startupError;
   child.once('error', error => { startupError = error; });
+  let stopping;
   const stop = async () => {
-    if (child.exitCode !== null || startupError) return;
-    const exited = new Promise(resolve => child.once('exit', resolve));
-    child.kill('SIGKILL');
-    await exited;
+    if (stopping) return stopping;
+    if (child.exitCode !== null || child.signalCode !== null || startupError) return;
+    stopping = new Promise((resolve, reject) => {
+      const exited = () => { clearTimeout(timer); resolve(); };
+      const timer = setTimeout(() => {
+        child.removeListener('exit', exited);
+        reject(new Error('Dedicated server did not stop within 5 seconds'));
+      }, 5000);
+      child.once('exit', exited);
+      child.kill('SIGKILL');
+    });
+    return stopping;
   };
   try {
     await waitFor(async () => {
