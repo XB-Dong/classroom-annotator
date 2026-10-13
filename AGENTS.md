@@ -10,6 +10,8 @@ Decision `docs/decisions/0007-public-demo-entry.md` records the user's subsequen
 
 ## P0.1 planning gate
 
+Current authorization: The user explicitly resumed P0.1 version0.2.0 on 2026-10-13. The paused baseline below is historical. Execute the approved four-source plan, use state.json for the resumed deadline, and freeze reviewed contracts before feature implementation. Authorized verified changes may be integrated and deployed by Leader without per-round permission.
+
 The user started P0.1 R0 on 2026-10-13 and then explicitly paused it for a four-source revision. `P0.1-PLAN.md` version0.2.0 and its specifications are now review drafts; only documentation revision is authorized. Do not install dependencies, implement features, migrate data, download/seed sample media, activate tunnels, spawn implementation workers, or deploy until the user explicitly resumes the revised plan. Receiving Mac status information does not resume coding. Preserve the prior R0 audit, external worktrees, budget usage, and repair counts; no product source change was made. P0's expired deadline does not apply.
 
 The user has confirmed the revised storage boundary: public_sample media stays on the demo host; upload/mac/dataset media stays on Mac; PostgreSQL retains metadata, jobs and annotations for every source. Do not use a global provider mode to hide/disable company API. After resume, reload the approved version/task packet, verify the existing Mac v1/id contract and ffprobe paths, and freeze interfaces before implementation. The Leader alone integrates and deploys verified changes within the resumed scope.
