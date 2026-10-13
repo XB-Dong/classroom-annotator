@@ -114,9 +114,13 @@ func (a *Agent) probeVideo(ctx context.Context, stage, videoID, operationID, exp
 }
 func (a *Agent) getResource(key string) (resource, string, error) {
 	r, p, e := a.lookupResource(key)
-	if e != nil { return resource{}, "", e }
+	if e != nil {
+		return resource{}, "", e
+	}
 	f, e := openVerifiedResource(p, r)
-	if e != nil { return resource{}, "", e }
+	if e != nil {
+		return resource{}, "", e
+	}
 	f.Close()
 	return r, p, nil
 }
