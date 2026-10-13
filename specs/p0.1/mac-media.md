@@ -100,7 +100,7 @@ Mac 仅云端内部访问，响应包含 `contractVersion="1.0.0"`。所有 `/br
 
 | 桥接入口 | 字段与结果 | 规则 |
 | --- | --- | --- |
-| `GET /bridge/v1/capabilities` | `{contractVersion,agentVersion,mediaRootWritable,ffmpegAvailable,maxUploadBytes,maxFrames}` | 发布前版本、能力、上限必须匹配 |
+| `GET /bridge/v1/capabilities` | contractVersion/agentVersion/mediaRootWritable/ffmpegAvailable/ffprobeAvailable/maxUploadBytes/maxFrames/leaseSeconds/queueSize/maxOperationSeconds/archiveTtlSeconds/maxControlBytes/maxArchiveImageBytes | 发布前版本、工具、实际限额必须匹配 |
 | `GET /bridge/v1/sources?cursor=…` | 同云端素材分页形状 | 只列明确授权的素材登记表 |
 | `POST /bridge/v1/registrations` | `{operationId,videoId,sourceId}` / `{operationId,videoId,mediaKey,sha256,sizeBytes,width,height,durationSeconds}` | 登记已存在视频；幂等 |
 | `GET /bridge/v1/dataset/lessons` | P0页参数 / 已观察的安全列表DTO | Mac调用公司API，不回传Key/签名URL |
@@ -110,11 +110,13 @@ Mac 仅云端内部访问，响应包含 `contractVersion="1.0.0"`。所有 `/br
 | `GET /bridge/v1/operations/{operationId}` | `{operationId,status,progress,errorCode,manifest?}` | manifest 为完整批次，不暴露部分帧 |
 | `POST /bridge/v1/operations/{operationId}/renew` | 空对象 / 200 | 仅延长运行操作租约，不改变业务终态 |
 | `POST /bridge/v1/operations/{operationId}/cancel` | 空对象 / 200 `{operationId,status}` | 真正停止 FFmpeg、清理后才 cancelled |
-| `POST /bridge/v1/operations/{operationId}/ack` | `{jobId}` / 200 | 云端事务发布成功后确认；不把 ack 等同于 DB 权威 |
+| `POST /bridge/v1/operations/{operationId}/ack` | `{publicationRevision}` / 200 | 所有operation类型统一；云端业务事务committed后确认，revision是操作提交标记，不是annotation revision |
 | `POST /bridge/v1/archives` | `{operationId,images:[{frameId,mediaKey,sha256,sizeBytes,width,height}],coco}` / 202 `{operationId,status}` | Go 提供已完成帧快照和 COCO，Mac 检查并完整打包 |
 | `GET/HEAD /bridge/v1/media/{mediaKey}` | 视频/图片/ZIP bytes + Content-Length/Content-Type/ETag | 不透明 key，仅登记资源；单 Range 支持 206/416 |
 
 operationId/jobId/batchId/videoId/frameId 用现有稳定随机 ID；key 不允许斜杠/路径分隔符。帧 manifest 为 `{batchId,frames:[{frameId,timestampMs,width,height,mediaKey,sha256,sizeBytes}]}`；archive manifest 为 `{mediaKey,sha256,sizeBytes,expiresAt}`。所有数字必须有限且在限额内。
+
+统一operation包含operationType、nullable jobId/resourceId、canonical requestFingerprint、publicationRevision。registration/upload/archive可没有business job；extraction/dataset_import必须绑定真实job。ack只接受云端已提交的操作身份与正整数publicationRevision，相同确认幂等，不同确认409；不接受借用另一job来确认。数据库media_operations的committed标记与资源发布同事务，不把HTTP返回成功当提交证明。
 
 operation/status不返回bridge Token或原始请求。云端Video增量返回sourceKind与storageProvider，Frame保留既有imageUrl语义；availability从独立storage/status读取，不把内网地址暴露给前端。
 
@@ -135,6 +137,8 @@ operation/status不返回bridge Token或原始请求。云端Video增量返回so
 7. cancellation 必须确认远端停止与 staging 清理。控制链路断开无法确认时，云端记录 failed/REMOTE_CLEANUP_PENDING 与 remote operationId，租约停止执行；网络恢复再核对，不能提前称清理成功。
 8. Mac 磁盘不足、新任务超限直接拒绝；清理只针对当前 Agent 创建且路径核验过的 staging/到期 ZIP。原素材、已确认帧和未决输出不自动删除。
 
+状态冻结：queued取消/租约到期后不得开始；running取消/到期先停止进程、清理staging再终态；completed未ack的不可变输出收到cancel也保留，返回已准备状态，由Go决定是否发布；committed/acknowledged输出不能因重启或重复cancel被删除。Go取消成功但远端确认缺失必须failed/REMOTE_CLEANUP_PENDING，FinishJob不能把它转换成cancelled。归档TTL只清理已完成导出包，不用于清理视频/帧；未决帧仅在明确核对数据库未发布后处理。
+
 Media Agent 使用 manifest 文件记录执行事实，不管理 annotations/completion/revision。Mac 硬盘故障仍会导致媒体不可用，隧道不能替代备份。
 
 ## 6. 图片、导出与离线用户体验
@@ -149,6 +153,8 @@ Media Agent 使用 manifest 文件记录执行事实，不管理 annotations/com
 - 单次导出混用 local/mac 返回 422 `MIXED_MEDIA_PROVIDERS`，UI 提示按来源分开选择。旧资源仍可按 local 路径导出。
 
 公司接口入口与Mac素材入口并存，P0.1必须实现材料驱动合成链路：Go→Mac→公司API/media→Mac文件。复用已观察分页/channel=4/play-url结构，真实内网结果单独not_run；不做批量自动抓取。公司Key仅在Mac，未配置返回DATASET_NOT_CONFIGURED；Mac离线返回MEDIA_SOURCE_UNAVAILABLE，不能使用全局模式禁用公司接口，也不能回退云端下载。
+
+公司桥接DTO只投影UI实际需要的已观察字段（课节id/course_name/organization_name/teacher/date/section_index/name/room/start_time/end_time；视频id/lesson_id/catalog_file_id/channel/part_index；type/items/total）。不透传任意tags/stats映射、raw错误或source_page_url/play-url；必须在合成含凭证样例中证明这些字段被剔除。
 
 ## 7. 云端媒体无文件写入的部署验收
 

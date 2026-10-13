@@ -9,7 +9,7 @@
 
 基线 `d848d3517cb985e68eea513424f56f75fc2cc1e0`：`backend/internal/platform/store/store.go` 用 `database/sql` + modernc SQLite，创建目录与 schema、连接数为 1；SQL 分散于 store、annotations、exports 三个能力边界。不是 ORM 项目。
 
-推荐锁定 PostgreSQL `17.11-bookworm`、pgx `v5.11.0`、goose `v3.29.0`。这是查到的已发布版本选择，不是已安装结果。启动后 R0 核验与 Go 1.25.5 的兼容性，锁入 go.mod/go.sum 和镜像 digest；验证失败记录阻塞，由 Leader 提出版本修订，不能用 `latest` 或暗中更换主版本。[PostgreSQL 官方镜像](https://hub.docker.com/_/postgres)、[pgx stdlib](https://pkg.go.dev/github.com/jackc/pgx/v5/stdlib)、[goose](https://pkg.go.dev/github.com/pressly/goose/v3)。
+R0修订：pgx v5.11.0已取得；goose v3.29.0要求Go1.26，改锁兼容当前Go1.25.5的v3.27.0，并以GOTOOLCHAIN=local完成获取。保留Go版本，不自动升级工具链。PostgreSQL17.11-bookworm镜像仍在核验，digest通过才锁定；依赖入go.mod/go.sum。不用latest、不暗中更换主版本。[goose v3.27官方go.mod](https://raw.githubusercontent.com/pressly/goose/v3.27.0/go.mod)、[pgx stdlib](https://pkg.go.dev/github.com/jackc/pgx/v5/stdlib)。
 
 业务 server 仅连接 PostgreSQL。一次性 `cmd/import-sqlite` 使用现有 pure-Go SQLite 驱动读取停止写入后的备份，不把 SQLite 引入长期运行的 server。沿用显式 repository SQL，不做字符串通用替换器，不重写领域模型或标注编辑器。
 
@@ -23,6 +23,7 @@
 - 视频新增source_kind（public_sample/upload/mac/dataset/legacy，旧记录默认legacy），nullable source_id用于稳定登记去重；以provider+source_kind+source_id+media_sha256唯一。upload可无source_id，Mac sourceId不是公司catalogFileId。视频/帧storage_key唯一性改为provider+storage_key，已有值不变。
 - 新增public_samples表管理有限预置sampleId、版本、作者/许可/页面、媒体摘要/元数据、缓存状态和可空video引用；不存视频bytes。样例seed/import按sampleId+version+hash幂等，不能重置已存在标注。source/provider映射为public_sample→local、upload/mac/dataset→mac，以CHECK和业务校验约束；legacy保持原provider。帧provider从所属video继承，不能由客户端覆盖。
 - 新增 `media_operations` 表保存云端 job ID、remote operation ID、provider、关联资源和安全状态；不用它承载媒体 bytes。表中不存 API Key、SSH key、Token、请求体或原始公司响应。
+- media_operations明确operation_type（registration/upload/extraction/dataset_import/archive）、nullable job_id/resource_id、request_fingerprint、publication_status（unpublished/committed）和publication_revision。它是业务提交标记，不是标注revision。发布资源/终态job/committed标记在同一事务提交；上传/注册/导出无需伪造business job。
 - goose SQL 迁移随源码提交。`cmd/migrate` 显式执行，使用 PostgreSQL advisory lock 防止两个迁移命令并行；已执行文件不修改。server readiness 同时验证 DB ping 与预期 schema 版本，版本不符返回 503。
 
 ## 3. SQL 与事务必须改变的地方
