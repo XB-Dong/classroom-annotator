@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
 import { validateSchema } from './contract.mjs';
+import { terminalJob } from './api.mjs';
 
 export async function review(request, frame) {
   const response = await request.get(`/api/v1/frames/${frame.id}/review`);
@@ -28,6 +29,33 @@ export async function finished(request, frame, status = 'completed') {
   await expect.poll(async () => {
     value = await review(request, frame); return value.currentRun?.status;
   }, { timeout: 40_000, intervals: [50, 100, 250] }).toBe(status);
+  return value;
+}
+
+export function assertTerminalAIJob(job, snapshots) {
+  validateSchema('Job', job);
+  expect(job.kind).toBe('preannotation');
+  expect(['completed', 'failed', 'cancelled']).toContain(job.status);
+  const timestamps = [job.createdAt, job.startedAt, job.finishedAt];
+  for (const timestamp of timestamps) expect(timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/);
+  const [created, started, finishedAt] = timestamps.map(Date.parse);
+  expect(started).toBeGreaterThanOrEqual(created); expect(finishedAt).toBeGreaterThanOrEqual(started);
+  expect(finishedAt - started).toBeLessThanOrEqual(120_000);
+  expect(job.partialResults).toHaveLength(snapshots.length);
+  expect(new Set(job.partialResults.map(item => item.frameId)).size).toBe(snapshots.length);
+  for (const snapshot of snapshots) {
+    const result = job.partialResults.find(item => item.frameId === snapshot.frameId);
+    expect(result).toMatchObject({ frameId: snapshot.frameId, runId: snapshot.currentRun.id,
+      status: snapshot.currentRun.status, applied: snapshot.currentRun.status === 'completed' && snapshot.activeRunId === snapshot.currentRun.id });
+    if (snapshot.currentRun.status === 'failed') expect(result.errorCode).toMatch(/^[A-Z][A-Z0-9_]+$/);
+    else expect(result.errorCode ?? '').toBe('');
+  }
+  return { queueWaitMs: started - created, executionMs: finishedAt - started, partialResults: job.partialResults };
+}
+
+export async function terminalEvidence(request, job, snapshots) {
+  const value = await terminalJob(request, job.id);
+  assertTerminalAIJob(value, snapshots);
   return value;
 }
 

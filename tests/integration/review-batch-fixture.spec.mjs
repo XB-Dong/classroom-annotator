@@ -1,6 +1,6 @@
 import { test, expect } from '../helpers/p1-session.mjs';
 import { upload, extract, terminalJob, save } from '../helpers/api.mjs';
-import { control, review, stats, expectStats } from '../helpers/review.mjs';
+import { control, review, stats, expectStats, assertTerminalAIJob } from '../helpers/review.mjs';
 import { validateSchema } from '../helpers/contract.mjs';
 import { dedicatedConnection } from '../helpers/postgres.mjs';
 import { randomUUID } from 'node:crypto';
@@ -18,9 +18,11 @@ test('P1-DEGRADE/AIRACE/STATS-001 fixture batch retains one published result and
     expect(response.status()).toBe(202);
     const job = validateSchema('Job', await response.json());
     expect(job.kind).toBe('preannotation');
-    expect((await terminalJob(request, job.id)).status).toBe('failed');
+    const terminal = await terminalJob(request, job.id);
+    expect(terminal.status).toBe('failed');
     const values = await Promise.all(selected.map(frame => review(request, frame)));
     expect(values.map(value => value.currentRun.status).sort()).toEqual(['completed', 'failed']);
+    assertTerminalAIJob(terminal, values);
     const success = values.find(value => value.currentRun.status === 'completed');
     const failure = values.find(value => value.currentRun.status === 'failed');
     expect(success.candidates).toHaveLength(3); expect(success.issues).toEqual([]);

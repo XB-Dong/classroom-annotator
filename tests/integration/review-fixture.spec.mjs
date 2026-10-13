@@ -1,10 +1,10 @@
 import { test, expect } from '../helpers/p1-session.mjs';
 import { upload, extract, snapshot, save } from '../helpers/api.mjs';
-import { review, stats, enqueue, finished, decide, decideIndividually, control, held, expectStats } from '../helpers/review.mjs';
+import { review, stats, enqueue, finished, decide, decideIndividually, control, held, expectStats, terminalEvidence } from '../helpers/review.mjs';
 import { inspectExport } from '../helpers/zip.mjs';
 import { dedicatedConnection } from '../helpers/postgres.mjs';
 import { waitFor } from '../helpers/process.mjs';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import pg from 'pg';
 
 test.beforeEach(async () => { expect(process.env.P1_AI_FIXTURE_PHASE).toBe('fixture_not_real_model'); });
@@ -48,6 +48,18 @@ test('P1-REVIEW/STATS/GATE-001 fixture decisions, AI edits, tombstone undo and r
   const start = await review(request, frame);
   const queued = await enqueue(request, frame, start.revision);
   let value = await finished(request, frame);
+  await terminalEvidence(request, queued.job, [value]);
+  const image = await request.get(frame.imageUrl); expect(image.status()).toBe(200);
+  const inputSHA = createHash('sha256').update(await image.body()).digest('hex');
+  const receipt = (await control()).evidence.find(item => item.requestId === value.currentRun.id);
+  expect(receipt).toMatchObject({ imageSHA256: inputSHA, dataType: 'fixture_not_real_model', width: 320, height: 240 });
+  const lineage = new pg.Pool({ connectionString: dedicatedConnection('P1_QA_DATABASE_URL_FILE').connectionString, max: 1 });
+  try {
+    const row = (await lineage.query('SELECT input_sha256,model_sha256,pipeline_version FROM ai_runs WHERE id=$1', [value.currentRun.id])).rows[0];
+    expect(row).toEqual({ input_sha256: inputSHA,
+      model_sha256: 'a5ece478fc918787258afccd0b313e54319f8f39aeb1ceca11f27dbd269e78bc',
+      pipeline_version: 'classroom-head-v1-fullframe-2x2-15' });
+  } finally { await lineage.end(); }
   expect(value.annotations).toEqual([prior]);
   const [good, low, duplicate] = byX(value);
   expect(byX(value).map(c => c.bbox)).toEqual([[10, 10, 20, 20], [70, 20, 10, 10], [72, 22, 10, 10]]);
@@ -82,6 +94,10 @@ test('P1-REVIEW/STATS/GATE-001 fixture decisions, AI edits, tombstone undo and r
   await save(request, frame, moved.filter(a => a.id !== originalId));
   expectStats(await stats(request, video), { ...boxCounts, pending: 0, adjusted: 1, rejected: 2,
     unresolvedRiskCandidates: 0, unresolvedRiskImages: 0, manualAdded: 1 });
+  await rejectedUnchanged(request, frames[1], before => request.put(`/api/v1/frames/${frames[1].id}/annotations`, {
+    data: { expectedRevision: before.revision, status: 'in_progress', annotations: [accepted] } }));
+  await rejectedUnchanged(request, frames[1], before => request.put(`/api/v1/frames/${frames[1].id}/annotations`, {
+    data: { expectedRevision: before.revision, status: 'in_progress', annotations: [{ id: accepted.id, bbox: accepted.bbox, source: 'manual' }] } }));
   // An unchanged original ID is the only legal undo of the deleted AI mapping.
   await save(request, frame, [...moved.filter(a => a.id !== originalId), accepted]);
   value = await review(request, frame);
@@ -98,6 +114,11 @@ test('P1-REVIEW/STATS/GATE-001 fixture decisions, AI edits, tombstone undo and r
   await rejectedUnchanged(request, frame, before => request.put(`/api/v1/frames/${frame.id}/annotations`, {
     data: { expectedRevision: before.revision, status: 'in_progress', annotations: before.annotations.map(a =>
       a.id === originalId ? { ...a, candidateId: duplicate.id } : a) } }));
+  await rejectedUnchanged(request, frame, before => request.put(`/api/v1/frames/${frame.id}/annotations`, {
+    data: { expectedRevision: before.revision, status: 'in_progress', annotations: before.annotations.map(a =>
+      a.id === originalId ? { ...a, runId: randomUUID() } : a) } }));
+  await rejectedUnchanged(request, frames[1], before => request.put(`/api/v1/frames/${frames[1].id}/review`, { data: {
+    expectedRevision: before.revision, decisions: [{ candidateId: good.id, decision: 'accepted' }], issueResolutions: [] } }), [404, 422]);
   await rejectedUnchanged(request, frame, before => request.put(`/api/v1/frames/${frame.id}/annotations`, {
     data: { expectedRevision: before.revision, status: 'in_progress', annotations: [...before.annotations,
       { id: randomUUID(), bbox: [1, 1, 20, 20], source: 'ai', candidateId: good.id, runId: good.runId }] } }), [400, 422]);
@@ -174,8 +195,9 @@ for (const mode of ['empty', 'failure', 'null-bbox']) {
   test(`P1-GATE/STATS-001 ${mode} fixture requires explicit image confirmation and has nullable zero denominators`, async ({ request }) => {
     const { video, frame } = await fresh(request);
     await control({ mode });
-    await enqueue(request, frame, (await review(request, frame)).revision);
+    const queued = await enqueue(request, frame, (await review(request, frame)).revision);
     let value = await finished(request, frame, mode === 'empty' ? 'completed' : 'failed');
+    await terminalEvidence(request, queued.job, [value]);
     expect(value.candidates).toEqual([]);
     expect(value.annotations).toEqual([]);
     expect(value.issues).toHaveLength(1);
@@ -202,12 +224,13 @@ for (const mode of ['boxes', 'failure']) {
   test(`P1-AIRACE-001 held ${mode} fixture cannot overwrite a newer manual save`, async ({ request }) => {
     const { video, frame } = await fresh(request);
     await control({ mode, hold: true });
-    await enqueue(request, frame, (await review(request, frame)).revision);
+    const queued = await enqueue(request, frame, (await review(request, frame)).revision);
     const id = await held();
     const manual = { id: randomUUID(), bbox: [140, 50, 25, 25], source: 'manual' };
     const saved = await save(request, frame, [manual], 'completed');
     await control({ release: id });
     const value = await finished(request, frame, mode === 'boxes' ? 'stale' : 'failed');
+    await terminalEvidence(request, queued.job, [value]);
     expect(value.revision).toBe(saved.revision); expect(value.status).toBe('completed');
     expect(value.annotations).toEqual([manual]); expect(value.candidates).toEqual([]); expect(value.issues).toEqual([]);
     expectStats(await stats(request, video), emptyCounts);
@@ -222,6 +245,7 @@ test('P1-AIRACE-001 cancellation of an actual held HTTP request creates no candi
   const cancelled = await request.post(`/api/v1/jobs/${queued.job.id}/cancel`);
   expect(cancelled.status()).toBe(200);
   const value = await finished(request, frame, 'cancelled');
+  expect((await terminalEvidence(request, queued.job, [value])).status).toBe('cancelled');
   expect(value.candidates).toEqual([]); expect(value.issues).toEqual([]);
   await expect.poll(async () => (await control()).held.length, { timeout: 5000 }).toBe(0);
 });

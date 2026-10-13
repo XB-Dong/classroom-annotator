@@ -138,7 +138,7 @@ await acceptance(async () => {
     });
     try {
       await run(['test', 'integration/review-fixture.spec.mjs', 'integration/review-batch-fixture.spec.mjs',
-        'integration/scheduler-fixture.spec.mjs', '--project=api'], {
+        'integration/review-publication-fixture.spec.mjs', 'integration/scheduler-fixture.spec.mjs', '--project=api'], {
         P1_AI_FIXTURE_PHASE: 'fixture_not_real_model', P1_AI_FIXTURE_ORIGIN: pythonOrigin,
         P1_AI_FIXTURE_CONTROL_TOKEN: syntheticAI.controlToken, P1_FOLLOWER_ORIGIN: followerOrigin,
         P0_TEST_OUTPUT: path.join(root, 'fixture-api-results'), P0_REPORT_OUTPUT: path.join(root, 'fixture-api-report') });
