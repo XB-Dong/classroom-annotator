@@ -46,7 +46,7 @@ await acceptance(async () => {
     return ['completed', 'failed', 'cancelled'].includes(operation.status) && operation;
   }, 90_000, 'Actual agent operation terminal state');
   const evidence = { observedAt: new Date().toISOString(), sourceSHA: process.env.P01_EXPECTED_AGENT_SHA,
-    environment: 'Windows native Go media agent with synthetic existing v1 service/company API', dataType: 'synthetic', actualMacVerificationStatus: 'not_run' };
+    environment: `${process.platform} native Go media agent with synthetic existing v1 service/company API`, dataType: 'synthetic', actualMacVerificationStatus: 'not_run' };
   try {
     processHandle = await dedicatedServer(process.env.P01_AGENT_BINARY, environment, origin, '/health/live');
     const unauthorized = await fetch(`${origin}/bridge/v1/capabilities`);
