@@ -3,6 +3,7 @@ package httpapi
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/dataset"
@@ -99,8 +100,21 @@ func TestSyntheticHTTPUploadExtractionAndCompanyImport(t *testing.T) {
 	if e = json.Unmarshal(w.Body.Bytes(), &video); e != nil {
 		t.Fatal(e)
 	}
-	if video.StorageProvider != "local" || video.MediaSHA256 == "" || video.Name != "unsafe.mp4" || strings.Contains(w.Body.String(), s.Root) {
+	if video.StorageProvider != "local" || video.Name != "unsafe.mp4" || strings.Contains(w.Body.String(), s.Root) {
 		t.Fatal(video, w.Body.String())
+	}
+	persisted, e := s.Video(video.ID)
+	if e != nil || persisted.MediaSHA256 != fmt.Sprintf("%x", sha256.Sum256([]byte("synthetic-video"))) || persisted.MediaSizeBytes != int64(len("synthetic-video")) {
+		t.Fatalf("upload byte integrity was not persisted: %+v error=%v", persisted, e)
+	}
+	var wire map[string]any
+	if e = json.Unmarshal(w.Body.Bytes(), &wire); e != nil {
+		t.Fatal(e)
+	}
+	for _, private := range []string{"storageKey", "sourceId", "mediaSHA256", "mediaSizeBytes"} {
+		if _, exposed := wire[private]; exposed {
+			t.Fatalf("private storage field exposed: %s", private)
+		}
 	}
 	w = call("POST", "/api/v1/videos/"+video.ID+"/extractions", `{"intervalSeconds":0.25}`)
 	if w.Code != 202 {
