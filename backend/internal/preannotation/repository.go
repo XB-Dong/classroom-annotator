@@ -246,5 +246,8 @@ func (s *Service) Review(ctx context.Context, frame string, w ReviewWrite) (Snap
 	if err = tx.Commit(); err != nil {
 		return Snapshot{}, err
 	}
+	for _, decision := range w.Decisions {
+		s.metrics.Decision(decision.Decision)
+	}
 	return out, nil
 }

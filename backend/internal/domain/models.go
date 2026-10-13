@@ -24,14 +24,27 @@ type Video struct {
 	MediaSizeBytes  int64   `json:"-"`
 }
 type Job struct {
-	ID        string  `json:"id"`
-	Kind      string  `json:"kind"`
-	VideoID   string  `json:"videoId,omitempty"`
-	BatchID   string  `json:"batchId,omitempty"`
-	Status    string  `json:"status"`
-	Progress  float64 `json:"progress"`
-	Error     string  `json:"error,omitempty"`
-	CreatedAt string  `json:"createdAt"`
+	ID             string             `json:"id"`
+	Kind           string             `json:"kind"`
+	VideoID        string             `json:"videoId,omitempty"`
+	BatchID        string             `json:"batchId,omitempty"`
+	Status         string             `json:"status"`
+	Progress       float64            `json:"progress"`
+	Error          string             `json:"error,omitempty"`
+	CreatedAt      string             `json:"createdAt"`
+	StartedAt      string             `json:"startedAt,omitempty"`
+	FinishedAt     string             `json:"finishedAt,omitempty"`
+	PartialResults []JobPartialResult `json:"partialResults,omitempty"`
+}
+
+// JobPartialResult describes an AI attempt. Applied indicates a completed run
+// currently supplying candidates; failed image issues are never successful output.
+type JobPartialResult struct {
+	FrameID   string `json:"frameId"`
+	RunID     string `json:"runId"`
+	Status    string `json:"status"`
+	Applied   bool   `json:"applied"`
+	ErrorCode string `json:"errorCode,omitempty"`
 }
 type Batch struct {
 	ID         string `json:"id"`

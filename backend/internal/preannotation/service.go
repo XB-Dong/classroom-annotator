@@ -11,6 +11,7 @@ import (
 	"github.com/XB-Dong/classroom-annotator/backend/internal/auth"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/domain"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/store"
+	aimetrics "github.com/XB-Dong/classroom-annotator/backend/internal/preannotation/metrics"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/reviewstate"
 	"github.com/jackc/pgx/v5/pgconn"
 	"io"
@@ -23,8 +24,10 @@ import (
 )
 
 type Service struct {
-	Store  *store.Store
-	Client Client
+	Store   *store.Store
+	Client  Client
+	metrics *aimetrics.Metrics
+	clock   func() time.Time
 }
 
 func NewService(s *store.Store, c Client) *Service { return &Service{Store: s, Client: c} }
@@ -181,6 +184,12 @@ func requestFingerprint(targets []target) string {
 // Run is a single sequential AI scheduler. The caller must hold the application's
 // PostgreSQL scheduler advisory lock for its entire lifetime.
 func (s *Service) Run(ctx context.Context) error {
+	if s.metrics != nil {
+		metricsCtx, cancelMetrics := context.WithCancel(ctx)
+		done := make(chan struct{})
+		go func() { defer close(done); s.pollRisk(metricsCtx) }()
+		defer func() { cancelMetrics(); <-done }()
+	}
 	ticker := time.NewTicker(250 * time.Millisecond)
 	defer ticker.Stop()
 	for {
@@ -188,7 +197,7 @@ func (s *Service) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
-			if _, e := s.Store.DB.ExecContext(ctx, `UPDATE ai_runs r SET status='cancelled',finished_at=now() FROM jobs j WHERE j.id=r.job_id AND j.status='cancelled' AND r.status IN ('queued','running')`); e != nil {
+			if _, e := s.Store.DB.ExecContext(ctx, `WITH terminal AS (UPDATE jobs j SET finished_at=clock_timestamp() WHERE kind='preannotation' AND status='cancelled' AND finished_at IS NULL AND EXISTS(SELECT 1 FROM ai_runs r WHERE r.job_id=j.id AND r.status IN ('queued','running')) RETURNING id) UPDATE ai_runs r SET status='cancelled',finished_at=now() FROM terminal j WHERE j.id=r.job_id AND r.status IN ('queued','running')`); e != nil {
 				return e
 			}
 			var job string
@@ -213,7 +222,7 @@ func (s *Service) Recover(ctx context.Context) error {
 		return e
 	}
 	defer tx.Rollback()
-	if _, e = tx.ExecContext(ctx, `UPDATE jobs SET status=CASE WHEN status='cancelling' THEN 'cancelled' ELSE 'failed' END,error=CASE WHEN status='cancelling' THEN '' ELSE 'INTERRUPTED' END WHERE kind='preannotation' AND status IN ('queued','running','cancelling')`); e != nil {
+	if _, e = tx.ExecContext(ctx, `UPDATE jobs j SET status=CASE WHEN status IN ('cancelling','cancelled') THEN 'cancelled' ELSE 'failed' END,error=CASE WHEN status IN ('cancelling','cancelled') THEN '' ELSE 'INTERRUPTED' END,finished_at=clock_timestamp() WHERE kind='preannotation' AND (status IN ('queued','running','cancelling') OR (status='cancelled' AND EXISTS(SELECT 1 FROM ai_runs r WHERE r.job_id=j.id AND r.status IN ('queued','running'))))`); e != nil {
 		return e
 	}
 	if _, e = tx.ExecContext(ctx, `UPDATE ai_runs r SET status=CASE WHEN j.status='cancelled' THEN 'cancelled' ELSE 'failed' END,error_code=CASE WHEN j.status='cancelled' THEN '' ELSE 'INTERRUPTED' END,finished_at=now() FROM jobs j WHERE j.id=r.job_id AND r.status IN ('queued','running')`); e != nil {
@@ -241,8 +250,9 @@ func (s *Service) execute(parent context.Context, job string) error {
 	if status != "queued" {
 		return nil
 	}
-	queueExpired := time.Since(created) > 120*time.Second
-	if _, e = tx.ExecContext(parent, `UPDATE jobs SET status='running' WHERE id=$1`, job); e != nil {
+	queueWait := s.now().Sub(created)
+	queueExpired := queueWait >= 120*time.Second
+	if _, e = tx.ExecContext(parent, `UPDATE jobs SET status='running',started_at=clock_timestamp() WHERE id=$1`, job); e != nil {
 		return e
 	}
 	if _, e = tx.ExecContext(parent, `UPDATE ai_runs SET status='running' WHERE job_id=$1 AND status='queued'`, job); e != nil {
@@ -251,6 +261,8 @@ func (s *Service) execute(parent context.Context, job string) error {
 	if e = tx.Commit(); e != nil {
 		return e
 	}
+	s.metrics.QueueWait(queueWait)
+	started := s.now()
 	rows, e := s.Store.DB.QueryContext(parent, `SELECT id,frame_id,actor_id,input_sha256,base_revision FROM ai_runs WHERE job_id=$1 ORDER BY frame_id`, job)
 	if e != nil {
 		return e
@@ -269,7 +281,7 @@ func (s *Service) execute(parent context.Context, job string) error {
 	if e != nil {
 		return e
 	}
-	ctx, cancel := context.WithTimeout(parent, 120*time.Second)
+	ctx, cancel := context.WithTimeout(parent, s.remaining(started))
 	defer cancel()
 	watchDone := make(chan struct{})
 	go func() {
@@ -281,7 +293,7 @@ func (s *Service) execute(parent context.Context, job string) error {
 			case <-ctx.Done():
 				return
 			case <-t.C:
-				j, err := s.Store.Job(job)
+				j, err := s.Store.JobWithContext(ctx, job)
 				if err != nil || j.Status != "running" {
 					cancel()
 					return
@@ -300,21 +312,15 @@ func (s *Service) execute(parent context.Context, job string) error {
 		if ctx.Err() != nil {
 			err = ctx.Err()
 		}
+		if !queueExpired && s.remaining(started) == 0 {
+			err = context.DeadlineExceeded
+			cancel()
+		}
 		if err == nil {
 			var image []byte
 			image, err = s.readImage(f, r.InputSHA)
 			if err == nil {
-				result, err = s.Client.Detect(ctx, image, f.Width, f.Height, r.ID)
-				if errors.Is(err, ErrBusy) {
-					timer := time.NewTimer(250 * time.Millisecond)
-					select {
-					case <-ctx.Done():
-						err = ctx.Err()
-					case <-timer.C:
-						result, err = s.Client.Detect(ctx, image, f.Width, f.Height, r.ID)
-					}
-					timer.Stop()
-				}
+				result, err = s.detect(ctx, image, f.Width, f.Height, r.ID)
 			}
 		}
 		if err != nil {
@@ -342,7 +348,7 @@ func (s *Service) execute(parent context.Context, job string) error {
 	if status == "cancelling" || status == "cancelled" {
 		final, code = "cancelled", ""
 	}
-	if _, e = tx.ExecContext(parent, `UPDATE jobs SET status=$1,error=$2,progress=1 WHERE id=$3`, final, code, job); e != nil {
+	if _, e = tx.ExecContext(parent, `UPDATE jobs SET status=$1,error=$2,progress=1,finished_at=clock_timestamp() WHERE id=$3`, final, code, job); e != nil {
 		return e
 	}
 	return tx.Commit()

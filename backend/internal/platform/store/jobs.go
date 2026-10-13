@@ -3,7 +3,9 @@ package store
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/domain"
+	"time"
 )
 
 func (s *Store) AddJob(j domain.Job) error {
@@ -16,10 +18,29 @@ func (s *Store) AddJobWithContext(parent context.Context, j domain.Job) error {
 	return e
 }
 
-const jobSelect = `SELECT id,kind,coalesce(video_id,''),coalesce(batch_id,''),status,progress,error,created_at FROM jobs`
+const jobSelect = `SELECT j.id,j.kind,coalesce(j.video_id,''),coalesce(j.batch_id,''),j.status,j.progress,j.error,j.created_at,j.started_at,j.finished_at,
+ CASE WHEN j.kind='preannotation' THEN coalesce((
+  SELECT jsonb_agg(jsonb_build_object('frameId',r.frame_id,'runId',r.id,'status',r.status,
+   'applied',r.status='completed' AND coalesce(f.active_ai_run_id=r.id,false),'errorCode',r.error_code) ORDER BY r.frame_id,r.id)
+  FROM ai_runs r JOIN frames f ON f.id=r.frame_id WHERE r.job_id=j.id
+ ),'[]'::jsonb) ELSE NULL END FROM jobs j`
 
 func scanJob(r interface{ Scan(...any) error }) (j domain.Job, e error) {
-	e = r.Scan(&j.ID, &j.Kind, &j.VideoID, &j.BatchID, &j.Status, &j.Progress, &j.Error, &j.CreatedAt)
+	var started, finished sql.NullTime
+	var partial []byte
+	e = r.Scan(&j.ID, &j.Kind, &j.VideoID, &j.BatchID, &j.Status, &j.Progress, &j.Error, &j.CreatedAt, &started, &finished, &partial)
+	if e != nil {
+		return
+	}
+	if started.Valid {
+		j.StartedAt = started.Time.UTC().Format(time.RFC3339Nano)
+	}
+	if finished.Valid {
+		j.FinishedAt = finished.Time.UTC().Format(time.RFC3339Nano)
+	}
+	if len(partial) > 0 {
+		e = json.Unmarshal(partial, &j.PartialResults)
+	}
 	return
 }
 func (s *Store) Job(id string) (domain.Job, error) {
