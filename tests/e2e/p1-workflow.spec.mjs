@@ -57,7 +57,7 @@ test('P1-LOWCONC-001 five independent browser sessions, three accounts, ten minu
     const first = records[0];
     const video = await upload(first.context.request);
     const { frames } = await extract(first.context.request, video.id, { intervalSeconds: 0.5 });
-    expect(frames.length).toBeGreaterThanOrEqual(5);
+    expect(frames).toHaveLength(6);
     await Promise.all(records.map(async (record, index) => {
       await record.page.getByTestId('video-select').selectOption(video.id);
       await record.page.getByTestId(`frame-item-${frames[index].id}`).click();
@@ -84,6 +84,28 @@ test('P1-LOWCONC-001 five independent browser sessions, three accounts, ten minu
             data: { frameIds: [frame.id] } });
           expect(archive.status()).toBe(200); record.exports++;
         }
+        if (index === 0 && record.saves === 1) {
+          const aiFrame = frames[5];
+          const aiBefore = await record.context.request.get(`/api/v1/frames/${aiFrame.id}/annotations`);
+          const aiQueued = await record.context.request.post(`/api/v1/frames/${aiFrame.id}/preannotations`, {
+            headers: { ...record.headers, 'Idempotency-Key': randomUUID() },
+            data: { expectedRevision: (await aiBefore.json()).revision } });
+          expect(aiQueued.status()).toBe(202);
+          record.concurrentAIJobs = 1;
+        }
+        if (index === 0 && record.saves === 2) {
+          let review;
+          await expect.poll(async () => {
+            const reviewed = await record.context.request.get(`/api/v1/frames/${frames[5].id}/review`);
+            expect(reviewed.status()).toBe(200); review = await reviewed.json();
+            return review.currentRun?.status;
+          }, { timeout: 40_000 }).toBe('completed');
+          const resolved = await record.context.request.put(`/api/v1/frames/${frames[5].id}/review`, {
+            headers: record.headers, data: { expectedRevision: review.revision,
+              decisions: review.candidates.map(candidate => ({ candidateId: candidate.id, decision: 'rejected' })),
+              issueResolutions: review.issues.filter(issue => !issue.resolved).map(issue => ({ id: issue.id, resolution: 'manual_checked' })) } });
+          expect(resolved.status()).toBe(200); record.reviews = 1;
+        }
         await record.page.waitForTimeout(5000);
       }
       const final = await record.context.request.get(`/api/v1/frames/${frame.id}/annotations`);
@@ -93,11 +115,21 @@ test('P1-LOWCONC-001 five independent browser sessions, three accounts, ten minu
     await records[0].page.screenshot({ path: testInfo.outputPath('five-session-workload.png'), fullPage: true });
     const evidence = { sourceSHA: process.env.P0_EXPECTED_SHA, observedAt: new Date().toISOString(),
       elapsedMs: Date.now() - started, contexts: 5, accounts: 3, distinctSessions: 5,
-      workloadMs: Date.now() - workloadStart, records: records.map(({ username, reads, saves, exports, conflicts, latencies }) => {
+      workloadMs: Date.now() - workloadStart, records: records.map(({ username, reads, saves, exports, conflicts, latencies, reviews = 0, concurrentAIJobs = 0 }) => {
         latencies.sort((a, b) => a - b);
-        return { username, reads, saves, exports, conflicts, samples: latencies.length,
+        return { username, reads, saves, exports, conflicts, reviews, concurrentAIJobs, samples: latencies.length,
           readAndSaveP95Ms: latencies[Math.ceil(latencies.length * 0.95) - 1] };
       }) };
     fs.writeFileSync(path.join(process.env.P1_STACK_EVIDENCE, 'low-concurrency-evidence.json'), JSON.stringify(evidence, null, 2));
   } finally { for (const context of contexts) await context.close(); }
+});
+
+test('P1-AUTH-001 failed browser logout shows a revocation warning after clearing local identity', async ({ page }) => {
+  await login(page.request);
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: '退出登录' })).toBeVisible();
+  await page.route('**/api/v1/auth/logout', route => route.abort('failed'));
+  await page.getByRole('button', { name: '退出登录' }).click();
+  await expect(page.getByRole('button', { name: '登录工作区' })).toBeVisible();
+  await expect(page.getByRole('alert')).toContainText('退出请求未确认');
 });

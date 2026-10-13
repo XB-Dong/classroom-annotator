@@ -10,7 +10,7 @@ concurrency:
 jobs:
   checks:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 45
     services:
       postgres:
         image: postgres:17.11@sha256:66aafa11cf15800a3c94763f7e11d1e7b2e37e5e84bc4ce027cb6e1e4bfaf4df
@@ -87,4 +87,97 @@ jobs:
           name: p1-evidence-${{ github.sha }}
           path: ${{ runner.temp }}/classroom-acceptance.*/
           if-no-files-found: warn
+          retention-days: 7
+  offline-ai:
+    needs: checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [amd64, arm64]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Enable ARM64 emulation for the portability check
+        if: matrix.arch == 'arm64'
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
+        with:
+          platforms: arm64
+      - name: Verify approved model and build the exact source image
+        env:
+          P1_ARCH: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/p1-image/model" "$RUNNER_TEMP/p1-image/release"
+          model="$RUNNER_TEMP/p1-image/model/yolov9_n_wholebody34_0100_1x3x640x640.onnx"
+          curl --fail --location --retry 2 --max-time 90 'https://github.com/PINTO0309/High-Angle_Robust_Fast_FaceAlignment/releases/download/weights/yolov9_n_wholebody34_0100_1x3x640x640.onnx' -o "$model"
+          test "$(stat -c %s "$model")" = 3221705
+          echo 'a5ece478fc918787258afccd0b313e54319f8f39aeb1ceca11f27dbd269e78bc  '"$model" | sha256sum --check --strict
+          docker build --platform "linux/$P1_ARCH" --label "org.opencontainers.image.revision=$GITHUB_SHA" -f deploy/ai.Dockerfile -t "classroom-ai:$GITHUB_SHA-$P1_ARCH" .
+          docker image inspect "classroom-ai:$GITHUB_SHA-$P1_ARCH" > "$RUNNER_TEMP/p1-image/release/image-inspect.json"
+      - name: Container readiness and actual synthetic JPEG inference
+        env:
+          P1_ARCH: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          trap 'docker rm -f p1-ai-check >/dev/null 2>&1 || true' EXIT
+          docker run -d --name p1-ai-check --platform "linux/$P1_ARCH" -e "P1_EXPECTED_ARCH=$P1_ARCH" -e AI_INTERNAL_TOKEN=synthetic-ci-container-token-with-enough-entropy -v "$RUNNER_TEMP/p1-image/model:/models:ro" -v "$PWD/tests/p1-container-check.py:/tmp/p1-container-check.py:ro" "classroom-ai:$GITHUB_SHA-$P1_ARCH"
+          timeout 180 docker exec p1-ai-check python /tmp/p1-container-check.py > "$RUNNER_TEMP/p1-image/release/model-smoke.json"
+          printf '%s\n' "$GITHUB_SHA" > "$RUNNER_TEMP/p1-image/release/source-sha.txt"
+          printf '%s\n' "linux/$P1_ARCH" > "$RUNNER_TEMP/p1-image/release/platform.txt"
+          cp ai-service/MODEL-LICENSE ai-service/model-manifest.json "$RUNNER_TEMP/p1-image/release/"
+          docker save "classroom-ai:$GITHUB_SHA-$P1_ARCH" | gzip -1 > "$RUNNER_TEMP/p1-image/release/ai-image.tar.gz"
+          cd "$RUNNER_TEMP/p1-image/release"
+          sha256sum ai-image.tar.gz image-inspect.json model-smoke.json source-sha.txt platform.txt MODEL-LICENSE model-manifest.json > SHA256SUMS
+      - name: Preserve verified offline AI image
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: p1-ai-${{ matrix.arch }}-${{ github.sha }}
+          path: ${{ runner.temp }}/p1-image/release/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+  arm64-binaries:
+    needs: checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24.16.0'
+      - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        with:
+          go-version: '1.25.5'
+          cache-dependency-path: backend/go.sum
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: p1-linux-amd64-${{ github.sha }}
+          path: ${{ runner.temp }}/p1-arm64
+      - name: Cross compile ARM64 commands after the full gate
+        env:
+          CGO_ENABLED: '0'
+          GOOS: linux
+          GOARCH: arm64
+          GOTOOLCHAIN: local
+          GOMAXPROCS: '2'
+          GOFLAGS: '-p=1'
+        run: |
+          set -euo pipefail
+          node scripts/sync-help-document.mjs
+          cd backend
+          for command in server migrate import-sqlite seed-samples bootstrap-user; do
+            output="$command"
+            if [[ "$command" == server ]]; then output=backend-server; fi
+            go build -ldflags "-X main.version=$GITHUB_SHA" -o "$RUNNER_TEMP/p1-arm64/artifacts/$output" "./cmd/$command"
+          done
+          cd "$RUNNER_TEMP/p1-arm64"
+          printf '%s\n' linux/arm64 > platform.txt
+          sha256sum artifacts/* > SHA256SUMS
+      - name: Preserve cross compiled ARM64 binaries and verified frontend
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: p1-linux-arm64-${{ github.sha }}
+          path: ${{ runner.temp }}/p1-arm64/
+          if-no-files-found: error
           retention-days: 7

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
+import os from 'node:os';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -62,17 +63,33 @@ await acceptance(async () => {
     response.setHeader('Content-Type', ({ '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml' })[path.extname(file)] || 'application/octet-stream');
     fs.createReadStream(file).pipe(response);
   });
-  let backend, python;
+  let backend, python, resourceTimer;
+  const resources = { samples: 0, goPeakRssKiB: 0, pythonPeakRssKiB: 0, combinedPeakRssKiB: 0,
+    machine: { platform: os.platform(), arch: os.arch(), logicalCPUs: os.cpus().length,
+      totalMemoryBytes: os.totalmem(), cpuModel: os.cpus()[0]?.model } };
   try {
     await command(process.env.P01_MIGRATE_BINARY, ['up'], env);
     await assertEmptyBusiness(pool);
     await command(process.env.P01_SEED_BINARY, ['--catalog', catalogFile, '--report', path.join(root, 'sample-seed.json')], env);
     python = await dedicatedServer(process.env.P1_PYTHON_BINARY, {
-      PYTHONPATH: path.resolve('../ai-service/src'), AI_MODEL_PATH: process.env.P1_MODEL_PATH,
+      PYTHONPATH: fileURLToPath(new URL('../../ai-service/src/', import.meta.url)), AI_MODEL_PATH: process.env.P1_MODEL_PATH,
       AI_INTERNAL_TOKEN: fs.readFileSync(aiTokenFile, 'utf8'),
       PYTHONSTARTUP: '' }, pythonOrigin, '/health/ready', ['-m', 'uvicorn', 'classroom_ai.app:create_app', '--factory',
       '--host', '127.0.0.1', '--port', new URL(pythonOrigin).port, '--workers', '1', '--no-access-log']);
     backend = await dedicatedServer(process.env.P0_BACKEND_BINARY, env, backendOrigin);
+    const sampleResources = () => {
+      if (os.platform() !== 'linux') return;
+      const rss = pid => {
+        try { return Number(fs.readFileSync(`/proc/${pid}/status`, 'utf8').match(/^VmRSS:\s+(\d+) kB$/m)?.[1] || 0); }
+        catch { return 0; }
+      };
+      const goRSS = rss(backend.child.pid), pythonRSS = rss(python.child.pid);
+      resources.samples++;
+      resources.goPeakRssKiB = Math.max(resources.goPeakRssKiB, goRSS);
+      resources.pythonPeakRssKiB = Math.max(resources.pythonPeakRssKiB, pythonRSS);
+      resources.combinedPeakRssKiB = Math.max(resources.combinedPeakRssKiB, goRSS + pythonRSS);
+    };
+    sampleResources(); resourceTimer = setInterval(sampleResources, 1000); resourceTimer.unref();
     await new Promise(resolve => proxy.listen(Number(new URL(frontendOrigin).port), '127.0.0.1', resolve));
     for (const username of [credentials.username, 'p1_account_two', 'p1_account_three']) {
       const registered = await fetch(`${frontendOrigin}/api/v1/auth/register`, { method: 'POST',
@@ -83,9 +100,10 @@ await acceptance(async () => {
     const cli = fileURLToPath(new URL('../node_modules/@playwright/test/cli.js', import.meta.url));
     const args = ['test', 'integration/api.spec.mjs', 'integration/auth.spec.mjs', 'integration/collaboration.spec.mjs',
       'integration/help.spec.mjs', 'integration/ai-review.spec.mjs', 'integration/p1-sources.spec.mjs',
-      'integration/public-samples.spec.mjs', '--project=api'];
+      'integration/public-samples.spec.mjs', 'integration/extraction-race.spec.mjs', '--project=api'];
     const run = async (arguments_, additionalEnvironment = {}) => {
-      const child = spawn(process.execPath, [cli, ...arguments_], { env: { ...process.env, P0_BASE_URL: frontendOrigin,
+      const child = spawn(process.execPath, [cli, ...arguments_], { cwd: fileURLToPath(new URL('../', import.meta.url)),
+        env: { ...process.env, P0_BASE_URL: frontendOrigin,
         P1_STACK_EVIDENCE: root, P1_QA_DATABASE_URL_FILE: process.env.P01_ACCEPTANCE_DATABASE_URL_FILE,
         P01_HAS_PUBLIC_SAMPLES: '1', ...additionalEnvironment }, stdio: 'inherit' });
       const code = await new Promise((resolve, reject) => { child.once('error', reject); child.once('exit', resolve); });
@@ -101,14 +119,24 @@ await acceptance(async () => {
       await delay(61_000);
       await run(['test', 'e2e/workflow.spec.mjs', 'e2e/public-samples.spec.mjs', 'e2e/p1-workflow.spec.mjs', 'e2e/p1-conflict.spec.mjs', '--project=chromium']);
     }
+    await python.stop();
+    assert.ok(python.child.signalCode || python.child.exitCode !== null, 'The owned Python service did not stop');
+    fs.writeFileSync(path.join(root, 'ai-stopped-evidence.json'), JSON.stringify({ sourceSHA: process.env.P0_EXPECTED_SHA,
+      observedAt: new Date().toISOString(), ownedPythonStopped: true, pid: python.child.pid }, null, 2));
+    await run(['test', 'integration/degrade.spec.mjs', '--project=api'], { P1_AI_STOPPED: '1' });
+    if (process.argv.includes('--e2e')) await run(['test', 'e2e/workflow.spec.mjs', '--project=chromium', '--grep', 'P0-E2E-001'], {
+      P1_AI_STOPPED: '1', P0_TEST_OUTPUT: path.join(root, 'after-ai-stop-browser-results'),
+      P0_REPORT_OUTPUT: path.join(root, 'after-ai-stop-browser-report') });
     fixture.assertClean();
     const routing = (await pool.query('SELECT source_kind,storage_provider,count(*) FROM videos GROUP BY source_kind,storage_provider')).rows;
     assert.ok(routing.some(row => row.source_kind === 'upload'));
     assert.ok(routing.every(row => row.storage_provider === 'local'), 'New resources must use current-host media');
     fs.writeFileSync(path.join(root, 'stack-evidence.json'), JSON.stringify({ sourceSHA: process.env.P0_EXPECTED_SHA,
       observedAt: new Date().toISOString(), dataType: 'synthetic', nativeAgent: false, tunnel: false,
-      routing, fixtureRequests: fixture.evidence, browserRun: process.argv.includes('--e2e') }, null, 2));
+      routing, fixtureRequests: fixture.evidence, resources, browserRun: process.argv.includes('--e2e') }, null, 2));
   } finally {
+    clearInterval(resourceTimer);
+    fs.writeFileSync(path.join(root, 'resource-evidence.json'), JSON.stringify(resources, null, 2));
     proxy.closeAllConnections(); if (proxy.listening) await new Promise(resolve => proxy.close(resolve));
     if (backend) await backend.stop(); if (python) await python.stop();
     await fixture.stop(); await pool.end();

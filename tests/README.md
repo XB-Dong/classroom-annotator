@@ -1,5 +1,17 @@
 # 独立验收
 
+P1当前正式入口是Linux CI的`bash scripts/verify.sh --e2e`；五份外部PG连接文件沿用`P01_*_DATABASE_URL_FILE`名字，分别为Go单测、事务快照/重启、全栈、SQLite导入与导入失败回滚专属库。Linux GHA创建真实PG17非超级用户数据库。Windows不启动数据库、Docker或隧道；可在`Local\CVTE_P1_BUILD`互斥锁内做`npm run check/npm test/npm run list`，最多等待120秒。其余真实PG/API/浏览器门槛在Linux执行。
+
+P1同机全栈单独入口`node tests/scripts/p1-run-stack.mjs --e2e`（从`tests`目录执行时为`node scripts/p1-run-stack.mjs --e2e`）要求前端已构建，且外部`P1_RUNTIME/P1_MODEL_PATH/P1_PYTHON_BINARY/P0_BACKEND_BINARY/P01_MIGRATE_BINARY/P01_SEED_BINARY/P0_FIXTURE_DIR/P01_ACCEPTANCE_DATABASE_URL_FILE`已配置。此入口只使用隔离测试命名的数据库和合成媒体，启动自己拥有的Go/Python及同源HTTP代理，并在finally中回收。不会操作已部署业务。先执行`node scripts/sync-help-document.mjs`再Go构建；它逐字复制唯一手册供embed。
+
+新增独立API测试覆盖注册/邀请码/密码字节范围/非自动登录、Cookie/CSRF/Origin/过期/匿名媒体、20轮PG行锁屏障CAS与逐轮数据库/审计、Go→真实Python模型→PG复核门禁、完整手册SHA与无供应商降级、本机目录内容身份、公司schema/channel4凭证隔离、实际FFmpeg发布/取消锁顺序。浏览器覆盖旧人工闭环、公共样例归属和原图下载、三尺寸截图、两账户冲突/草稿保留及5独立会话/3账号固定10分钟读写/完成/导出。API与浏览器之间等待61秒以遵守实际登录IP限流，不绕过限流器。
+
+锁定Python单测、合成JPEG真实ONNX计算和课堂图质量是三种不同证据。CI只从作者单文件release下载3221705字节、固定SHA的真实Nano；`tests/p1-model-check.py`会加载真实ONNX，但不把合成图结果描述成准确率/课堂8图验证。独立AI原8私有图证据不进Git/CI/GLM。
+
+完整checks通过后才导出`p1-linux-amd64-SHA`的精确二进制/前端；后置job交叉编译arm64 Go工具并打包同一已验证前端，ARM64运行仍需另验。另一个双架构job构建真实AI Docker镜像、通过容器readiness与真实模型/JPEG推理后保存离线`p1-ai-{amd64,arm64}-SHA`。arm64在Linux QEMU运行，不等于Mac实机验证。镜像、源SHA、平台、模型许可证、检查结果与SHA256SUMS一并保存；任一步失败就不上传“verified”镜像工件。
+
+下文P0/P0.1入口保留为历史说明。Mac代理专属检查已退出P1公共CI；PG/导入/CAS/事务快照/FFmpeg/COCO的不变量保留或换成同机测试，不能把退役接口删除当成业务证明。
+
 本目录是独立 npm workspace，不混入 frontend 的 Vitest。运行数据、合成视频、浏览器安装缓存和凭证必须在仓库外。Node 24、npm、FFmpeg/ffprobe 和可访问的真实部署为外部要求。
 
 ```sh
