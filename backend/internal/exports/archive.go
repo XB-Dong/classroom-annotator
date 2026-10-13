@@ -3,7 +3,9 @@ package exports
 import (
 	"archive/zip"
 	"context"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"image/jpeg"
@@ -53,6 +55,9 @@ func (s Service) Create(ctx context.Context, selection Selection) (string, error
 
 // Build owns all archive resources and removes partial output on every failure.
 func (s Service) Build(ctx context.Context, records []Record) (path string, err error) {
+	if _, err = providerOf(records); err != nil {
+		return "", err
+	}
 	temp, err := os.CreateTemp(filepath.Join(s.Store.Root, "staging"), "export-*.zip")
 	if err != nil {
 		return "", err
@@ -187,6 +192,12 @@ func (s Service) writeCredits(ctx context.Context, archive *zip.Writer, records 
 }
 
 func (s Service) copyImage(ctx context.Context, archive *zip.Writer, record Record, name string, remaining int64) (int64, error) {
+	if record.Frame.StorageProvider == "mac" {
+		return 0, ErrRetired
+	}
+	if record.Frame.MediaSHA256 == "" || record.Frame.MediaSizeBytes <= 0 {
+		return 0, ErrBackfill
+	}
 	key := record.Frame.StorageKey
 	if filepath.IsAbs(key) {
 		return 0, errors.New("invalid frame media key")
@@ -222,12 +233,16 @@ func (s Service) copyImage(ctx context.Context, archive *zip.Writer, record Reco
 	if err != nil {
 		return 0, err
 	}
-	n, err := io.Copy(entry, io.LimitReader(contextReader{ctx: ctx, reader: file}, remaining+1))
+	hash := sha256.New()
+	n, err := io.Copy(io.MultiWriter(entry, hash), io.LimitReader(contextReader{ctx: ctx, reader: file}, remaining+1))
 	if err != nil {
 		return n, err
 	}
 	if n > remaining {
 		return n, ErrLimit
+	}
+	if n != record.Frame.MediaSizeBytes || hex.EncodeToString(hash.Sum(nil)) != record.Frame.MediaSHA256 {
+		return n, ErrChanged
 	}
 	return n, nil
 }

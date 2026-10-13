@@ -30,7 +30,7 @@ func TestHealthAndUnconfiguredDatasetReturnContract(t *testing.T) {
 		path     string
 		code     int
 		fragment string
-	}{{"/health/ready", 200, `"version":"test"`}, {"/api/v1/dataset/lessons", 503, "MEDIA_SOURCE_UNAVAILABLE"}, {"/api/v1/jobs", 200, `"jobs":[]`}, {"/metrics", 200, "classroom_job_queue_depth"}} {
+	}{{"/health/ready", 200, `"version":"test"`}, {"/api/v1/dataset/lessons", 503, "DATASET_NOT_CONFIGURED"}, {"/api/v1/jobs", 200, `"jobs":[]`}, {"/metrics", 200, "classroom_job_queue_depth"}} {
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, tc.path, nil))
 		if w.Code != tc.code || !strings.Contains(w.Body.String(), tc.fragment) {

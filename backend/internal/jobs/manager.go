@@ -38,14 +38,31 @@ func New(s *store.Store, n int, timeout time.Duration) *Manager {
 }
 func (m *Manager) Close() { m.stop(); <-m.done }
 func (m *Manager) Submit(kind, video, batch string, work func(context.Context, domain.Job) error) (domain.Job, error) {
+	return m.SubmitWithPersistence(kind, video, batch, func(j domain.Job, allow bool) (domain.Job, bool, error) {
+		if !allow {
+			return domain.Job{}, false, ErrQueue
+		}
+		e := m.s.AddJob(j)
+		return j, e == nil, e
+	}, work)
+}
+
+// SubmitWithPersistence atomically persists the caller's idempotency claim and job before enqueueing.
+// persist must return a pre-existing job without creating or enqueueing it, even when allowCreate is false.
+func (m *Manager) SubmitWithPersistence(kind, video, batch string, persist func(domain.Job, bool) (domain.Job, bool, error), work func(context.Context, domain.Job) error) (domain.Job, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if m.ctx.Err() != nil || len(m.queue) >= cap(m.queue) {
-		return domain.Job{}, ErrQueue
-	}
-	j := domain.Job{ID: domain.ID(), Kind: kind, VideoID: video, BatchID: batch, Status: "queued", CreatedAt: domain.Now()}
-	if e := m.s.AddJob(j); e != nil {
+	allow := m.ctx.Err() == nil && len(m.queue) < cap(m.queue)
+	candidate := domain.Job{ID: domain.ID(), Kind: kind, VideoID: video, BatchID: batch, Status: "queued", CreatedAt: domain.Now()}
+	j, created, e := persist(candidate, allow)
+	if e != nil {
 		return domain.Job{}, e
+	}
+	if !created {
+		return j, nil
+	}
+	if !allow {
+		return domain.Job{}, ErrQueue
 	}
 	m.queue <- task{j, work}
 	m.Metrics.Queue.Set(float64(len(m.queue)))

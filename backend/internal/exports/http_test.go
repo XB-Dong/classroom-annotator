@@ -4,6 +4,8 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/testdb"
 	"image"
@@ -55,6 +57,9 @@ func fixture(t *testing.T) (*store.Store, *gin.Engine, map[string][]byte) {
 			if err = jpeg.Encode(&buf, img, nil); err != nil {
 				t.Fatal(err)
 			}
+			hash := sha256.Sum256(buf.Bytes())
+			frames[len(frames)-1].MediaSHA256 = hex.EncodeToString(hash[:])
+			frames[len(frames)-1].MediaSizeBytes = int64(buf.Len())
 			images[id] = append([]byte(nil), buf.Bytes()...)
 			if err = os.MkdirAll(filepath.Dir(filepath.Join(s.Root, key)), 0700); err != nil {
 				t.Fatal(err)

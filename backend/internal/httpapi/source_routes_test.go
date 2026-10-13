@@ -1,12 +1,8 @@
 package httpapi
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
-
-	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/store"
-	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/testdb"
 )
 
 func TestAvailabilityWireIncludesNullableReason(t *testing.T) {
@@ -21,26 +17,5 @@ func TestAvailabilityWireIncludesNullableReason(t *testing.T) {
 		if err != nil || string(wire) != tc.want {
 			t.Fatalf("availability: %s %v", wire, err)
 		}
-	}
-}
-
-func TestRestartWithoutMacBridgeKeepsCleanupPending(t *testing.T) {
-	s, err := store.Open(t.TempDir(), store.Options{DatabaseURL: testdb.URL(t)})
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer s.DB.Close()
-	ctx := context.Background()
-	op := store.MediaOperation{OperationID: "pending-upload", OperationType: "upload", ResourceID: "unpublished-video", Provider: "mac", RequestFingerprint: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", Status: "queued"}
-	if err = s.PersistOperation(ctx, op); err != nil {
-		t.Fatal(err)
-	}
-	sources := &SourceService{Store: s}
-	if err = sources.ReconcileRemote(ctx); err != nil {
-		t.Fatal(err)
-	}
-	got, err := s.GetOperation(ctx, op.OperationID)
-	if err != nil || got.Status != "failed" || got.ErrorCode != "REMOTE_CLEANUP_PENDING" || got.PublicationStatus != "unpublished" {
-		t.Fatalf("restart ledger: %+v %v", got, err)
 	}
 }

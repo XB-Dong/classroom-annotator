@@ -37,7 +37,11 @@ func New(c config.Config) *Adapter {
 		}
 		return p.Validate(r.URL, false)
 	}
-	media := &http.Client{Timeout: timeout, Transport: p.Transport()}
+	mediaTimeout := c.MediaDownloadTimeout
+	if mediaTimeout <= 0 {
+		mediaTimeout = timeout
+	}
+	media := &http.Client{Timeout: mediaTimeout, Transport: p.Transport()}
 	media.CheckRedirect = func(r *http.Request, via []*http.Request) error {
 		if len(via) >= 5 {
 			return ErrUpstream

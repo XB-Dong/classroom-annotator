@@ -13,6 +13,7 @@ import (
 )
 
 type Config struct {
+	LocalSourceDirs                                                                  []string
 	AuthInviteCode                                                                   string
 	AuthTrustedOrigins, AuthTrustedProxies                                           []string
 	AuthCookieSecure                                                                 bool
@@ -24,7 +25,7 @@ type Config struct {
 	QueueSize, MaxFrames                                                             int
 	JobTimeout, HTTPTimeout                                                          time.Duration
 	AllowedPrivateOrigins, AllowedMediaOrigins                                       []string
-	MacBridgeURL, MacBridgeTokenFile, SampleCatalogFile                              string
+	SampleCatalogFile                                                                string
 	MediaDownloadTimeout                                                             time.Duration
 }
 
@@ -137,22 +138,20 @@ func Load(get func(string) string) (Config, error) {
 		return c, errors.New("invalid HTTP timeout")
 	}
 	c.HTTPTimeout = time.Duration(n) * time.Second
-	c.MacBridgeURL = get("APP_MAC_BRIDGE_URL")
-	c.MacBridgeTokenFile = get("APP_MAC_BRIDGE_TOKEN_FILE")
 	c.SampleCatalogFile = get("APP_SAMPLE_CATALOG_FILE")
 	n, err = positive(get, "APP_MEDIA_DOWNLOAD_TIMEOUT_SECONDS", "", 1800)
 	if err != nil || n > 86400 {
 		return c, errors.New("invalid media download timeout")
 	}
 	c.MediaDownloadTimeout = time.Duration(n) * time.Second
-	if (c.MacBridgeURL == "") != (c.MacBridgeTokenFile == "") {
-		return c, errors.New("Mac bridge URL and token file must be configured together")
-	}
-	if c.MacBridgeTokenFile != "" && !filepath.IsAbs(c.MacBridgeTokenFile) {
-		return c, errors.New("APP_MAC_BRIDGE_TOKEN_FILE must be absolute")
-	}
-	if c.MacBridgeTokenFile != "" && insideCheckout(c.MacBridgeTokenFile) {
-		return c, errors.New("APP_MAC_BRIDGE_TOKEN_FILE must be outside a source checkout")
+	if raw := get("APP_LOCAL_SOURCE_DIRS"); raw != "" {
+		for _, root := range strings.Split(raw, ",") {
+			root = strings.TrimSpace(root)
+			if !filepath.IsAbs(root) {
+				return c, errors.New("APP_LOCAL_SOURCE_DIRS requires comma-separated absolute roots")
+			}
+			c.LocalSourceDirs = append(c.LocalSourceDirs, filepath.Clean(root))
+		}
 	}
 	if c.SampleCatalogFile != "" && !filepath.IsAbs(c.SampleCatalogFile) {
 		return c, errors.New("APP_SAMPLE_CATALOG_FILE must be absolute")

@@ -2,6 +2,8 @@ package extraction
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/domain"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/media"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/store"
@@ -107,6 +109,16 @@ func TestBatchPublishesActualJPEGDimensionsAndUnavailableTailFails(t *testing.T)
 			frames, e := s.Frames(v.ID, "b")
 			if e != nil || len(frames) != 2 || frames[0].Width != 3 || frames[0].Height != 2 || frames[1].TimestampMs != 4 {
 				t.Fatal(frames, e)
+			}
+			for _, frame := range frames {
+				data, err := os.ReadFile(filepath.Join(s.Root, frame.StorageKey))
+				if err != nil {
+					t.Fatal(err)
+				}
+				hash := sha256.Sum256(data)
+				if frame.StorageProvider != "local" || frame.MediaSHA256 != hex.EncodeToString(hash[:]) || frame.MediaSizeBytes != int64(len(data)) {
+					t.Fatal("published frame lost exact media identity", frame)
+				}
 			}
 		}
 		entries, _ := os.ReadDir(filepath.Join(s.Root, "staging"))

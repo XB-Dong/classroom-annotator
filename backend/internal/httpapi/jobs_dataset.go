@@ -2,10 +2,11 @@ package httpapi
 
 import (
 	"context"
+	"errors"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/auth"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/dataset"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/domain"
-	"github.com/XB-Dong/classroom-annotator/backend/internal/mediabridge"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/sources"
 	"github.com/gin-gonic/gin"
 	"strconv"
 )
@@ -57,18 +58,13 @@ func (a *API) lessons(c *gin.Context) {
 		Error(c, 400, "INVALID_REQUEST", "Invalid page size")
 		return
 	}
-	if a.Sources == nil || a.Sources.Bridge == nil {
-		bridgeFailure(c, mediabridge.ErrUnavailable)
+	if a.Dataset == nil || !a.Dataset.Configured() {
+		failure(c, dataset.ErrConfig)
 		return
 	}
-	capabilities, e := a.Sources.bridgeCapabilities(c.Request.Context())
-	if e != nil || !capabilities.DatasetConfigured {
-		Error(c, 503, "DATASET_NOT_CONFIGURED", "Company API is unavailable")
-		return
-	}
-	p, e := a.Sources.Bridge.Lessons(c.Request.Context(), page, size)
+	p, e := a.Dataset.Lessons(c.Request.Context(), page, size)
 	if e != nil {
-		bridgeFailure(c, e)
+		failure(c, e)
 		return
 	}
 	c.JSON(200, p)
@@ -85,18 +81,33 @@ func (a *API) importVideo(c *gin.Context) {
 		Error(c, 400, "INVALID_REQUEST", "Invalid catalog file ID or name")
 		return
 	}
-	if a.Sources == nil || a.Sources.Bridge == nil {
-		bridgeFailure(c, mediabridge.ErrUnavailable)
+	if a.Dataset == nil || !a.Dataset.Configured() {
+		failure(c, dataset.ErrConfig)
 		return
 	}
-	capabilities, e := a.Sources.bridgeCapabilities(c.Request.Context())
-	if e != nil || !capabilities.DatasetConfigured {
-		Error(c, 503, "DATASET_NOT_CONFIGURED", "Company API is unavailable")
-		return
-	}
-	videoID := domain.ID()
 	j, e := a.Jobs.Submit("import", "", "", func(ctx context.Context, j domain.Job) error {
-		return a.Sources.RunDatasetImport(ctx, j, videoID, req.CatalogFileID, req.Name)
+		body, e := a.Dataset.Download(ctx, req.CatalogFileID)
+		if e != nil {
+			return e
+		}
+		defer body.Close()
+		v, e := a.Media.Prepare(ctx, body, req.Name)
+		if e != nil {
+			return e
+		}
+		if e = sources.Stamp(ctx, a.Media, &v); e != nil {
+			return errors.Join(e, a.Media.Remove(v))
+		}
+		v.SourceKind = "dataset"
+		v.SourceID = req.CatalogFileID
+		reused, e := (sources.Repository{DB: a.Store.DB}).PublishImport(ctx, j, v)
+		if e != nil {
+			return errors.Join(e, a.Media.Remove(v))
+		}
+		if reused {
+			return a.Media.Remove(v)
+		}
+		return nil
 	})
 	if e != nil {
 		failure(c, e)

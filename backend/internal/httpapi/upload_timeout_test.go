@@ -2,18 +2,17 @@ package httpapi
 
 import (
 	"bufio"
-	"encoding/json"
+
 	"fmt"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/dataset"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/extraction"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/jobs"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/media"
-	"github.com/XB-Dong/classroom-annotator/backend/internal/mediaapi"
-	"github.com/XB-Dong/classroom-annotator/backend/internal/mediabridge"
+
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/config"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/store"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/testdb"
-	"io"
+
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -54,25 +53,7 @@ func TestUploadDeadlineCoversMultipartHeaderAndStalledFile(t *testing.T) {
 				}
 				m := jobs.New(s, 1, time.Second)
 				defer m.Close()
-				remote := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					switch {
-					case r.URL.Path == "/bridge/v1/capabilities":
-						_ = json.NewEncoder(w).Encode(mediaapi.Capabilities{ContractVersion: mediaapi.ContractVersion, MediaRootWritable: true, FFprobeAvailable: true, FFmpegAvailable: true, MaxUploadBytes: 1 << 30, MaxFrames: 1000, MaxControlBytes: 16 << 20, MaxOperationSeconds: 600, LeaseSeconds: 120, QueueSize: 8})
-					case r.URL.Path == "/bridge/v1/uploads":
-						_, _ = io.Copy(io.Discard, r.Body)
-					case strings.HasSuffix(r.URL.Path, "/cancel"):
-						parts := strings.Split(r.URL.Path, "/")
-						_ = json.NewEncoder(w).Encode(mediaapi.Operation{ContractVersion: mediaapi.ContractVersion, OperationID: parts[len(parts)-2], Status: "cancelled"})
-					default:
-						w.WriteHeader(http.StatusNotFound)
-					}
-				}))
-				defer remote.Close()
-				bridge, e := mediabridge.New(mediabridge.Config{BaseURL: remote.URL, Token: "test-agent-token-123", AllowedOrigins: []string{remote.URL}, Timeout: budget})
-				if e != nil {
-					t.Fatal(e)
-				}
-				sources := &SourceService{Store: s, Jobs: m, Bridge: bridge, MaxUploadBytes: cfg.MaxUploadBytes, MaxFrames: 10}
+				sources := &SourceService{Store: s, Jobs: m, MaxUploadBytes: cfg.MaxUploadBytes, MaxFrames: 10}
 				r := NewWithSources(cfg, s, m, &media.Service{Root: s.Root, Limit: cfg.MaxUploadBytes, Runner: flowRunner{}}, &extraction.Service{}, dataset.New(cfg), sources)
 				server := httptest.NewServer(r)
 				defer server.Close()

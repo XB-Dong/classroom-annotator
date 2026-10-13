@@ -6,6 +6,7 @@ import (
 	"github.com/XB-Dong/classroom-annotator/backend/internal/domain"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/media"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/store"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/sources"
 	"os"
 	"path/filepath"
 )
@@ -42,7 +43,11 @@ func (s *Service) Run(ctx context.Context, j domain.Job, v domain.Video, targets
 		if e != nil {
 			return e
 		}
-		frames = append(frames, domain.Frame{ID: id, VideoID: v.ID, BatchID: j.BatchID, TimestampMs: ms, Width: w, Height: h, StorageKey: filepath.Join("frames", j.BatchID, id+".jpg")})
+		hash, size, e := sources.Fingerprint(ctx, out)
+		if e != nil {
+			return e
+		}
+		frames = append(frames, domain.Frame{ID: id, VideoID: v.ID, BatchID: j.BatchID, TimestampMs: ms, Width: w, Height: h, StorageKey: filepath.Join("frames", j.BatchID, id+".jpg"), MediaSHA256: hash, MediaSizeBytes: size})
 		if e = s.Store.SetProgress(j.ID, .9*float64(i+1)/float64(len(targets))); e != nil {
 			return e
 		}

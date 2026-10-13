@@ -40,6 +40,14 @@ func Scope(r ResourceAuthorizer) gin.HandlerFunc {
 			if !check("frame", c.Param("id")) {
 				return
 			}
+		case strings.HasPrefix(path, "/api/v1/batches/"):
+			batchID := c.Param("batchId")
+			if batchID == "" {
+				batchID = c.Param("id")
+			}
+			if !check("batch", batchID) {
+				return
+			}
 		case strings.HasPrefix(path, "/api/v1/jobs/"):
 			if !check("job", c.Param("id")) {
 				return

@@ -6,7 +6,7 @@ import (
 	"github.com/XB-Dong/classroom-annotator/backend/internal/auth"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/domain"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/extraction"
-	"github.com/XB-Dong/classroom-annotator/backend/internal/mediabridge"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/sources"
 	"github.com/gin-gonic/gin"
 	"io"
 	"math"
@@ -94,16 +94,26 @@ func (a *API) upload(c *gin.Context) {
 		Error(c, 400, "INVALID_UPLOAD", "Missing file field")
 		return
 	}
-	if a.Sources == nil {
-		bridgeFailure(c, mediabridge.ErrUnavailable)
+	if a.Media == nil {
+		Error(c, 503, "MEDIA_UNAVAILABLE", "Local media is unavailable")
 		return
 	}
-	v, e := a.Sources.UploadToMac(guard.ctx, body, name)
+	defer body.Close()
+	v, e := a.Media.Prepare(guard.ctx, body, name)
 	if e != nil {
 		if guard.report(e) {
 			return
 		}
 		failure(c, e)
+		return
+	}
+	if e = sources.Stamp(guard.ctx, a.Media, &v); e != nil {
+		failure(c, errors.Join(e, a.Media.Remove(v)))
+		return
+	}
+	v.SourceKind = "upload"
+	if e = a.Store.AddVideo(v); e != nil {
+		failure(c, errors.Join(e, a.Media.Remove(v)))
 		return
 	}
 	c.JSON(201, v)
@@ -141,11 +151,8 @@ func (a *API) extract(c *gin.Context) {
 	}
 	run := func(ctx context.Context, j domain.Job) error { return a.Extraction.Run(ctx, j, v, targets) }
 	if v.StorageProvider == "mac" {
-		if a.Sources == nil {
-			bridgeFailure(c, mediabridge.ErrUnavailable)
-			return
-		}
-		run = func(ctx context.Context, j domain.Job) error { return a.Sources.RunExtraction(ctx, j, v, targets) }
+		retiredStorage(c)
+		return
 	}
 	j, e := a.Jobs.Submit("extraction", v.ID, domain.ID(), run)
 	if e != nil {
@@ -190,11 +197,7 @@ func (a *API) frameMedia(c *gin.Context) {
 		return
 	}
 	if f.StorageProvider == "mac" {
-		if a.Sources == nil {
-			bridgeFailure(c, mediabridge.ErrUnavailable)
-			return
-		}
-		a.Sources.StreamFrame(c, f)
+		retiredStorage(c)
 		return
 	}
 	path := filepath.Join(a.Store.Root, f.StorageKey)
