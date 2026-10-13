@@ -157,6 +157,16 @@ export interface Job {
   progress: number;
   error?: string;
   createdAt: string;
+  startedAt?: string;
+  finishedAt?: string;
+  partialResults?: JobPartialResult[];
+}
+export interface JobPartialResult {
+  frameId: string;
+  runId: string;
+  status: 'queued' | 'running' | 'completed' | 'failed' | 'stale' | 'cancelled';
+  applied: boolean;
+  errorCode?: string;
 }
 export interface Batch {
   id: string;

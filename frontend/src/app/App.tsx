@@ -304,7 +304,7 @@ function Workspace() {
           }}
         />
         {video && <ExtractionForm key={video.id} video={video} onJob={addJob} />}
-        <JobsPanel jobs={jobs} error={jobsError} cancel={(id) => void cancel(id)} />
+        <JobsPanel jobs={jobs} frames={frames} error={jobsError} cancel={(id) => void cancel(id)} />
       </aside>
       <main className="workspace">
         <div className="workspace-header">
