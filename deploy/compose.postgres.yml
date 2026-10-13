@@ -1,5 +1,6 @@
 services:
   postgres:
+    platform: linux/amd64
     image: ${POSTGRES_IMAGE:?set verified immutable PostgreSQL 17 image}
     pull_policy: never
     restart: unless-stopped

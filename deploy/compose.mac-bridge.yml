@@ -2,6 +2,7 @@
 name: classroom-mac-bridge
 services:
   relay:
+    platform: linux/amd64
     image: ${MAC_BRIDGE_NGINX_IMAGE:?set immutable verified Nginx image}
     pull_policy: never
     entrypoint: ["nginx"]

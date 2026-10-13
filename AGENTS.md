@@ -41,6 +41,10 @@ The user has confirmed the revised storage boundary: public_sample media stays o
 
 ## Model allocation and context
 
+- Active P0.1 Leader override: the user explicitly changed the current Leader reasoning effort to `high` after interrupting the `xhigh` run for speed. Use `gpt-6.1-sol/high` as the requested Leader configuration for the remainder of P0.1; record actual settings as unknown unless independently verifiable. Specialist review and the previously authorized implementation fallback stay unchanged.
+
+- Active P0.1 override: the user explicitly approved temporary `gpt-6-sol` / `high` for implementation roles after repeated `gpt-6.1-sol` / `high` capacity errors. Backend (including media implementation) and Frontend may use this override for P0.1 only. Leader and GLM settings stay unchanged. Record requested/actual settings and the authorization in wave state; do not carry the temporary override into later waves automatically.
+
 - Treat decision 0003 as the canonical role/model policy. Leader uses `gpt-6.1-sol` with `xhigh`; Frontend, Backend, Test / Acceptance, and P1 AI Integration use `gpt-6.1-sol` with `high`.
 - Activate Architecture Reviewer as needed with `gpt-6-astra` and `xhigh` for core architecture/contracts, coordinate/save consistency, and complex cross-module issues. Do not automatically escalate to `max/ultra`.
 - P0 has five core responsibilities: Leader, Frontend, Backend, Test / Acceptance, and external GLM Reviewer/Experience. Leader owns product clarification; Test organizes verified evidence and drafts reports. Do not create separate Product, Evidence Assistant, or Luna roles under this policy. Roles are responsibilities, not permanently running processes.

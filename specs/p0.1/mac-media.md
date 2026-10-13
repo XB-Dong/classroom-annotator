@@ -102,12 +102,12 @@ Mac 仅云端内部访问，响应包含 `contractVersion="1.0.0"`。所有 `/br
 
 | 桥接入口 | 字段与结果 | 规则 |
 | --- | --- | --- |
-| `GET /bridge/v1/capabilities` | contractVersion/agentVersion/mediaRootWritable/ffmpegAvailable/ffprobeAvailable/maxUploadBytes/maxFrames/leaseSeconds/queueSize/maxOperationSeconds/archiveTtlSeconds/maxControlBytes/maxArchiveImageBytes | 发布前版本、工具、实际限额必须匹配 |
+| `GET /bridge/v1/capabilities` | contractVersion/agentVersion/mediaRootWritable/ffmpegAvailable/ffprobeAvailable/sourceConfigured/datasetConfigured/maxUploadBytes/maxFrames/leaseSeconds/queueSize/maxOperationSeconds/archiveTtlSeconds/maxControlBytes/maxArchiveImageBytes | 发布前版本、工具、实际限额必须匹配；两个配置标记不代表上游请求已成功 |
 | `GET /bridge/v1/sources?cursor=…` | 同云端素材分页形状 | 只列明确授权的素材登记表 |
 | `POST /bridge/v1/registrations` | `{operationId,videoId,sourceId}` / `{operationId,videoId,mediaKey,sha256,sizeBytes,width,height,durationSeconds}` | 登记已存在视频；幂等 |
 | `GET /bridge/v1/dataset/lessons` | P0页参数 / 已观察的安全列表DTO | Mac调用公司API，不回传Key/签名URL |
 | `POST /bridge/v1/dataset/imports` | operationId/jobId/videoId/catalogFileId/name / 202操作 | Mac查询play-url并下载/探测/准备，云端Go发布业务记录 |
-| `POST /bridge/v1/uploads` | multipart file，headers `X-Operation-ID` / `X-Video-ID`；返回同 registration | 逐块写 Mac staging，完整 probe 后原子发布；断流拒绝 |
+| `POST /bridge/v1/uploads` | multipart file，headers `X-Operation-ID` / `X-Video-ID`；返回同 registration | 接收字节前保存稳定操作身份，逐块写 Mac staging，完整 probe 后原子发布；断流拒绝 |
 | `POST /bridge/v1/extractions` | `{operationId,jobId,batchId,videoId,mediaKey,timestampsMs,deadlineSeconds}` / 202 `{operationId,status}` | 只接受 Go 已校验的有限时间戳计划 |
 | `GET /bridge/v1/operations/{operationId}` | `{operationId,status,progress,errorCode,manifest?}` | manifest 为完整批次，不暴露部分帧 |
 | `POST /bridge/v1/operations/{operationId}/renew` | 空对象 / 200 | 仅延长运行操作租约，不改变业务终态 |
@@ -138,6 +138,10 @@ operation/status不返回bridge Token或原始请求。云端Video增量返回so
 6. 两端重启不假装恢复旧 FFmpeg。Go 既有未终态任务为 failed/INTERRUPTED；远端操作重启核对 manifest，并清理自己终止的 staging。已完成但未确认的资源进入待核对清单，禁止全盘“无引用即删除”。
 7. cancellation 必须确认远端停止与 staging 清理。控制链路断开无法确认时，云端记录 failed/REMOTE_CLEANUP_PENDING 与 remote operationId，租约停止执行；网络恢复再核对，不能提前称清理成功。
 8. Mac 磁盘不足、新任务超限直接拒绝；清理只针对当前 Agent 创建且路径核验过的 staging/到期 ZIP。原素材、已确认帧和未决输出不自动删除。
+
+上传的不可变 requestFingerprint 对 canonical `UploadIntent{videoId,name}` 求 SHA-256（字段顺序 videoId、name）。文件内容 SHA-256/长度及完整 prepared manifest 的 SHA-256 独立记录，不能在上传后修改请求 fingerprint。相同 operationId/intent 但不同文件字节返回 409；重放也须核验字节。接收中可 renew/cancel，容量与 deadline 有界；进程退出后 staging 仍由持久化操作拥有。清理失败保留 staging 路径及 CLEANUP_FAILED，重启后继续核对，不能抹掉尚未删除的路径。
+
+云端 media_operations 的 manifest_sha256 绑定完整准备结果，发布重放须校验；发布资源、任务终态及 committed 标记在同一事务内完成。sourceConfigured 只表示旧素材清单配置已提供，datasetConfigured 只表示公司接口配置已提供。工具/写入能力、Mac 清单入口、浏览器上传、公司入口分别判断可用性；配置标记不冒充真实内网 API 验证。
 
 状态冻结：queued取消/租约到期后不得开始；running取消/到期先停止进程、清理staging再终态；completed未ack的不可变输出收到cancel也保留，返回已准备状态，由Go决定是否发布；committed/acknowledged输出不能因重启或重复cancel被删除。Go取消成功但远端确认缺失必须failed/REMOTE_CLEANUP_PENDING，FinishJob不能把它转换成cancelled。归档TTL只清理已完成导出包，不用于清理视频/帧；未决帧仅在明确核对数据库未发布后处理。
 
