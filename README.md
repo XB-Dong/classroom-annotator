@@ -2,11 +2,14 @@
 
 教室人员标注平台：视频导入、抽帧、人头标注、人工审核与数据导出。
 
+当前：P0.1已按用户要求收束为partial，通过CI的候选尚未切换公网。P1正在准备审核，重点为手绘工作台、真实AI预标注/高风险复核、注册与多用户冲突、无隧道同机部署；截止已确认2026-10-14 08:30，但尚未授权执行。现行入口见 [P1计划](P1-PLAN.md)、[规格与验收](specs/p1/acceptance.md)、[P0.1收束报告](docs/audit/reports/report-20261013T205401+0800.md)。下文P0说明属于历史已发布基线。
+
 P0 已交付人工标注闭环，并完成当前本地/合成材料范围的 14 项门槛。查看 [P0 交付报告](docs/audit/reports/report-20261013T032912+0800.md)、[执行状态](docs/waves/P0/state.json) 与 [验收清单](docs/waves/P0/acceptance.json)。模型配置偏差和 GLM 在核心操作结束后超时均如实记录。真实公司 API 尚未联调；材料驱动的合成 API 导入已验证。
 
 - [项目宪法](CONSTITUTION.md)
 - [P0计划](P0-PLAN.md)
-- [P0.1计划：PostgreSQL、四素材入口与Mac存储（已暂停，修订待审核）](P0.1-PLAN.md)
+- [P0.1计划：已收束的历史波次](P0.1-PLAN.md)
+- [P1计划：手绘工作台、AI复核与多人协作（待审核）](P1-PLAN.md)
 - [公共示例与四类素材存储边界](specs/p0.1/sources-and-samples.md)
 - [后续波次前瞻：P1/P2](NEXT-WAVES.md)
 - [14项确认记录](docs/decisions/0001-confirmed-choices.md)

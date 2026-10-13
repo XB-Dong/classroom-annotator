@@ -1,5 +1,17 @@
 # Agent Instructions
 
+## Current P1 preparation gate (supersedes historical execution wording)
+
+The user closed P0.1 and requested P1 preparation for review. Current authorization is documentation and bounded read-only plan review only. Do not implement, install dependencies, start feature workers or servers, migrate/deploy, retire tunnel infrastructure, or operate Mac until the user explicitly approves and starts P1. Receiving a deadline or plan-review message does not start execution.
+
+Load P1-PLAN.md, specs/p1/*.md, docs/waves/P1/TASK-PACKET.md, docs/decisions/0009-p1-local-stack-ai-and-collaboration.md and docs/waves/P1/state.json. The confirmed future deadline is 2026-10-14T08:30:00+08:00. P0/P0.1 deadlines and role-file fixed deadlines are historical. P0.1 is partial_closed_by_user; its tested product candidate is not production deployment.
+
+P1 proposes same-host media/Go/Python/PostgreSQL with no tunnel dependency, one authorized temporary cloud sample and later whole-stack Mac deployment. Preserve historical private media and unavailable remote references; do not map a retired Mac key to a local path. Do not send real classroom media/credentials to GLM. Product API/media authorization and frame CAS apply to all new paths.
+
+P1 model/retry policy is proposed, not yet active: Leader Sol/high; workers Sol/high, bounded implementation-only Sol6/high capacity fallback after plan approval; specialist Astra/xhigh; actual external company-glm/glm-4.7-flash for independent code/browser experience. Do not inherit P0.1 temporary fallback as fresh authorization. Keep actual settings unknown when unverifiable. Proposed P1 repair budget8 requires plan approval; preserve P0.1 used6/6 and explicitly allocate inherited defects without resetting root counts.
+
+Windows heavy builds/tests are single-slot; CI/cloud handle heavier verification after start. Do not start Docker Desktop or add Windows autostart jobs. Shared behavior rules are in docs/agents/SOUL.md; role/memory/handoff files use the active wave rather than expired P0 instructions. These preparation documents do not launch agents or background jobs.
+
 ## Read before work
 
 Read `CONSTITUTION.md`, `P0-PLAN.md`, `docs/decisions/0001-confirmed-choices.md`, `docs/decisions/0003-lean-agent-roles.md`, `docs/decisions/0004-local-materials-acceptance.md`, and the active wave's specification, task packet, and handoff. The lean role/model policy is confirmed. Decision 0003 supersedes decision 0002; decision 0004 replaces choice 05 of decision 0001. P0 execution still requires the user's explicit start instruction. `NEXT-WAVES.md` is reference only and never authorizes P1/P2 work.
@@ -10,7 +22,7 @@ Decision `docs/decisions/0007-public-demo-entry.md` records the user's subsequen
 
 ## P0.1 planning gate
 
-Current authorization: The user explicitly resumed P0.1 version0.2.0 on 2026-10-13. The paused baseline below is historical. Execute the approved four-source plan, use state.json for the resumed deadline, and freeze reviewed contracts before feature implementation. Authorized verified changes may be integrated and deployed by Leader without per-round permission.
+Historical authorization: The user resumed P0.1 version0.2.0 on 2026-10-13 and later explicitly closed it. Do not continue that execution window. Preserve state/audit; the current P1 preparation gate above takes precedence.
 
 The user started P0.1 R0 on 2026-10-13 and then explicitly paused it for a four-source revision. `P0.1-PLAN.md` version0.2.0 and its specifications are now review drafts; only documentation revision is authorized. Do not install dependencies, implement features, migrate data, download/seed sample media, activate tunnels, spawn implementation workers, or deploy until the user explicitly resumes the revised plan. Receiving Mac status information does not resume coding. Preserve the prior R0 audit, external worktrees, budget usage, and repair counts; no product source change was made. P0's expired deadline does not apply.
 
