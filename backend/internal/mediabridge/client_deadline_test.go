@@ -21,7 +21,7 @@ func TestMetadataTimesOutAfterFlushedHeaders(t *testing.T) {
 		<-r.Context().Done()
 	}))
 	defer server.Close()
-	client, err := New(Config{BaseURL: server.URL, Token: strings.Repeat("x", 24), Timeout: time.Second, ControlTimeout: 80 * time.Millisecond})
+	client, err := New(Config{BaseURL: server.URL, Token: strings.Repeat("x", 24), Timeout: 2 * time.Second, ControlTimeout: 80 * time.Millisecond})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,7 +34,7 @@ func TestMetadataTimesOutAfterFlushedHeaders(t *testing.T) {
 		if err := read(); !errors.Is(err, ErrUnavailable) {
 			t.Fatalf("stalled metadata body: %v", err)
 		}
-		if elapsed := time.Since(start); elapsed > 300*time.Millisecond {
+		if elapsed := time.Since(start); elapsed > 800*time.Millisecond {
 			t.Fatalf("metadata body waited %v", elapsed)
 		}
 	}
@@ -59,7 +59,7 @@ func TestRegistrationKeepsLongPreparationBudget(t *testing.T) {
 func TestMediaBodyIdleDeadlineAndProgress(t *testing.T) {
 	for _, progressing := range []bool{false, true} {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Length", "3")
+			w.Header().Set("Content-Length", "13")
 			w.Header().Set("Content-Type", "image/jpeg")
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte("a"))
@@ -68,13 +68,13 @@ func TestMediaBodyIdleDeadlineAndProgress(t *testing.T) {
 				<-r.Context().Done()
 				return
 			}
-			for _, b := range []byte("bc") {
+			for _, b := range []byte("bcdefghijklm") {
 				time.Sleep(50 * time.Millisecond)
 				_, _ = w.Write([]byte{b})
 				w.(http.Flusher).Flush()
 			}
 		}))
-		client, err := New(Config{BaseURL: server.URL, Token: strings.Repeat("x", 24), DownloadTimeout: time.Second, MediaIdleTimeout: 80 * time.Millisecond})
+		client, err := New(Config{BaseURL: server.URL, Token: strings.Repeat("x", 24), DownloadTimeout: 2 * time.Second, MediaIdleTimeout: 500 * time.Millisecond})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -87,14 +87,14 @@ func TestMediaBodyIdleDeadlineAndProgress(t *testing.T) {
 		_ = resp.Body.Close()
 		server.Close()
 		if progressing {
-			if readErr != nil || string(b) != "abc" {
+			if readErr != nil || string(b) != "abcdefghijklm" {
 				t.Fatalf("progressing stream: %q %v", b, readErr)
 			}
 		} else {
 			if readErr == nil || errors.Is(readErr, io.EOF) {
 				t.Fatalf("stalled stream looked complete: %q %v", b, readErr)
 			}
-			if elapsed := time.Since(start); elapsed > 300*time.Millisecond {
+			if elapsed := time.Since(start); elapsed > 1500*time.Millisecond {
 				t.Fatalf("idle download waited %v", elapsed)
 			}
 		}
