@@ -12,6 +12,7 @@ import (
 	"github.com/XB-Dong/classroom-annotator/backend/internal/media"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/config"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/store"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/testdb"
 	"image"
 	"image/jpeg"
 	"mime/multipart"
@@ -54,13 +55,13 @@ func TestSyntheticHTTPUploadExtractionAndCompanyImport(t *testing.T) {
 		fmt.Fprintf(w, `{"url":%q}`, mediaHost.URL)
 	}))
 	defer apiHost.Close()
-	s, e := store.Open(t.TempDir())
+	s, e := store.Open(t.TempDir(), store.Options{DatabaseURL: testdb.URL(t)})
 	if e != nil {
 		t.Fatal(e)
 	}
 	defer s.DB.Close()
-	cfg := config.Config{MaxUploadBytes: 1024, MaxFrames: 10, JobTimeout: time.Second, HTTPTimeout: time.Second, DatasetAPIURL: apiHost.URL, DatasetID: "fixture", DatasetAPIKey: "fixture-key", AllowedPrivateOrigins: []string{apiHost.URL, mediaHost.URL}}
-	m := jobs.New(s, 3, time.Second)
+	cfg := config.Config{MaxUploadBytes: 1024, MaxFrames: 10, JobTimeout: 15 * time.Second, HTTPTimeout: time.Second, DatasetAPIURL: apiHost.URL, DatasetID: "fixture", DatasetAPIKey: "fixture-key", AllowedPrivateOrigins: []string{apiHost.URL, mediaHost.URL}}
+	m := jobs.New(s, 3, 15*time.Second)
 	defer m.Close()
 	vsvc := &media.Service{Root: s.Root, Limit: cfg.MaxUploadBytes, Runner: flowRunner{}}
 	r := New(cfg, s, m, vsvc, &extraction.Service{Store: s, Runner: flowRunner{}}, dataset.New(cfg))
@@ -100,7 +101,7 @@ func TestSyntheticHTTPUploadExtractionAndCompanyImport(t *testing.T) {
 	var job domain.Job
 	json.Unmarshal(w.Body.Bytes(), &job)
 	wait := func(id string) domain.Job {
-		deadline := time.Now().Add(time.Second)
+		deadline := time.Now().Add(15 * time.Second)
 		for time.Now().Before(deadline) {
 			j, e := s.Job(id)
 			if e != nil {

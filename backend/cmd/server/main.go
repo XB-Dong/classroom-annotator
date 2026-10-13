@@ -30,13 +30,16 @@ func main() {
 	if cfg.Version == "dev" {
 		cfg.Version = version
 	}
-	s, e := store.Open(cfg.DataDir)
+	s, e := store.Open(cfg.DataDir, store.Options{DatabaseURL: cfg.DatabaseURL, MaxOpenConns: cfg.DBMaxOpenConns, MaxIdleConns: cfg.DBMaxIdleConns, ConnectTimeout: cfg.DBConnectTimeout, QueryTimeout: cfg.DBQueryTimeout, ConnMaxLifetime: cfg.DBConnMaxLifetime, ConnMaxIdleTime: cfg.DBConnMaxIdleTime})
 	if e != nil {
 		log.Fatal("storage initialization failed")
 	}
 	defer s.DB.Close()
 	if e = s.Recover(); e != nil {
 		log.Fatal("storage reconciliation failed")
+	}
+	if e = s.RecoverLocalMedia(); e != nil {
+		log.Fatal("local media reconciliation failed")
 	}
 	process := media.Process{FFmpeg: cfg.FFmpeg, FFprobe: cfg.FFprobe}
 	v := &media.Service{Root: s.Root, Limit: cfg.MaxUploadBytes, Runner: process}

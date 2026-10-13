@@ -13,6 +13,9 @@ import (
 )
 
 type Config struct {
+	DatabaseURL                                                                      string
+	DBMaxOpenConns, DBMaxIdleConns                                                   int
+	DBConnectTimeout, DBQueryTimeout, DBConnMaxLifetime, DBConnMaxIdleTime           time.Duration
 	DataDir, Addr, Version, FFmpeg, FFprobe, DatasetAPIURL, DatasetAPIKey, DatasetID string
 	MaxUploadBytes                                                                   int64
 	QueueSize, MaxFrames                                                             int
@@ -22,6 +25,36 @@ type Config struct {
 
 func Load(get func(string) string) (Config, error) {
 	c := Config{DataDir: get("APP_DATA_DIR"), Addr: value(get, "APP_ADDR", ":8080"), Version: value(get, "APP_VERSION", "dev"), FFmpeg: value(get, "APP_FFMPEG", "ffmpeg"), FFprobe: value(get, "APP_FFPROBE", "ffprobe"), DatasetAPIURL: get("APP_DATASET_API_URL"), DatasetAPIKey: get("APP_DATASET_API_KEY")}
+	c.DatabaseURL = get("APP_DATABASE_URL")
+	u, databaseErr := url.Parse(c.DatabaseURL)
+	if databaseErr != nil || u.Host == "" || (u.Scheme != "postgres" && u.Scheme != "postgresql") {
+		return c, errors.New("APP_DATABASE_URL must be a PostgreSQL URL")
+	}
+	for _, option := range []struct {
+		key string
+		def int64
+		dst *int
+	}{{"APP_DB_MAX_OPEN_CONNS", 5, &c.DBMaxOpenConns}, {"APP_DB_MAX_IDLE_CONNS", 2, &c.DBMaxIdleConns}} {
+		n, err := positive(get, option.key, "", option.def)
+		if err != nil || n > 5 {
+			return c, errors.New("invalid database pool size")
+		}
+		*option.dst = int(n)
+	}
+	if c.DBMaxIdleConns > c.DBMaxOpenConns {
+		return c, errors.New("database idle connections exceed open connections")
+	}
+	for _, option := range []struct {
+		key string
+		def int64
+		dst *time.Duration
+	}{{"APP_DB_CONNECT_TIMEOUT_SECONDS", 5, &c.DBConnectTimeout}, {"APP_DB_QUERY_TIMEOUT_SECONDS", 10, &c.DBQueryTimeout}, {"APP_DB_CONN_MAX_LIFETIME_SECONDS", 1800, &c.DBConnMaxLifetime}, {"APP_DB_CONN_MAX_IDLE_SECONDS", 300, &c.DBConnMaxIdleTime}} {
+		n, err := positive(get, option.key, "", option.def)
+		if err != nil || n > 86400 {
+			return c, errors.New("invalid database timeout")
+		}
+		*option.dst = time.Duration(n) * time.Second
+	}
 	c.DatasetID = get("APP_DATASET_ID")
 	_, port, addrErr := net.SplitHostPort(c.Addr)
 	portNumber, portErr := strconv.ParseUint(port, 10, 16)

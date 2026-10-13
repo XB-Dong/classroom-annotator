@@ -45,7 +45,7 @@ func TestSnapshotSurvivesDatabaseReopen(t *testing.T) {
 	if err := s.DB.Close(); err != nil {
 		t.Fatal(err)
 	}
-	reopened, err := store.Open(s.Root)
+	reopened, err := store.Open(s.Root, s.Options)
 	if err != nil {
 		t.Fatal(err)
 	}

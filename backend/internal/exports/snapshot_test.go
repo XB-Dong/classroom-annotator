@@ -24,11 +24,14 @@ import (
 func TestSnapshotReleasedBeforeZIPAndRemainsImmutable(t *testing.T) {
 	s, _, images := fixture(t)
 	service := Service{Store: s}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	records, err := service.Snapshot(ctx, Selection{FrameIDs: []string{"f1", "zero"}})
 	if err != nil {
 		t.Fatal(err)
+	}
+	if inUse := s.DB.Stats().InUse; inUse != 0 {
+		t.Fatalf("snapshot retained %d database connections", inUse)
 	}
 	_, err = (annotations.Repository{Store: s}).Save(ctx, "f1", annotations.Save{ExpectedRevision: 1, Status: "in_progress", Annotations: []domain.Annotation{{ID: "new", Source: "manual", BBox: [4]float64{0, 0, 9, 9}}}})
 	if err != nil {

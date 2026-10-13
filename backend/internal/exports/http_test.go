@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/testdb"
 	"image"
 	"image/color"
 	"image/jpeg"
@@ -25,7 +26,7 @@ import (
 
 func fixture(t *testing.T) (*store.Store, *gin.Engine, map[string][]byte) {
 	t.Helper()
-	s, err := store.Open(t.TempDir())
+	s, err := store.Open(t.TempDir(), store.Options{DatabaseURL: testdb.URL(t)})
 	if err != nil {
 		t.Fatal(err)
 	}

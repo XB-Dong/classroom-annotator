@@ -53,7 +53,7 @@ func New(cfg config.Config, s *store.Store, m *jobs.Manager, v *media.Service, x
 	r.GET("/health/ready", func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(c.Request.Context(), time.Second)
 		defer cancel()
-		if s.DB.PingContext(ctx) != nil {
+		if s.Ready(ctx) != nil {
 			Error(c, 503, "NOT_READY", "Storage unavailable")
 			return
 		}

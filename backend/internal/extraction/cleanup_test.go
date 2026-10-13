@@ -5,6 +5,7 @@ import (
 	"github.com/XB-Dong/classroom-annotator/backend/internal/domain"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/jobs"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/store"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/testdb"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -35,7 +36,7 @@ func TestWindowsLockedJPEGCleanupFailureIsNotCancelled(t *testing.T) {
 	if runtime.GOOS != "windows" {
 		t.Skip("Windows denies deletion of an open file")
 	}
-	s, e := store.Open(t.TempDir())
+	s, e := store.Open(t.TempDir(), store.Options{DatabaseURL: testdb.URL(t)})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -87,6 +88,9 @@ func TestWindowsLockedJPEGCleanupFailureIsNotCancelled(t *testing.T) {
 				t.Fatal(e)
 			}
 			if e = s.Recover(); e != nil {
+				t.Fatal(e)
+			}
+			if e = s.RecoverLocalMedia(); e != nil {
 				t.Fatal(e)
 			}
 			entries, e = os.ReadDir(filepath.Join(s.Root, "staging"))

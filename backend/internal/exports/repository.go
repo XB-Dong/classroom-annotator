@@ -63,10 +63,12 @@ func (s Service) frameLimit() int {
 
 // Snapshot ends the read transaction before images are read or ZIP work starts.
 func (s Service) Snapshot(ctx context.Context, selection Selection) ([]Record, error) {
+	ctx, cancel := s.Store.Context(ctx)
+	defer cancel()
 	if err := selection.validate(s.frameLimit()); err != nil {
 		return nil, err
 	}
-	tx, err := s.Store.DB.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
+	tx, err := s.Store.DB.BeginTx(ctx, &sql.TxOptions{ReadOnly: true, Isolation: sql.LevelRepeatableRead})
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +107,7 @@ func selectedFrames(ctx context.Context, tx *sql.Tx, selection Selection, limit 
 	if selection.VideoID == "" {
 		// Resolve every explicit ID, including unfinished frames, to detect missing IDs.
 		for _, id := range selection.FrameIDs {
-			f, err := store.ScanFrame(tx.QueryRowContext(ctx, `SELECT `+store.FrameColumns+` FROM frames f WHERE f.id=?`, id))
+			f, err := store.ScanFrame(tx.QueryRowContext(ctx, `SELECT `+store.FrameColumns+` FROM frames f WHERE f.id=$1`, id))
 			if err != nil {
 				return nil, err
 			}
@@ -116,15 +118,15 @@ func selectedFrames(ctx context.Context, tx *sql.Tx, selection Selection, limit 
 		return frames, nil
 	}
 	var id string
-	if err := tx.QueryRowContext(ctx, `SELECT id FROM videos WHERE id=?`, selection.VideoID).Scan(&id); err != nil {
+	if err := tx.QueryRowContext(ctx, `SELECT id FROM videos WHERE id=$1`, selection.VideoID).Scan(&id); err != nil {
 		return nil, err
 	}
 	if selection.BatchID != "" {
-		if err := tx.QueryRowContext(ctx, `SELECT id FROM batches WHERE id=? AND video_id=?`, selection.BatchID, selection.VideoID).Scan(&id); err != nil {
+		if err := tx.QueryRowContext(ctx, `SELECT id FROM batches WHERE id=$1 AND video_id=$2`, selection.BatchID, selection.VideoID).Scan(&id); err != nil {
 			return nil, err
 		}
 	}
-	rows, err := tx.QueryContext(ctx, `SELECT `+store.FrameColumns+` FROM frames f JOIN batches b ON b.id=f.batch_id WHERE f.video_id=? AND (?='' OR f.batch_id=?) AND f.status='completed' ORDER BY b.created_at,b.id,f.timestamp_ms,f.id LIMIT ?`, selection.VideoID, selection.BatchID, selection.BatchID, limit+1)
+	rows, err := tx.QueryContext(ctx, `SELECT `+store.FrameColumns+` FROM frames f JOIN batches b ON b.id=f.batch_id WHERE f.video_id=$1 AND ($2='' OR f.batch_id=$3) AND f.status='completed' ORDER BY b.created_at,b.id,f.timestamp_ms,f.id LIMIT $4`, selection.VideoID, selection.BatchID, selection.BatchID, limit+1)
 	if err != nil {
 		return nil, err
 	}

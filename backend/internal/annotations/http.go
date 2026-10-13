@@ -86,6 +86,8 @@ func respondError(c *gin.Context, err error) {
 		httpapi.Error(c, 404, "NOT_FOUND", "Frame not found")
 	case errors.Is(err, ErrConflict):
 		httpapi.Error(c, 409, "REVISION_CONFLICT", "Frame was changed; reload before saving")
+	case errors.Is(err, ErrIDCollision):
+		httpapi.Error(c, 400, "ANNOTATION_ID_COLLISION", "Annotation ID belongs to another frame")
 	case errors.Is(err, ErrInvalid):
 		httpapi.Error(c, 422, "INVALID_ANNOTATIONS", "Annotation snapshot is invalid")
 	case errors.Is(err, errMissing):

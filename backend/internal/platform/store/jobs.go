@@ -1,12 +1,15 @@
 package store
 
 import (
+	"context"
 	"database/sql"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/domain"
 )
 
 func (s *Store) AddJob(j domain.Job) error {
-	_, e := s.DB.Exec(`INSERT INTO jobs(id,kind,video_id,batch_id,status,progress,error,created_at) VALUES(?,?,nullif(?,''),nullif(?,''),?,?,?,?)`, j.ID, j.Kind, j.VideoID, j.BatchID, j.Status, j.Progress, j.Error, j.CreatedAt)
+	ctx, cancel := s.Context(context.Background())
+	defer cancel()
+	_, e := s.DB.ExecContext(ctx, `INSERT INTO jobs(id,kind,video_id,batch_id,status,progress,error,created_at) VALUES($1,$2,nullif($3,''),nullif($4,''),$5,$6,$7,$8)`, j.ID, j.Kind, j.VideoID, j.BatchID, j.Status, j.Progress, j.Error, j.CreatedAt)
 	return e
 }
 
@@ -17,11 +20,15 @@ func scanJob(r interface{ Scan(...any) error }) (j domain.Job, e error) {
 	return
 }
 func (s *Store) Job(id string) (domain.Job, error) {
-	return scanJob(s.DB.QueryRow(jobSelect+` WHERE id=?`, id))
+	ctx, cancel := s.Context(context.Background())
+	defer cancel()
+	return scanJob(s.DB.QueryRowContext(ctx, jobSelect+` WHERE id=$1`, id))
 }
 func (s *Store) Jobs() ([]domain.Job, error) {
+	ctx, cancel := s.Context(context.Background())
+	defer cancel()
 	out := []domain.Job{}
-	r, e := s.DB.Query(jobSelect + ` ORDER BY created_at DESC,id DESC LIMIT 100`)
+	r, e := s.DB.QueryContext(ctx, jobSelect+` ORDER BY created_at DESC,id DESC LIMIT 100`)
 	if e != nil {
 		return nil, e
 	}
@@ -36,7 +43,9 @@ func (s *Store) Jobs() ([]domain.Job, error) {
 	return out, r.Err()
 }
 func (s *Store) StartJob(id string) (bool, error) {
-	r, e := s.DB.Exec(`UPDATE jobs SET status='running' WHERE id=? AND status='queued'`, id)
+	ctx, cancel := s.Context(context.Background())
+	defer cancel()
+	r, e := s.DB.ExecContext(ctx, `UPDATE jobs SET status='running' WHERE id=$1 AND status='queued'`, id)
 	if e != nil {
 		return false, e
 	}
@@ -44,23 +53,46 @@ func (s *Store) StartJob(id string) (bool, error) {
 	return n == 1, e
 }
 func (s *Store) CancelJob(id string) (domain.Job, error) {
-	_, e := s.DB.Exec(`UPDATE jobs SET status=CASE status WHEN 'queued' THEN 'cancelled' WHEN 'running' THEN 'cancelling' ELSE status END WHERE id=?`, id)
+	ctx, cancel := s.Context(context.Background())
+	defer cancel()
+	tx, e := s.DB.BeginTx(ctx, nil)
 	if e != nil {
 		return domain.Job{}, e
 	}
-	return s.Job(id)
+	defer tx.Rollback()
+	j, e := scanJob(tx.QueryRowContext(ctx, jobSelect+` WHERE id=$1 FOR UPDATE`, id))
+	if e != nil {
+		return domain.Job{}, e
+	}
+	switch j.Status {
+	case "queued":
+		j.Status = "cancelled"
+	case "running":
+		j.Status = "cancelling"
+	}
+	if _, e = tx.ExecContext(ctx, `UPDATE jobs SET status=$1 WHERE id=$2`, j.Status, id); e != nil {
+		return domain.Job{}, e
+	}
+	if e = tx.Commit(); e != nil {
+		return domain.Job{}, e
+	}
+	return j, nil
 }
 func (s *Store) FinishJob(id, status, code string) error {
-	_, e := s.DB.Exec(`UPDATE jobs SET status=CASE WHEN status='cancelling' AND ?<>'CLEANUP_FAILED' THEN 'cancelled' ELSE ? END,error=CASE WHEN status='cancelling' AND ?<>'CLEANUP_FAILED' THEN '' ELSE ? END WHERE id=? AND status IN ('running','cancelling')`, code, status, code, code, id)
+	ctx, cancel := s.Context(context.Background())
+	defer cancel()
+	_, e := s.DB.ExecContext(ctx, `UPDATE jobs SET status=CASE WHEN status='cancelling' AND $1 NOT IN ('CLEANUP_FAILED','REMOTE_CLEANUP_PENDING') THEN 'cancelled' ELSE $2 END,error=CASE WHEN status='cancelling' AND $3 NOT IN ('CLEANUP_FAILED','REMOTE_CLEANUP_PENDING') THEN '' ELSE $4 END WHERE id=$5 AND status IN ('running','cancelling')`, code, status, code, code, id)
 	return e
 }
 func (s *Store) SetProgress(id string, p float64) error {
-	_, e := s.DB.Exec(`UPDATE jobs SET progress=max(progress,?) WHERE id=? AND status='running'`, p, id)
+	ctx, cancel := s.Context(context.Background())
+	defer cancel()
+	_, e := s.DB.ExecContext(ctx, `UPDATE jobs SET progress=GREATEST(progress,$1) WHERE id=$2 AND status='running'`, p, id)
 	return e
 }
-func requireRunning(tx *sql.Tx, id string) error {
+func requireRunning(ctx context.Context, tx *sql.Tx, id string) error {
 	var state string
-	if e := tx.QueryRow(`SELECT status FROM jobs WHERE id=?`, id).Scan(&state); e != nil {
+	if e := tx.QueryRowContext(ctx, `SELECT status FROM jobs WHERE id=$1 FOR UPDATE`, id).Scan(&state); e != nil {
 		return e
 	}
 	if state != "running" {
@@ -69,41 +101,59 @@ func requireRunning(tx *sql.Tx, id string) error {
 	return nil
 }
 func (s *Store) PublishBatch(j domain.Job, frames []domain.Frame) error {
-	tx, e := s.DB.Begin()
+	ctx, cancel := s.Context(context.Background())
+	defer cancel()
+	tx, e := s.DB.BeginTx(ctx, nil)
 	if e != nil {
 		return e
 	}
 	defer tx.Rollback()
-	if e = requireRunning(tx, j.ID); e != nil {
-		return e
-	}
-	if _, e = tx.Exec(`INSERT INTO batches VALUES(?,?,?,?)`, j.BatchID, j.VideoID, j.ID, domain.Now()); e != nil {
-		return e
-	}
-	for _, f := range frames {
-		if _, e = tx.Exec(`INSERT INTO frames(id,video_id,batch_id,timestamp_ms,width,height,storage_key) VALUES(?,?,?,?,?,?,?)`, f.ID, f.VideoID, f.BatchID, f.TimestampMs, f.Width, f.Height, f.StorageKey); e != nil {
-			return e
-		}
-	}
-	if _, e = tx.Exec(`UPDATE jobs SET status='completed',progress=1 WHERE id=? AND status='running'`, j.ID); e != nil {
+	if e = publishBatchTx(ctx, tx, j, frames); e != nil {
 		return e
 	}
 	return tx.Commit()
 }
+func publishBatchTx(ctx context.Context, tx *sql.Tx, j domain.Job, frames []domain.Frame) error {
+	var e error
+	if e = requireRunning(ctx, tx, j.ID); e != nil {
+		return e
+	}
+	if _, e = tx.ExecContext(ctx, `INSERT INTO batches(id,video_id,job_id,created_at) VALUES($1,$2,$3,$4)`, j.BatchID, j.VideoID, j.ID, domain.Now()); e != nil {
+		return e
+	}
+	for _, f := range frames {
+		if _, e = tx.ExecContext(ctx, `INSERT INTO frames(id,video_id,batch_id,timestamp_ms,width,height,storage_key,storage_provider,media_sha256,media_size_bytes) SELECT $1,$2,$3,$4,$5,$6,$7,storage_provider,$8,$9 FROM videos WHERE id=$2`, f.ID, f.VideoID, f.BatchID, f.TimestampMs, f.Width, f.Height, f.StorageKey, f.MediaSHA256, f.MediaSizeBytes); e != nil {
+			return e
+		}
+	}
+	if _, e = tx.ExecContext(ctx, `UPDATE jobs SET status='completed',progress=1 WHERE id=$1 AND status='running'`, j.ID); e != nil {
+		return e
+	}
+	return nil
+}
 func (s *Store) PublishImport(j domain.Job, v domain.Video) error {
-	tx, e := s.DB.Begin()
+	ctx, cancel := s.Context(context.Background())
+	defer cancel()
+	tx, e := s.DB.BeginTx(ctx, nil)
 	if e != nil {
 		return e
 	}
 	defer tx.Rollback()
-	if e = requireRunning(tx, j.ID); e != nil {
-		return e
-	}
-	if _, e = tx.Exec(`INSERT INTO videos VALUES(?,?,?,?,?,?,?,?)`, v.ID, v.Name, v.Width, v.Height, v.DurationSeconds, v.Status, v.CreatedAt, v.StorageKey); e != nil {
-		return e
-	}
-	if _, e = tx.Exec(`UPDATE jobs SET status='completed',progress=1,video_id=? WHERE id=? AND status='running'`, v.ID, j.ID); e != nil {
+	if e = publishImportTx(ctx, tx, j, v); e != nil {
 		return e
 	}
 	return tx.Commit()
+}
+func publishImportTx(ctx context.Context, tx *sql.Tx, j domain.Job, v domain.Video) error {
+	var e error
+	if e = requireRunning(ctx, tx, j.ID); e != nil {
+		return e
+	}
+	if _, e = tx.ExecContext(ctx, insertVideo, videoArgs(v)...); e != nil {
+		return e
+	}
+	if _, e = tx.ExecContext(ctx, `UPDATE jobs SET status='completed',progress=1,video_id=$1 WHERE id=$2 AND status='running'`, v.ID, j.ID); e != nil {
+		return e
+	}
+	return nil
 }

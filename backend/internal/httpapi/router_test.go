@@ -8,6 +8,7 @@ import (
 	"github.com/XB-Dong/classroom-annotator/backend/internal/media"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/config"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/store"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/testdb"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -16,7 +17,7 @@ import (
 )
 
 func TestHealthAndUnconfiguredDatasetReturnContract(t *testing.T) {
-	s, e := store.Open(t.TempDir())
+	s, e := store.Open(t.TempDir(), store.Options{DatabaseURL: testdb.URL(t)})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -36,9 +37,17 @@ func TestHealthAndUnconfiguredDatasetReturnContract(t *testing.T) {
 			t.Fatalf("%s: %d %s", tc.path, w.Code, w.Body.String())
 		}
 	}
+	if err := s.DB.Close(); err != nil {
+		t.Fatal(err)
+	}
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/health/ready", nil))
+	if w.Code != 503 || !strings.Contains(w.Body.String(), "NOT_READY") {
+		t.Fatal("database outage did not fail readiness", w.Code, w.Body.String())
+	}
 }
 func TestCustomMethodsShareBoundedMetricLabel(t *testing.T) {
-	s, e := store.Open(t.TempDir())
+	s, e := store.Open(t.TempDir(), store.Options{DatabaseURL: testdb.URL(t)})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -69,7 +78,7 @@ func TestCustomMethodsShareBoundedMetricLabel(t *testing.T) {
 	}
 }
 func TestMalformedMultipartReturnsClientError(t *testing.T) {
-	s, e := store.Open(t.TempDir())
+	s, e := store.Open(t.TempDir(), store.Options{DatabaseURL: testdb.URL(t)})
 	if e != nil {
 		t.Fatal(e)
 	}

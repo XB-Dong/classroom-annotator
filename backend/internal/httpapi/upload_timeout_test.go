@@ -9,6 +9,7 @@ import (
 	"github.com/XB-Dong/classroom-annotator/backend/internal/media"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/config"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/store"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/testdb"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -23,7 +24,7 @@ func TestUploadDeadlineCoversMultipartHeaderAndStalledFile(t *testing.T) {
 	for _, budget := range []time.Duration{150 * time.Millisecond, time.Second} {
 		for _, body := range []string{"--x\r\nContent-Disposition:", "--x\r\nContent-Disposition: form-data; name=\"file\"; filename=\"slow.mp4\"\r\nContent-Type: video/mp4\r\n\r\npartial-video"} {
 			t.Run(fmt.Sprintf("%dms-%d", budget.Milliseconds(), len(body)), func(t *testing.T) {
-				s, e := store.Open(t.TempDir())
+				s, e := store.Open(t.TempDir(), store.Options{DatabaseURL: testdb.URL(t)})
 				if e != nil {
 					t.Fatal(e)
 				}
@@ -34,6 +35,8 @@ func TestUploadDeadlineCoversMultipartHeaderAndStalledFile(t *testing.T) {
 						switch k {
 						case "APP_DATA_DIR":
 							return s.Root
+						case "APP_DATABASE_URL":
+							return s.Options.DatabaseURL
 						case "APP_JOB_TIMEOUT_SECONDS":
 							return "1"
 						case "APP_MAX_UPLOAD_BYTES":

@@ -17,6 +17,11 @@ type Video struct {
 	Status          string  `json:"status"`
 	CreatedAt       string  `json:"createdAt"`
 	StorageKey      string  `json:"-"`
+	SourceKind      string  `json:"sourceKind"`
+	SourceID        string  `json:"-"`
+	StorageProvider string  `json:"storageProvider"`
+	MediaSHA256     string  `json:"-"`
+	MediaSizeBytes  int64   `json:"-"`
 }
 type Job struct {
 	ID        string  `json:"id"`
@@ -36,16 +41,19 @@ type Batch struct {
 	FrameCount int    `json:"frameCount"`
 }
 type Frame struct {
-	ID          string `json:"id"`
-	VideoID     string `json:"videoId"`
-	BatchID     string `json:"batchId"`
-	TimestampMs int64  `json:"timestampMs"`
-	Width       int    `json:"width"`
-	Height      int    `json:"height"`
-	ImageURL    string `json:"imageUrl"`
-	Status      string `json:"status"`
-	Revision    int64  `json:"revision"`
-	StorageKey  string `json:"-"`
+	ID              string `json:"id"`
+	VideoID         string `json:"videoId"`
+	BatchID         string `json:"batchId"`
+	TimestampMs     int64  `json:"timestampMs"`
+	Width           int    `json:"width"`
+	Height          int    `json:"height"`
+	ImageURL        string `json:"imageUrl"`
+	Status          string `json:"status"`
+	Revision        int64  `json:"revision"`
+	StorageKey      string `json:"-"`
+	StorageProvider string `json:"storageProvider"`
+	MediaSHA256     string `json:"-"`
+	MediaSizeBytes  int64  `json:"-"`
 }
 type Annotation struct {
 	ID     string     `json:"id"`

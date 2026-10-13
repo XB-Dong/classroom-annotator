@@ -5,6 +5,7 @@ import (
 	"github.com/XB-Dong/classroom-annotator/backend/internal/domain"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/media"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/store"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/testdb"
 	"image"
 	"image/jpeg"
 	"os"
@@ -31,7 +32,7 @@ func (r *cancellingRunner) Extract(ctx context.Context, in string, ms int64, out
 	return e
 }
 func TestCancellationBeforePublicationCleansRenamedBatch(t *testing.T) {
-	s, e := store.Open(t.TempDir())
+	s, e := store.Open(t.TempDir(), store.Options{DatabaseURL: testdb.URL(t)})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -76,7 +77,7 @@ func (r *jpegRunner) Extract(ctx context.Context, in string, ms int64, out strin
 }
 func TestBatchPublishesActualJPEGDimensionsAndUnavailableTailFails(t *testing.T) {
 	for _, missing := range []bool{false, true} {
-		s, e := store.Open(t.TempDir())
+		s, e := store.Open(t.TempDir(), store.Options{DatabaseURL: testdb.URL(t)})
 		if e != nil {
 			t.Fatal(e)
 		}

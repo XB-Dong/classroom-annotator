@@ -3,13 +3,14 @@ package store
 import (
 	"fmt"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/domain"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/testdb"
 	"os"
 	"path/filepath"
 	"testing"
 )
 
 func TestCancelWinsPublicationAndRestartInterrupts(t *testing.T) {
-	s, e := Open(t.TempDir())
+	s, e := Open(t.TempDir(), Options{DatabaseURL: testdb.URL(t)})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -49,7 +50,7 @@ func TestCancelWinsPublicationAndRestartInterrupts(t *testing.T) {
 	}
 }
 func TestCleanupFailureDuringCancellationPersistsFailed(t *testing.T) {
-	s, e := Open(t.TempDir())
+	s, e := Open(t.TempDir(), Options{DatabaseURL: testdb.URL(t)})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -69,7 +70,7 @@ func TestCleanupFailureDuringCancellationPersistsFailed(t *testing.T) {
 	}
 }
 func TestRestartReconcilesOnlyUnpublishedMedia(t *testing.T) {
-	s, e := Open(t.TempDir())
+	s, e := Open(t.TempDir(), Options{DatabaseURL: testdb.URL(t)})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -86,7 +87,17 @@ func TestRestartReconcilesOnlyUnpublishedMedia(t *testing.T) {
 			t.Fatal(e)
 		}
 	}
-	if e = s.Recover(); e != nil {
+	publicSample := filepath.Join(s.Root, "videos", "public-samples", "pending.mp4")
+	if e = os.MkdirAll(filepath.Dir(publicSample), 0700); e != nil {
+		t.Fatal(e)
+	}
+	if e = os.WriteFile(publicSample, []byte("staged-public-sample"), 0600); e != nil {
+		t.Fatal(e)
+	}
+	if _, e = s.DB.Exec(`INSERT INTO public_samples(sample_id,version,author,license,source_page,media_sha256,media_size_bytes,width,height,duration_seconds,cache_status,name,description,license_url,storage_key) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`, "sample", "1", "creator", "CC BY-SA 4.0", "https://example.org/source", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 1024, 2, 3, 1, "ready", "Sample", "", "https://example.org/license", "videos/public-samples/pending.mp4"); e != nil {
+		t.Fatal(e)
+	}
+	if e = s.RecoverLocalMedia(); e != nil {
 		t.Fatal(e)
 	}
 	for _, dir := range []string{"staging", "frames", "videos"} {
@@ -97,10 +108,14 @@ func TestRestartReconcilesOnlyUnpublishedMedia(t *testing.T) {
 	if _, e = os.Stat(filepath.Join(s.Root, "videos", "v")); e != nil {
 		t.Fatal("committed media removed", e)
 	}
+	if _, e = os.Stat(publicSample); e != nil {
+		t.Fatal("registered public sample cache removed", e)
+	}
 }
 func TestCompletedPublicationWinsLateCancelAndPersists(t *testing.T) {
 	root := t.TempDir()
-	s, e := Open(root)
+	options := Options{DatabaseURL: testdb.URL(t)}
+	s, e := Open(root, options)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -120,7 +135,7 @@ func TestCompletedPublicationWinsLateCancelAndPersists(t *testing.T) {
 		t.Fatal(got, e)
 	}
 	s.DB.Close()
-	s, e = Open(root)
+	s, e = Open(root, options)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -138,7 +153,7 @@ func TestCompletedPublicationWinsLateCancelAndPersists(t *testing.T) {
 	}
 }
 func TestJobDiscoveryReturnsNewest100AndImportFieldsAreConditional(t *testing.T) {
-	s, e := Open(t.TempDir())
+	s, e := Open(t.TempDir(), Options{DatabaseURL: testdb.URL(t)})
 	if e != nil {
 		t.Fatal(e)
 	}

@@ -12,7 +12,7 @@ func TestConfigRequiresExternalDataAndPositiveLimits(t *testing.T) {
 		t.Fatal("missing DATA_DIR accepted")
 	}
 	root := t.TempDir()
-	values := map[string]string{"DATA_DIR": root, "MAX_UPLOAD_BYTES": "0"}
+	values := map[string]string{"DATA_DIR": root, "MAX_UPLOAD_BYTES": "0", "APP_DATABASE_URL": "postgres://localhost/test"}
 	if _, err := Load(func(k string) string { return values[k] }); err == nil {
 		t.Fatal("zero limit accepted")
 	}

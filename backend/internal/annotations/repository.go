@@ -5,10 +5,12 @@ import (
 	"database/sql"
 	"errors"
 	"math"
+	"sort"
 	"strings"
 
 	"github.com/XB-Dong/classroom-annotator/backend/internal/domain"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/store"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // MaxAnnotations bounds per-frame work independently of the HTTP body limit.
@@ -17,6 +19,7 @@ const MaxIDLength = 128
 
 var ErrConflict = errors.New("annotation revision conflict")
 var ErrInvalid = errors.New("invalid annotation snapshot")
+var ErrIDCollision = errors.New("annotation ID belongs to another frame")
 
 type Save struct {
 	ExpectedRevision int64
@@ -58,7 +61,7 @@ func Validate(save Save, width, height int) error {
 
 // ReadAnnotations uses the caller's transaction, preserving its frame snapshot.
 func ReadAnnotations(ctx context.Context, tx *sql.Tx, frameID string) ([]domain.Annotation, error) {
-	rows, err := tx.QueryContext(ctx, `SELECT id,x,y,width,height,source FROM annotations WHERE frame_id=? ORDER BY id`, frameID)
+	rows, err := tx.QueryContext(ctx, `SELECT id,x,y,width,height,source FROM annotations WHERE frame_id=$1 ORDER BY id`, frameID)
 	if err != nil {
 		return nil, err
 	}
@@ -75,12 +78,14 @@ func ReadAnnotations(ctx context.Context, tx *sql.Tx, frameID string) ([]domain.
 }
 
 func (r Repository) Get(ctx context.Context, id string) (domain.Snapshot, error) {
-	tx, err := r.Store.DB.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
+	ctx, cancel := r.Store.Context(ctx)
+	defer cancel()
+	tx, err := r.Store.DB.BeginTx(ctx, &sql.TxOptions{ReadOnly: true, Isolation: sql.LevelRepeatableRead})
 	if err != nil {
 		return domain.Snapshot{}, err
 	}
 	defer tx.Rollback()
-	f, err := store.ScanFrame(tx.QueryRowContext(ctx, `SELECT `+store.FrameColumns+` FROM frames f WHERE f.id=?`, id))
+	f, err := store.ScanFrame(tx.QueryRowContext(ctx, `SELECT `+store.FrameColumns+` FROM frames f WHERE f.id=$1`, id))
 	if err != nil {
 		return domain.Snapshot{}, err
 	}
@@ -95,12 +100,14 @@ func (r Repository) Get(ctx context.Context, id string) (domain.Snapshot, error)
 }
 
 func (r Repository) Save(ctx context.Context, id string, save Save) (domain.Snapshot, error) {
+	ctx, cancel := r.Store.Context(ctx)
+	defer cancel()
 	tx, err := r.Store.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return domain.Snapshot{}, err
 	}
 	defer tx.Rollback()
-	f, err := store.ScanFrame(tx.QueryRowContext(ctx, `SELECT `+store.FrameColumns+` FROM frames f WHERE f.id=?`, id))
+	f, err := store.ScanFrame(tx.QueryRowContext(ctx, `SELECT `+store.FrameColumns+` FROM frames f WHERE f.id=$1`, id))
 	if err != nil {
 		return domain.Snapshot{}, err
 	}
@@ -112,15 +119,15 @@ func (r Repository) Save(ctx context.Context, id string, save Save) (domain.Snap
 	}
 	for _, a := range save.Annotations {
 		var owner string
-		err = tx.QueryRowContext(ctx, `SELECT frame_id FROM annotations WHERE id=?`, a.ID).Scan(&owner)
+		err = tx.QueryRowContext(ctx, `SELECT frame_id FROM annotations WHERE id=$1`, a.ID).Scan(&owner)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return domain.Snapshot{}, err
 		}
 		if err == nil && owner != id {
-			return domain.Snapshot{}, ErrInvalid
+			return domain.Snapshot{}, ErrIDCollision
 		}
 	}
-	result, err := tx.ExecContext(ctx, `UPDATE frames SET status=?,revision=revision+1 WHERE id=? AND revision=?`, save.Status, id, save.ExpectedRevision)
+	result, err := tx.ExecContext(ctx, `UPDATE frames SET status=$1,revision=revision+1 WHERE id=$2 AND revision=$3`, save.Status, id, save.ExpectedRevision)
 	if err != nil {
 		return domain.Snapshot{}, err
 	}
@@ -131,11 +138,17 @@ func (r Repository) Save(ctx context.Context, id string, save Save) (domain.Snap
 	if n != 1 {
 		return domain.Snapshot{}, ErrConflict
 	}
-	if _, err = tx.ExecContext(ctx, `DELETE FROM annotations WHERE frame_id=?`, id); err != nil {
+	if _, err = tx.ExecContext(ctx, `DELETE FROM annotations WHERE frame_id=$1`, id); err != nil {
 		return domain.Snapshot{}, err
 	}
-	for _, a := range save.Annotations {
-		if _, err = tx.ExecContext(ctx, `INSERT INTO annotations(id,frame_id,x,y,width,height,source) VALUES(?,?,?,?,?,?,?)`, a.ID, id, a.BBox[0], a.BBox[1], a.BBox[2], a.BBox[3], a.Source); err != nil {
+	ordered := append([]domain.Annotation(nil), save.Annotations...)
+	sort.Slice(ordered, func(i, j int) bool { return ordered[i].ID < ordered[j].ID })
+	for _, a := range ordered {
+		if _, err = tx.ExecContext(ctx, `INSERT INTO annotations(id,frame_id,x,y,width,height,source) VALUES($1,$2,$3,$4,$5,$6,$7)`, a.ID, id, a.BBox[0], a.BBox[1], a.BBox[2], a.BBox[3], a.Source); err != nil {
+			var pgError *pgconn.PgError
+			if errors.As(err, &pgError) && pgError.Code == "23505" && pgError.ConstraintName == "annotations_global_id" {
+				return domain.Snapshot{}, ErrIDCollision
+			}
 			return domain.Snapshot{}, err
 		}
 	}

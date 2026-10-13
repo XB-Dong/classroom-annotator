@@ -4,12 +4,13 @@ import (
 	"context"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/domain"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/store"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/testdb"
 	"testing"
 	"time"
 )
 
 func TestCancellationWaitsForWorkCleanupAndQueueIsBounded(t *testing.T) {
-	s, e := store.Open(t.TempDir())
+	s, e := store.Open(t.TempDir(), store.Options{DatabaseURL: testdb.URL(t)})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -65,7 +66,7 @@ func TestCancellationWaitsForWorkCleanupAndQueueIsBounded(t *testing.T) {
 	t.Fatal(got)
 }
 func TestTimeoutPersistsFailureAfterCleanup(t *testing.T) {
-	s, e := store.Open(t.TempDir())
+	s, e := store.Open(t.TempDir(), store.Options{DatabaseURL: testdb.URL(t)})
 	if e != nil {
 		t.Fatal(e)
 	}

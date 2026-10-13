@@ -3,6 +3,7 @@ package annotations
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/testdb"
 	"net/http/httptest"
 	"path/filepath"
 	"reflect"
@@ -17,7 +18,7 @@ import (
 
 func fixture(t *testing.T) (*store.Store, *gin.Engine) {
 	t.Helper()
-	s, err := store.Open(t.TempDir())
+	s, err := store.Open(t.TempDir(), store.Options{DatabaseURL: testdb.URL(t)})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -137,7 +138,7 @@ func TestInvalidWritesAreAtomic(t *testing.T) {
 			}
 		})
 	}
-	if w := request(r, "PUT", "f2", firstSave); w.Code != 422 {
+	if w := request(r, "PUT", "f2", firstSave); w.Code != 400 {
 		t.Fatalf("cross-frame ID collision %d: %s", w.Code, w.Body.String())
 	}
 	if got := snapshot(t, r, "f2"); got.Revision != 0 || got.Status != "not_started" || len(got.Annotations) != 0 {
@@ -151,14 +152,38 @@ func TestInvalidWritesAreAtomic(t *testing.T) {
 	}
 }
 
+func TestConcurrentCrossFrameIDCollisionReturnsBadRequestAndRollsBack(t *testing.T) {
+	_, r := fixture(t)
+	start := make(chan struct{})
+	results := make(chan int, 2)
+	for _, frame := range []string{"f1", "f2"} {
+		go func(id string) { <-start; results <- request(r, "PUT", id, firstSave).Code }(frame)
+	}
+	close(start)
+	counts := map[int]int{}
+	for i := 0; i < 2; i++ {
+		counts[<-results]++
+	}
+	if counts[200] != 1 || counts[400] != 1 {
+		t.Fatalf("cross-frame statuses: %v", counts)
+	}
+	a, b := snapshot(t, r, "f1"), snapshot(t, r, "f2")
+	if a.Revision+b.Revision != 1 || len(a.Annotations)+len(b.Annotations) != 1 {
+		t.Fatal("collision changed losing frame", a, b)
+	}
+}
+
 func TestSQLFailureRollsBackReplacement(t *testing.T) {
 	s, r := fixture(t)
 	if w := request(r, "PUT", "f1", firstSave); w.Code != 200 {
 		t.Fatal(w.Code)
 	}
 	before := snapshot(t, r, "f1")
-	_, err := s.DB.Exec(`CREATE TRIGGER fail_annotation BEFORE INSERT ON annotations WHEN NEW.id='reject' BEGIN SELECT RAISE(ABORT,'synthetic failure'); END`)
+	_, err := s.DB.Exec(`CREATE FUNCTION fail_annotation() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.id='reject' THEN RAISE EXCEPTION 'synthetic failure'; END IF; RETURN NEW; END $$`)
 	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = s.DB.Exec(`CREATE TRIGGER fail_annotation BEFORE INSERT ON annotations FOR EACH ROW EXECUTE FUNCTION fail_annotation()`); err != nil {
 		t.Fatal(err)
 	}
 	w := request(r, "PUT", "f1", `{"expectedRevision":1,"status":"in_progress","annotations":[{"id":"new","bbox":[1,1,2,2],"source":"manual"},{"id":"reject","bbox":[2,2,2,2],"source":"manual"}]}`)
