@@ -5,6 +5,8 @@
   "scripts": {
     "test": "node --test unit/*.test.mjs",
     "check": "node scripts/check.mjs",
+    "postgres": "node scripts/postgres-check.mjs",
+    "migration": "node scripts/migration-check.mjs",
     "fixtures": "node scripts/generate-fixtures.mjs",
     "restart": "node scripts/restart-check.mjs",
     "dataset": "node scripts/dataset-check.mjs",
@@ -21,6 +23,7 @@
     "adm-zip": "0.6.1",
     "ajv": "8.20.0",
     "ajv-formats": "3.0.1",
-    "jpeg-js": "0.4.4"
+    "jpeg-js": "0.4.4",
+    "pg": "8.16.3"
   }
 }
