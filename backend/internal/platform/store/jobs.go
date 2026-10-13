@@ -25,10 +25,16 @@ func (s *Store) Job(id string) (domain.Job, error) {
 	return scanJob(s.DB.QueryRowContext(ctx, jobSelect+` WHERE id=$1`, id))
 }
 func (s *Store) Jobs() ([]domain.Job, error) {
+	return s.jobsWhere("", nil)
+}
+func (s *Store) JobsInWorkspace(workspace string) ([]domain.Job, error) {
+	return s.jobsWhere(` WHERE video_id IN (SELECT id FROM videos WHERE workspace_id=$1) OR (video_id IS NULL AND $1='00000000-0000-4000-8000-000000000001')`, []any{workspace})
+}
+func (s *Store) jobsWhere(where string, args []any) ([]domain.Job, error) {
 	ctx, cancel := s.Context(context.Background())
 	defer cancel()
 	out := []domain.Job{}
-	r, e := s.DB.QueryContext(ctx, jobSelect+` ORDER BY created_at DESC,id DESC LIMIT 100`)
+	r, e := s.DB.QueryContext(ctx, jobSelect+where+` ORDER BY created_at DESC,id DESC LIMIT 100`, args...)
 	if e != nil {
 		return nil, e
 	}

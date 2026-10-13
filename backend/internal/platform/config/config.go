@@ -13,6 +13,9 @@ import (
 )
 
 type Config struct {
+	AuthInviteCode                                                                   string
+	AuthTrustedOrigins, AuthTrustedProxies                                           []string
+	AuthCookieSecure                                                                 bool
 	DatabaseURL                                                                      string
 	DBMaxOpenConns, DBMaxIdleConns                                                   int
 	DBConnectTimeout, DBQueryTimeout, DBConnMaxLifetime, DBConnMaxIdleTime           time.Duration
@@ -27,6 +30,36 @@ type Config struct {
 
 func Load(get func(string) string) (Config, error) {
 	c := Config{DataDir: get("APP_DATA_DIR"), Addr: value(get, "APP_ADDR", ":8080"), Version: value(get, "APP_VERSION", "dev"), FFmpeg: value(get, "APP_FFMPEG", "ffmpeg"), FFprobe: value(get, "APP_FFPROBE", "ffprobe"), DatasetAPIURL: get("APP_DATASET_API_URL"), DatasetAPIKey: get("APP_DATASET_API_KEY")}
+	c.AuthInviteCode = get("APP_AUTH_INVITE_CODE")
+	c.AuthCookieSecure = true
+	if raw := get("APP_AUTH_COOKIE_SECURE"); raw != "" {
+		var e error
+		c.AuthCookieSecure, e = strconv.ParseBool(raw)
+		if e != nil {
+			return c, errors.New("invalid auth cookie security")
+		}
+	}
+	if raw := get("APP_AUTH_TRUSTED_ORIGINS"); raw != "" {
+		for _, origin := range strings.Split(raw, ",") {
+			origin = strings.TrimSpace(origin)
+			u, e := url.Parse(origin)
+			if e != nil || u.Host == "" || u.User != nil || u.Path != "" || u.RawQuery != "" || u.Fragment != "" || (u.Scheme != "https" && u.Scheme != "http") {
+				return c, errors.New("invalid auth trusted origin")
+			}
+			c.AuthTrustedOrigins = append(c.AuthTrustedOrigins, origin)
+		}
+	}
+	if raw := get("APP_AUTH_TRUSTED_PROXIES"); raw != "" {
+		for _, proxy := range strings.Split(raw, ",") {
+			proxy = strings.TrimSpace(proxy)
+			if net.ParseIP(proxy) == nil {
+				if _, _, e := net.ParseCIDR(proxy); e != nil {
+					return c, errors.New("invalid auth trusted proxy")
+				}
+			}
+			c.AuthTrustedProxies = append(c.AuthTrustedProxies, proxy)
+		}
+	}
 	c.DatabaseURL = get("APP_DATABASE_URL")
 	u, databaseErr := url.Parse(c.DatabaseURL)
 	if databaseErr != nil || u.Host == "" || (u.Scheme != "postgres" && u.Scheme != "postgresql") {

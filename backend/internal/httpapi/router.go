@@ -2,6 +2,8 @@ package httpapi
 
 import (
 	"context"
+	"errors"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/auth"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/dataset"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/domain"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/extraction"
@@ -13,6 +15,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -28,12 +31,32 @@ type API struct {
 
 // Extensions receive the existing group so annotation/export capabilities can register their routes.
 type Extension func(*gin.RouterGroup, *store.Store)
+type Security struct {
+	Auth      *auth.HTTP
+	Resources auth.ResourceAuthorizer
+}
+
+func NewWithSecurity(cfg config.Config, s *store.Store, m *jobs.Manager, v *media.Service, x *extraction.Service, d *dataset.Adapter, sources *SourceService, security Security, extensions ...Extension) (*gin.Engine, error) {
+	if security.Auth == nil || security.Resources == nil {
+		return nil, errors.New("authentication is required")
+	}
+	r := newRouter(cfg, s, m, v, x, d, sources, &security, extensions...)
+	if e := r.SetTrustedProxies(cfg.AuthTrustedProxies); e != nil {
+		return nil, errors.New("invalid trusted proxy configuration")
+	}
+	return r, nil
+}
 
 func New(cfg config.Config, s *store.Store, m *jobs.Manager, v *media.Service, x *extraction.Service, d *dataset.Adapter, extensions ...Extension) *gin.Engine {
 	return NewWithSources(cfg, s, m, v, x, d, nil, extensions...)
 }
 
 func NewWithSources(cfg config.Config, s *store.Store, m *jobs.Manager, v *media.Service, x *extraction.Service, d *dataset.Adapter, sources *SourceService, extensions ...Extension) *gin.Engine {
+	return newRouter(cfg, s, m, v, x, d, sources, nil, extensions...)
+}
+
+// Legacy constructors are explicit isolated test harnesses. Production uses NewWithSecurity.
+func newRouter(cfg config.Config, s *store.Store, m *jobs.Manager, v *media.Service, x *extraction.Service, d *dataset.Adapter, sources *SourceService, security *Security, extensions ...Extension) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.Use(func(c *gin.Context) {
@@ -54,6 +77,22 @@ func NewWithSources(cfg config.Config, s *store.Store, m *jobs.Manager, v *media
 		}()
 		c.Next()
 	})
+	if security != nil {
+		r.Use(func(c *gin.Context) {
+			if strings.HasPrefix(c.Request.URL.Path, "/media/") {
+				security.Auth.Protect()(c)
+			} else {
+				c.Next()
+			}
+		}, func(c *gin.Context) {
+			if strings.HasPrefix(c.Request.URL.Path, "/media/") {
+				auth.Scope(security.Resources)(c)
+			} else {
+				c.Next()
+			}
+		})
+		security.Auth.Register(r.Group("/api/v1"))
+	}
 	r.GET("/health/live", func(c *gin.Context) { c.JSON(200, gin.H{"status": "ok", "version": cfg.Version}) })
 	r.GET("/health/ready", func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(c.Request.Context(), time.Second)
@@ -67,6 +106,9 @@ func NewWithSources(cfg config.Config, s *store.Store, m *jobs.Manager, v *media
 	r.GET("/metrics", gin.WrapH(promhttp.HandlerFor(m.Metrics.Registry, promhttp.HandlerOpts{})))
 	a := &API{Cfg: cfg, Store: s, Jobs: m, Media: v, Extraction: x, Dataset: d, Sources: sources}
 	g := r.Group("/api/v1")
+	if security != nil {
+		g.Use(security.Auth.Protect(), auth.Scope(security.Resources))
+	}
 	g.GET("/videos", a.videos)
 	g.POST("/videos", a.upload)
 	g.POST("/videos/:id/extractions", a.extract)

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/annotations"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/auth"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/exports"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/extraction"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/httpapi"
@@ -74,10 +75,18 @@ func main() {
 		log.Print("remote reconciliation pending")
 	}
 	recoveryCancel()
-	r := httpapi.NewWithSources(cfg, s, m, v, x, nil, sources, func(g *gin.RouterGroup, s *store.Store) {
+	authRepo := auth.NewPGRepository(s.DB)
+	authHTTP, authErr := auth.NewHTTP(auth.NewService(authRepo, cfg.AuthInviteCode), auth.HTTPOptions{TrustedOrigins: cfg.AuthTrustedOrigins, CookieSecure: cfg.AuthCookieSecure})
+	if authErr != nil {
+		log.Fatal("authentication configuration failed")
+	}
+	r, e := httpapi.NewWithSecurity(cfg, s, m, v, x, nil, sources, httpapi.Security{Auth: authHTTP, Resources: authRepo}, func(g *gin.RouterGroup, s *store.Store) {
 		annotations.Register(g, s, m.Metrics.Registry)
 		exports.RegisterWithBridge(g, s, bridge, m.Metrics.Registry, cfg.MaxFrames)
 	})
+	if e != nil {
+		log.Fatal("secure router initialization failed")
+	}
 	server := &http.Server{Addr: cfg.Addr, Handler: r, ReadHeaderTimeout: 10 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 1024 * 1024}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

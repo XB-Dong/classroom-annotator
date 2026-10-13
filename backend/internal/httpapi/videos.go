@@ -3,6 +3,7 @@ package httpapi
 import (
 	"context"
 	"errors"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/auth"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/domain"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/extraction"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/mediabridge"
@@ -34,13 +35,20 @@ func (p *interruptibleUploadPart) Close() error {
 }
 
 func (a *API) videos(c *gin.Context) {
-	v, e := a.Store.Videos()
+	var v []domain.Video
+	var e error
+	if u, ok := auth.ActorFrom(c.Request.Context()); ok {
+		v, e = a.Store.VideosInWorkspace(u.WorkspaceID)
+	} else {
+		v, e = a.Store.Videos()
+	}
 	if e != nil {
 		failure(c, e)
 		return
 	}
 	c.JSON(200, gin.H{"videos": v})
 }
+
 func (a *API) upload(c *gin.Context) {
 	guard := startUploadDeadline(c, a.Cfg.JobTimeout)
 	defer guard.close()

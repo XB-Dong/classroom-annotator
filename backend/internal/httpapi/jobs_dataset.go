@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"context"
+	"github.com/XB-Dong/classroom-annotator/backend/internal/auth"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/dataset"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/domain"
 	"github.com/XB-Dong/classroom-annotator/backend/internal/mediabridge"
@@ -10,7 +11,13 @@ import (
 )
 
 func (a *API) jobs(c *gin.Context) {
-	j, e := a.Store.Jobs()
+	var j []domain.Job
+	var e error
+	if u, ok := auth.ActorFrom(c.Request.Context()); ok {
+		j, e = a.Store.JobsInWorkspace(u.WorkspaceID)
+	} else {
+		j, e = a.Store.Jobs()
+	}
 	if e != nil {
 		failure(c, e)
 		return

@@ -127,9 +127,15 @@ func (s *Store) Video(id string) (domain.Video, error) {
 	return scanVideo(s.DB.QueryRowContext(ctx, `SELECT `+videoColumns+` FROM videos WHERE id=$1`, id))
 }
 func (s *Store) Videos() ([]domain.Video, error) {
+	return s.videosWhere("", nil)
+}
+func (s *Store) VideosInWorkspace(workspace string) ([]domain.Video, error) {
+	return s.videosWhere(" WHERE workspace_id=$1", []any{workspace})
+}
+func (s *Store) videosWhere(where string, args []any) ([]domain.Video, error) {
 	ctx, cancel := s.Context(context.Background())
 	defer cancel()
-	rows, err := s.DB.QueryContext(ctx, `SELECT `+videoColumns+` FROM videos ORDER BY created_at DESC,id`)
+	rows, err := s.DB.QueryContext(ctx, `SELECT `+videoColumns+` FROM videos`+where+` ORDER BY created_at DESC,id`, args...)
 	if err != nil {
 		return nil, err
 	}

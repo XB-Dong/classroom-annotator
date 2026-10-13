@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/XB-Dong/classroom-annotator/backend/internal/platform/testdb"
+	"github.com/XB-Dong/classroom-annotator/backend/migrations"
 )
 
 func TestProductionStoreRejectsMissingDatabaseConfiguration(t *testing.T) {
@@ -22,7 +23,7 @@ func TestProductionStoreRejectsOutdatedSchema(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.Exec(`UPDATE goose_db_version SET is_applied=false WHERE version_id=4`); err != nil {
+	if _, err := db.Exec(`UPDATE goose_db_version SET is_applied=false WHERE version_id=$1`, migrations.Version); err != nil {
 		db.Close()
 		t.Fatal(err)
 	}
