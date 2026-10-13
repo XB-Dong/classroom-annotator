@@ -22,6 +22,18 @@ test('independent reader accepts consistent JPEG/COCO and zero-head frames', () 
   zero.expected[0].annotations = [];
   inspectExport(zero.buffer, zero.expected);
 });
+
+test('public export requires exact attribution entries while private export remains strict', () => {
+  const { buffer, expected } = sample();
+  assert.throws(() => inspectExport(buffer, expected, { attributed: true }));
+  const archive = new AdmZip(buffer);
+  archive.addFile('credits.json', Buffer.from('{"schemaVersion":"1.0.0","items":[]}'));
+  archive.addFile('LICENSES.txt', Buffer.from('Fixture license'));
+  inspectExport(archive.toBuffer(), expected, { attributed: true });
+  assert.throws(() => inspectExport(archive.toBuffer(), expected));
+  archive.addFile('unexpected.txt', Buffer.from('Unexpected'));
+  assert.throws(() => inspectExport(archive.toBuffer(), expected, { attributed: true }));
+});
 for (const [name, mutate] of [
   ['false dimensions', coco => { coco.images[0].width = 5; }],
   ['dangling annotation', coco => { coco.annotations[0].image_id = 2; }],

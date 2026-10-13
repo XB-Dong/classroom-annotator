@@ -3,12 +3,14 @@ import AdmZip from 'adm-zip';
 import jpeg from 'jpeg-js';
 
 // Independent reader: never calls product export code or trusts COCO dimensions.
-export function inspectExport(buffer, expected) {
+export function inspectExport(buffer, expected, { attributed = false } = {}) {
   const zip = new AdmZip(buffer);
   const entries = zip.getEntries();
   const names = entries.map(entry => entry.entryName);
   assert.equal(new Set(names).size, names.length, 'duplicate ZIP entry');
-  assert.ok(names.every(name => name === 'annotations.json' || /^images\/[^/\\]+\.jpg$/.test(name)), 'unexpected ZIP path');
+  const metadata = attributed ? ['credits.json', 'LICENSES.txt'] : [];
+  assert.ok(names.every(name => name === 'annotations.json' || metadata.includes(name) || /^images\/[^/\\]+\.jpg$/.test(name)), 'unexpected ZIP path');
+  for (const name of metadata) assert.ok(names.includes(name) && zip.readFile(name)?.length > 0, 'missing required public attribution');
   const coco = JSON.parse(zip.readAsText('annotations.json'));
   assert.equal(coco.categories.length, 1);
   assert.equal(coco.categories[0].id, 1);
@@ -30,7 +32,7 @@ export function inspectExport(buffer, expected) {
     expectedByName.delete(image.file_name);
   }
   assert.equal(expectedByName.size, 0);
-  assert.equal(names.length, expected.length + 1, 'extra/missing ZIP entries');
+  assert.equal(names.length, expected.length + 1 + metadata.length, 'extra/missing ZIP entries');
   const annotationIds = new Set();
   for (const annotation of coco.annotations) {
     assert.ok(Number.isInteger(annotation.id) && !annotationIds.has(annotation.id));

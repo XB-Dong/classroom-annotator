@@ -59,10 +59,10 @@ test -f backend/go.mod
   go vet ./...
   go test ./...
   go build ./...
-  CGO_ENABLED=0 go build -o "$P0_BACKEND_BINARY" ./cmd/server
+  CGO_ENABLED=0 go build -ldflags "-X main.version=$P0_EXPECTED_SHA" -o "$P0_BACKEND_BINARY" ./cmd/server
   CGO_ENABLED=0 go build -o "$P01_MIGRATE_BINARY" ./cmd/migrate
   CGO_ENABLED=0 go build -o "$P01_IMPORT_BINARY" ./cmd/import-sqlite
-  CGO_ENABLED=0 go build -o "$P01_AGENT_BINARY" ./cmd/media-agent
+  CGO_ENABLED=0 go build -ldflags "-X main.version=$P01_EXPECTED_AGENT_SHA" -o "$P01_AGENT_BINARY" ./cmd/media-agent
   CGO_ENABLED=0 go build -o "$P01_SEED_BINARY" ./cmd/seed-samples
   if [[ "${P0_SKIP_RACE:-0}" == 1 ]]; then
     echo 'RACE NOT RUN: explicit P0_SKIP_RACE=1; delivery needs separate race evidence.'

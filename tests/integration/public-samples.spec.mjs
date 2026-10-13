@@ -41,7 +41,7 @@ async function closure(request, sample, video) {
   }
   const response = await request.post('/api/v1/exports', { data: { videoId: video.id, batchId: job.batchId } });
   expect(response.status()).toBe(200);
-  const bytes = await response.body(); inspectExport(bytes, expected);
+  const bytes = await response.body(); inspectExport(bytes, expected, { attributed: true });
   const zip = new AdmZip(bytes);
   const credits = JSON.parse(zip.readAsText('credits.json'));
   expect(credits.schemaVersion).toBe('1.0.0'); expect(credits.items).toHaveLength(1);

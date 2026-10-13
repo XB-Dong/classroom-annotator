@@ -62,10 +62,10 @@ try {
   Invoke-Checked go @('vet', './...')
   Invoke-Checked go @('test', './...')
   Invoke-Checked go @('build', './...')
-  Invoke-Checked go @('build', '-o', $env:P0_BACKEND_BINARY, './cmd/server')
+  Invoke-Checked go @('build', '-ldflags', "-X main.version=$env:P0_EXPECTED_SHA", '-o', $env:P0_BACKEND_BINARY, './cmd/server')
   Invoke-Checked go @('build', '-o', $env:P01_MIGRATE_BINARY, './cmd/migrate')
   Invoke-Checked go @('build', '-o', $env:P01_IMPORT_BINARY, './cmd/import-sqlite')
-  Invoke-Checked go @('build', '-o', $env:P01_AGENT_BINARY, './cmd/media-agent')
+  Invoke-Checked go @('build', '-ldflags', "-X main.version=$env:P01_EXPECTED_AGENT_SHA", '-o', $env:P01_AGENT_BINARY, './cmd/media-agent')
   Invoke-Checked go @('build', '-o', $env:P01_SEED_BINARY, './cmd/seed-samples')
   if ($env:P0_SKIP_RACE -eq '1') {
     Write-Output 'RACE NOT RUN: explicit P0_SKIP_RACE=1; delivery needs separate race evidence.'

@@ -32,7 +32,7 @@ test('P01-SAMPLE-003 default public browser entry displays attribution and compl
   const download = page.waitForEvent('download'); await page.getByTestId('export-zip').click();
   const bytes = fs.readFileSync(await (await download).path());
   const media = await request.get(frames[0].imageUrl); expect(media.status()).toBe(200);
-  inspectExport(bytes, [{ ...frames[0], annotations: [], imageBytes: await media.body() }]);
+  inspectExport(bytes, [{ ...frames[0], annotations: [], imageBytes: await media.body() }], { attributed: true });
   const credits = JSON.parse(new AdmZip(bytes).readAsText('credits.json'));
   expect(credits.items[0].videoId).toBe(video.id);
 });
