@@ -1,13 +1,15 @@
 # P0.1 Mac 媒体存储、接口与运行边界
 
-执行说明：用户已批准启动P0.1；本文审核稿作为执行基线，R0审核收敛后冻结。历史“未启动”描述不再代表现行状态；进度见state.json。
+执行说明：用户已暂停P0.1。本文0.2.0修订稿与四来源规格一并待审核；不得因收到Mac状态而恢复编码/隧道/部署。
 
 
-版本：0.1.0｜状态：待审核，未实施｜日期：2026-10-13
+版本：0.2.0｜状态：暂停后的修订稿，待审核，未实施｜日期：2026-10-13
 
 ## 1. 目的与明确职责
 
-本规格用于新增 Mac 资源的完整人工标注闭环：素材选择或上传 → Mac 抽帧 → 云端显示与保存 → Mac 打包 → 浏览器下载。只接通 SSH 或代理一张图片不足以交付。
+本规格用于新增Mac资源的完整人工标注闭环：素材选择或上传/公司导入→Mac抽帧→云端显示与保存→Mac打包→浏览器下载。只接通SSH或代理一张图片不足以交付。
+
+来源统一见[四入口规格](sources-and-samples.md)：公共示例由local适配器在云端执行，Mac素材/本地上传/公司接口媒体由Mac处理。provider按每条资源决定，不设置关闭公司入口的全局Mac模式。
 
 | 数据/工作 | 权威位置/责任方 | 云端是否允许落盘 |
 | --- | --- | --- |
@@ -16,6 +18,7 @@
 | 标注框、revision、完成状态、业务 job | 云端 PostgreSQL，由 Go 管理 | 允许；这是业务元数据 |
 | Mac 操作 manifest/幂等记录 | Mac 文件 manifest，仅执行状态与资源清单 | 不作为第二业务数据库，不含标注权威状态 |
 | COCO 语义、已完成帧选择与快照 | 云端 Go | 元数据可持久化；不含图片 bytes |
+| 新公开样例的视频/JPEG/ZIP | 云端local媒体适配器与公开样例卷 | 允许；这是云端常驻演示数据 |
 | 已有 P0 local 视频/帧/ZIP | 原云端媒体适配器与原卷 | 兼容保留，不纳入“新增 Mac 媒体无云端文件”的结论 |
 | 浏览器下载包/当前图片 | 使用者浏览器 | 用户下载可写本机；与云端无媒体文件区分 |
 
@@ -34,25 +37,29 @@ flowchart LR
   Mac --> FFmpeg[FFmpeg 抽帧]
 ```
 
-- Mac 主动连云端专用 `classroom-tunnel`。仅允许远程监听云端 `127.0.0.1:19090`，Mac Agent 本地也仅监听 `127.0.0.1:19090`。
+- Mac主动连云端专用classroom-tunnel，仅允许远程监听云端127.0.0.1:19090。现有Mac只读媒体服务127.0.0.1:19090保留；新增项目Go媒体执行端默认127.0.0.1:19092，避免抢占/覆盖原服务。隧道映射云端19090→Mac19092，执行端从本机19090服务按已核对的契约读取授权素材。
 - Go 容器经实际 Docker 网络的私有网关地址访问云端转发服务；不硬编码 Docker 子网，不把转发端口绑定 `0.0.0.0`。端口和媒体地址以外部配置传入。
 - 云端 Go 调用 Agent 使用专用随机 Bearer Token；不复用演示网页密码、公司 API Key 或 SSH 私钥。Token 由外部文件配置，Mac/云端各自读取；不得出现于 URL、日志、Git 或浏览器。
 - 对外页面/API/媒体仍经过现有门禁；前端不直连 Mac、私有代理地址或 SSH 端口。
 - 原候选代理只有 GET/HEAD，不支持命令与上传，**不能原样复用**。P0.1 转发将按 `/bridge/v1/media/` 读取与明确的控制路由分别白名单，默认路径拒绝。
 - 专用账号拒绝 shell/TTY/本地转发/任意监听；host key 必须来自已核验管理连接，Mac 自行固定 known_hosts，不能盲信 ssh-keyscan。
 
-Mac 本地已存在的服务和素材需在启动后登记。本项目确定交付同仓库 Go 媒体 Agent；既有未知接口不能直接当成符合本规格，不擅自替换原服务或读取整个文件系统。
+Mac本地已有服务先保留；项目交付同仓库Go媒体执行边界，先核对真实接口再适配或增加所需能力，不把当前v1接口假定为完整bridge契约，也不直接覆盖原服务。
+
+用户转交的Mac侧检查：在线arm64，FFmpeg7.1已完整解码授权视频但不在默认PATH；默认PATH未发现ffprobe；127.0.0.1:19090本地健康/认证/列表200，9个媒体hash和HEAD200/no-store匹配；只有路径v1、没有contractVersion；云端隧道未验证。这是Mac侧报告，不是Windows云端实测。恢复后须核对媒体类型，不能把9个媒体当9段视频。
 
 配置键固定如下；路径/地址由环境决定，不能写死在源码或测试fixture：
 
 | 配置 | 默认/要求 |
 | --- | --- |
-| `APP_MEDIA_PROVIDER` | local/mac显式选择，历史行不受默认切换影响 |
-| `APP_MAC_BRIDGE_URL` | mac模式必填，仅经过授权的私有origin；请求体不得覆盖origin |
-| `APP_MAC_BRIDGE_TOKEN_FILE` | mac模式必填，源码外受限文件；不打印内容 |
-| `MAC_AGENT_ADDR` | 默认127.0.0.1:19090，仅loopback |
+| `APP_SAMPLE_CATALOG_FILE` / `APP_SAMPLE_MEDIA_ROOT` | 版本化公开登记清单/源码外媒体根；样例固定local，不接受任意下载URL |
+| `APP_MAC_BRIDGE_URL` | Mac三类入口启用时必填，仅授权私有origin；请求体不得覆盖origin |
+| `APP_MAC_BRIDGE_TOKEN_FILE` | Mac三类入口启用时必填，源码外受限文件；不打印内容 |
+| `MAC_AGENT_ADDR` | 默认127.0.0.1:19092，仅loopback，不抢占现有19090 |
+| `MAC_SOURCE_SERVICE_URL` / `MAC_SOURCE_TOKEN_FILE` | 默认本机127.0.0.1:19090的已存在只读服务；精确核对字段/鉴权，不复用桥接Token |
 | `MAC_MEDIA_ROOT` / `MAC_TOKEN_FILE` | 必填、源码外绝对路径；Token权限核验 |
 | `MAC_FFMPEG` / `MAC_FFPROBE` | 实际可执行文件路径，启动检查 |
+| `MAC_DATASET_API_URL` / `MAC_DATASET_ID` / `MAC_DATASET_API_KEY_FILE` | 公司接口仅在Mac配置，Key放外部文件；未配置不影响公共示例/授权素材 |
 | `MAC_OPERATION_LEASE_SECONDS` / `MAC_QUEUE_SIZE` | 默认120/8，正值且能力响应一致 |
 | `MAC_MAX_UPLOAD_BYTES` / `MAC_MAX_FRAMES` | 默认1GiB/1000，与云端配置核对 |
 | `MAC_ARCHIVE_TTL_SECONDS` | 默认3600，仅清理到期export资源 |
@@ -78,12 +85,14 @@ launchd配置模板只引用外部配置文件，不嵌入Token/私钥。云端�
 
 | 入口 | 请求/响应 | 行为 |
 | --- | --- | --- |
-| `GET /api/v1/media-sources/mac` | `cursor?` / `{items:[{sourceId,name,width,height,durationSeconds,sha256,sizeBytes}],nextCursor}` | 授权素材清单，不返回物理路径 |
+| `GET /api/v1/media-sources/mac` | cursor分页，items含sourceId/mediaKind/name/dimensions/durationSeconds/hash/sizeBytes，nextCursor | 授权素材清单，不返回物理路径；仅video可用于抽帧 |
 | `POST /api/v1/media-sources/mac/imports` | `{sourceId}` / 202 既有 Job | 注册 Mac 已存在媒体，仅保存元数据引用 |
-| `GET /api/v1/media-storage/status` | `{provider,available,reasonCode}` | 不返回 Token、内网地址；Mac 可用和云端 DB ready 分开 |
-| `POST /api/v1/videos` | 既有 multipart file / 201 Video | 配置为 mac 时流式转交，local 模式维持 P0 行为 |
+| `GET /api/v1/media-storage/status` | providers/sourceKinds分别的available/reasonCode | 不返回秘密；local/mac/dataset配置与DB ready分开 |
+| `POST /api/v1/videos` | 既有multipart file / 201 Video | 本地上传固定流式转交Mac；云端公开样例另走sample入口 |
 
 清单分页固定最大 20 项；`nextCursor` 为不透明值，无下一页为 null。已导入 source 以 provider+sourceId+sha256 防重复；同 key 内容发生变化必须重新登记新身份，不能重写已标注帧。
+
+sourceId由本项目Mac授权登记表生成稳定不透明ID。当前接口只有id，必须先核对含义并形成映射（sourceId→现有媒体身份/校验摘要）；两者字段名不直接互换，也不把catalogFileId或文件名当sourceId。记录跨服务重启保持稳定；未冻结映射不注册真实样本。媒体类型显式分video/image，抽帧入口仅列可解码视频。
 
 登记时在Mac本机将授权源文件复制到Agent受控的不可变媒体目录并核对源清单摘要，不通过云端传输、不使用可能被原路径修改的硬链接。需要计入这份本机副本的磁盘空间；源变化则拒绝登记，不覆盖旧版本。清单只含经授权的登记项，不自动扫描公司网络或整个Mac硬盘。
 
@@ -94,6 +103,8 @@ Mac 仅云端内部访问，响应包含 `contractVersion="1.0.0"`。所有 `/br
 | `GET /bridge/v1/capabilities` | `{contractVersion,agentVersion,mediaRootWritable,ffmpegAvailable,maxUploadBytes,maxFrames}` | 发布前版本、能力、上限必须匹配 |
 | `GET /bridge/v1/sources?cursor=…` | 同云端素材分页形状 | 只列明确授权的素材登记表 |
 | `POST /bridge/v1/registrations` | `{operationId,videoId,sourceId}` / `{operationId,videoId,mediaKey,sha256,sizeBytes,width,height,durationSeconds}` | 登记已存在视频；幂等 |
+| `GET /bridge/v1/dataset/lessons` | P0页参数 / 已观察的安全列表DTO | Mac调用公司API，不回传Key/签名URL |
+| `POST /bridge/v1/dataset/imports` | operationId/jobId/videoId/catalogFileId/name / 202操作 | Mac查询play-url并下载/探测/准备，云端Go发布业务记录 |
 | `POST /bridge/v1/uploads` | multipart file，headers `X-Operation-ID` / `X-Video-ID`；返回同 registration | 逐块写 Mac staging，完整 probe 后原子发布；断流拒绝 |
 | `POST /bridge/v1/extractions` | `{operationId,jobId,batchId,videoId,mediaKey,timestampsMs,deadlineSeconds}` / 202 `{operationId,status}` | 只接受 Go 已校验的有限时间戳计划 |
 | `GET /bridge/v1/operations/{operationId}` | `{operationId,status,progress,errorCode,manifest?}` | manifest 为完整批次，不暴露部分帧 |
@@ -105,7 +116,7 @@ Mac 仅云端内部访问，响应包含 `contractVersion="1.0.0"`。所有 `/br
 
 operationId/jobId/batchId/videoId/frameId 用现有稳定随机 ID；key 不允许斜杠/路径分隔符。帧 manifest 为 `{batchId,frames:[{frameId,timestampMs,width,height,mediaKey,sha256,sizeBytes}]}`；archive manifest 为 `{mediaKey,sha256,sizeBytes,expiresAt}`。所有数字必须有限且在限额内。
 
-operation/status不返回bridge Token或原始请求。云端Video增量返回 `storageProvider`（local/mac），Frame保留既有imageUrl语义；availability只从独立storage/status读取，不把内网地址暴露给前端。
+operation/status不返回bridge Token或原始请求。云端Video增量返回sourceKind与storageProvider，Frame保留既有imageUrl语义；availability从独立storage/status读取，不把内网地址暴露给前端。
 
 桥接执行状态为 queued/running/completed/failed/cancelled；云端 cancelling 由 Go 维护。completed 表示不可变输出已完整准备，不意味着数据库已经发布。错误形状 `{code,message,requestId}`，只含安全枚举：`INVALID_REQUEST/UNAUTHORIZED/RESOURCE_NOT_FOUND/RESOURCE_CHANGED/OPERATION_CONFLICT/QUEUE_FULL/NO_SPACE/PROCESS_FAILED/TIMEOUT/CLEANUP_FAILED`。云端映射到现有错误框架，业务 409 不能被媒体重试掩盖。
 
@@ -137,15 +148,13 @@ Media Agent 使用 manifest 文件记录执行事实，不管理 annotations/com
 - Mac 离线不影响云端 DB readiness。UI 独立显示“素材服务离线”，保留已经加载的图和编辑/草稿/保存；未加载图片不能进入可标注状态。新抽帧/上传/导出受影响，返回 503 `MEDIA_SOURCE_UNAVAILABLE`，取消待确认则展示安全错误。
 - 单次导出混用 local/mac 返回 422 `MIXED_MEDIA_PROVIDERS`，UI 提示按来源分开选择。旧资源仍可按 local 路径导出。
 
-公司真实 API 和大批数据自动抓取不在 P0.1 必需范围。云端不得直接借此拿到 Mac 的公司 API Key；现有公司接口未配置仍保持明确错误，不能把素材列表称成公司 API 验证通过。
-
-Mac模式下现有 `/dataset/lessons` 和 `/dataset/imports` 返回503 `DATASET_MODE_UNAVAILABLE`，UI说明当前使用Mac授权素材入口；不因残留公司API配置触发云端媒体下载。local兼容模式保持P0材料驱动适配器与合成验收。真实公司API在Mac侧的后续接入另行制定契约和许可，不扩大本波次。
+公司接口入口与Mac素材入口并存，P0.1必须实现材料驱动合成链路：Go→Mac→公司API/media→Mac文件。复用已观察分页/channel=4/play-url结构，真实内网结果单独not_run；不做批量自动抓取。公司Key仅在Mac，未配置返回DATASET_NOT_CONFIGURED；Mac离线返回MEDIA_SOURCE_UNAVAILABLE，不能使用全局模式禁用公司接口，也不能回退云端下载。
 
 ## 7. 云端媒体无文件写入的部署验收
 
 检查整条链：公网 Nginx → Go 上传/媒体/export handler → 私有转发 → sshd，而不是只看一个 Nginx 配置。
 
-- Mac 模式上传请求关闭前端网关与私有转发的 request buffering；媒体和 ZIP 关闭 response buffering/cache/store/temporary response file。控制路由单独限制 JSON 请求体。
+- 发往Mac的上传请求关闭前端网关与私有转发的request buffering；Mac媒体和ZIP关闭response buffering/cache/store/temporary response file。公开样例的云端文件属于允许范围；控制路由单独限制JSON请求体。
 - Go 不调用会落盘的 multipart convenience API，不生成 Mac 视频/帧/export 临时文件；内容和错误日志不打印媒体或 Token。
 - 转发容器只读根文件系统，临时运行目录为小型 tmpfs；不把“tmpfs”误认为可以容纳完整视频。按白名单暴露 POST 控制/上传，不用无限制代理。
 - 不设置允许上游通过 X-Accel 指令改写缓存/跳转的配置；GET/HEAD 和媒体 Range 路径通过专门测试。
@@ -157,7 +166,7 @@ Mac模式下现有 `/dataset/lessons` 和 `/dataset/imports` 返回503 `DATASET_
 
 原候选脚本的两项审核意见必须在 P0.1 采用：每次执行使用独立回滚快照，不用首次历史备份覆盖后续 SSH 改动；对真实来源条件检查并断言全部有效策略，并确认 root 管理策略前后不变。校验失败不得 reload。
 
-Mac Codex 在批准后核验系统架构、FFmpeg、授权素材目录、磁盘余量、服务现状；构建匹配 arm64/amd64 的 Go 二进制，在代码外配置媒体根、日志和 Token。launchd 管理 Agent 和 `ssh -N -T`，固定 host key、ExitOnForwardFailure、KeepAlive、有限间隔重连；不写入私钥到云端，不调整公司网络权限。
+Mac Codex在明确恢复后核验已报告arm64/FFmpeg7.1的绝对路径，查找配套ffprobe并实际运行；若缺失再按批准范围补齐，不能依赖默认PATH或把云端probe冒充Mac验证。记录当前v1字段/鉴权并建立sourceId映射，保留原19090服务，新增Go执行端使用19092。项目代码外配置媒体根/日志/Token，launchd管理执行端与隧道，固定host key和有限重连，不上传私钥/公司Key。
 
 常态服务需要 Mac 开机、联网且媒体期间不休眠。断线重连可常驻，但不包含反复执行 coding 的循环；Go 不因重连自动重启已失败任务。
 
@@ -166,7 +175,7 @@ Mac Codex 在批准后核验系统架构、FFmpeg、授权素材目录、磁盘�
 ## 9. 发布与回滚
 
 - 发布前保留旧 local 适配器、数据库和授权样本。Mac 上准备新版本媒体 Agent；云端合成检查通过后再启用真实样本连接。
-- `APP_MEDIA_PROVIDER=mac` 只决定新增上传/素材，不重解释历史行。历史行的 provider 逐条决定读取方式；不删除或自动转移旧媒体。
+- provider逐条决定读取方式，新public_sample固定local，upload/mac/dataset固定mac；历史legacy仍按原provider读。暂停/关闭Mac接入不影响公共样例，不删除或自动转移旧媒体。
 - 媒体功能回滚：停止新任务、关闭 Mac 入口，保留 schema、引用和标注，采用兼容 provider 的最后通过版本。对 Mac 资源显示离线，不假装 local 文件存在。
 - 移除隧道/转发后不能声称 Mac 图片还可读。回滚重新测试旧 local 闭环、认证、DB 保存和监控，保留失败现场。
 - DB 备份与 Mac 媒体备份分别执行、按 immutable key/hash 对齐。在恢复演练中核对至少一个有框完成帧、一个零框完成帧及完整 ZIP。

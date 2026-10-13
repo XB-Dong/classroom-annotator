@@ -1,11 +1,11 @@
 # P0.1 任务拆分与所有权
 
-执行说明：用户已批准启动P0.1；本文审核稿作为执行基线，R0审核收敛后冻结。历史“未启动”描述不再代表现行状态；进度见state.json。
+执行说明：用户已暂停P0.1；所有Worker已停止，0.2.0四入口修订等待审核与明确恢复。保留R0工作树与历史记录，不派发新实施任务。
 
 
-版本：0.1.0｜状态：待审核，任务未派发｜日期：2026-10-13
+版本：0.2.0｜状态：暂停后的修订稿；R0只读任务已中断，实施任务未派发｜日期：2026-10-13
 
-本稿是执行顺序和路径边界。批准启动后才创建 task packet/工作树/角色运行配置。执行说明与实际代码用英文，用户审核文档用中文。
+本稿是执行顺序和路径边界。已有三个外部P0.1工作树保留，无产品修改；恢复后更新到冻结规格SHA再派发英文task packet。文档采用中文。
 
 ## 1. 任务与文件地图
 
@@ -16,9 +16,10 @@
 | P01-SPEC-001 | Leader：本计划、specs/p0.1、契约增量、state；Astra只读审核 | 先核对Mac现状与兼容性，冻结规格SHA；审查SQL/媒体/回滚 |
 | P01-DB-IMPL-001 | Backend：`backend/internal/platform/store/{store,frames,jobs}.go`，新增`postgres.go`/测试；`annotations/repository.go`、`exports/repository.go` | DB001–005；实际PG读写、CAS、快照、任务锁 |
 | P01-DB-MIG-001 | Backend：新增`backend/migrations/{embed.go,00001_initial.sql,00002_media_refs.sql}`、`backend/cmd/migrate/main.go`、`backend/cmd/import-sqlite/main.go`、`backend/internal/migration/`及测试 | schema/依赖由Leader合入；DB006–007；只读来源、非空目标拒绝、恢复 |
+| P01-SAMPLE-IMPL-001 | Backend：新增`backend/internal/samples/`、`backend/cmd/seed-samples/main.go`及测试；Leader单写版本化`deploy/samples/catalog.json`/公开出处文档 | source/provider契约冻结；公开样例两条、幂等seed/import、真实原图与credits；媒体下载/运行数据在仓库外 |
 | P01-MEDIA-AGENT-001 | Backend/Mac执行端：新增`backend/cmd/media-agent/main.go`、`backend/internal/mediaagent/`及测试 | 桥接契约冻结；Mac001–006/009；禁止依赖业务store |
-| P01-MEDIA-CLOUD-001 | Backend：新增`backend/internal/mediabridge/`及测试；`media/service.go`、`extraction/service.go`、`exports/{archive,http}.go`、`httpapi/`适配 | DB门槛和Agent接口通过；媒体不同来源、幂等、快照、无临时文件 |
-| P01-FRONT-001 | Frontend：`frontend/src/features/videos/{ImportPanel,JobsPanel}.tsx`、新增`MacSourcePanel.tsx`；`shared/api/{client,types}.ts`；`annotation/FramePicker.tsx`、`export/ExportButton.tsx`及对应测试 | Leader同步增量契约；Mac入口、离线、混合来源提示，不重写Canvas |
+| P01-MEDIA-CLOUD-001 | Backend：新增`backend/internal/mediabridge/`及测试；media/extraction/exports/httpapi适配；dataset接口通过Mac调用 | 按资源provider路由；Mac源ID映射、公司适配合成链路/Key隔离；无非公开payload云端文件 |
+| P01-FRONT-001 | Frontend：ImportPanel/JobsPanel，新增PublicSamplePanel.tsx与MacSourcePanel.tsx；shared/api、FramePicker、ExportButton及对应测试 | 四入口同时可见；默认公共示例；来源与离线反馈，不重写Canvas |
 | P01-TEST-001 | Test：新增`tests/scripts/{postgres-check,mac-media-check,migration-check}.mjs`、`tests/e2e/`相关用例，调整已有storage/restart/dataset验证 | 规格冻结即设计测试；保留P0断言；独立PG与合成Agent，后补真实Mac/E2E |
 | P01-OPS-001 | Leader单写：`docker-compose.yml`、新增`deploy/compose.postgres.yml`/`compose.mac-bridge.yml`、`deploy/mac-bridge-nginx.conf.tpl`、`deploy/nginx.conf`、`.env.example`、`scripts/verify.{sh,ps1}`、`.github/workflows/verify.yml`、monitoring与部署文档 | 共享配置不得双写；保留门禁；真实容量/恢复/端口检查 |
 | P01-REVIEW-001 | Astra核心只读审查，OpenCode GLM代码/体验审查；Leader处理 | 不发真实媒体/凭证给GLM，逐条复现；问题修复不重置预算 |
@@ -62,6 +63,6 @@ R0/R1主要Backend+Test+Astra；R3/R4主要Backend+Frontend+Test。Astra用完�
 
 每轮审计至少包括：timestamp（+08:00）、wave/round/task、actor、scope/paths、requested/actual模型、specVersion/specSHA、sourceSHA、动作、命令退出码、evidenceRef、repairCount、blocker、Leader决定。日志记录可观察行为，不收集模型内部思维。
 
-每任务最多2轮修复，全波次最多6轮；外部GLM同一阻塞最多2次，每次600秒。任务换人/续跑继承计数。计划提案预算8小时，到达时报告并停止，不自动续成下一波次。
+每任务最多2轮修复，全波次最多6轮；外部GLM同一阻塞最多2次，每次600秒。任务换人/续跑继承计数。恢复预算沿用原8小时扣除已记录648秒R0，暂停不计开发；具体截止在明确恢复时写state，不自动重置预算。
 
 Mac 任务由用户转交 [交接稿](MAC-HANDOFF.md)；Leader 不在未获直接授权时跨聊天发送消息。共享代码由 Leader 合入GitHub；Mac只拉明确SHA，不在内网运行来源不清的随意脚本。

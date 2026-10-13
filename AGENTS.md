@@ -10,9 +10,9 @@ Decision `docs/decisions/0007-public-demo-entry.md` records the user's subsequen
 
 ## P0.1 planning gate
 
-The user explicitly started P0.1 on 2026-10-13. The previously approved review baseline below is now authorized; use P0.1 state for the active deadline and proceed through R0 review before implementation. P0 deadlines do not apply. The Leader may integrate and deploy verified P0.1 changes to the already authorized demo host.
+The user started P0.1 R0 on 2026-10-13 and then explicitly paused it for a four-source revision. `P0.1-PLAN.md` version0.2.0 and its specifications are now review drafts; only documentation revision is authorized. Do not install dependencies, implement features, migrate data, download/seed sample media, activate tunnels, spawn implementation workers, or deploy until the user explicitly resumes the revised plan. Receiving Mac status information does not resume coding. Preserve the prior R0 audit, external worktrees, budget usage, and repair counts; no product source change was made. P0's expired deadline does not apply.
 
-`P0.1-PLAN.md`, `specs/p0.1/`, and `docs/waves/P0.1/` are review drafts. The user has authorized documentation preparation only and explicitly withheld P0.1 execution. Do not install dependencies, implement PostgreSQL/media changes, migrate data, activate tunnels, or deploy until the user explicitly starts P0.1. Do not carry P0's expired deadline into this wave. Keep the stopped bridge candidate and external drafts separate from implemented source. After authorization, reload the approved P0.1 specification/task packet and retain the model, evidence, and repository-cleanliness policies below.
+The user has confirmed the revised storage boundary: public_sample media stays on the demo host; upload/mac/dataset media stays on Mac; PostgreSQL retains metadata, jobs and annotations for every source. Do not use a global provider mode to hide/disable company API. After resume, reload the approved version/task packet, verify the existing Mac v1/id contract and ffprobe paths, and freeze interfaces before implementation. The Leader alone integrates and deploys verified changes within the resumed scope.
 
 ## Scope and language
 

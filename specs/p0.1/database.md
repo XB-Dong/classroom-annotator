@@ -1,9 +1,9 @@
 # P0.1 数据库规格与迁移方案
 
-执行说明：用户已批准启动P0.1；本文审核稿作为执行基线，R0审核收敛后冻结。历史“未启动”描述不再代表现行状态；进度见state.json。
+执行说明：用户已暂停P0.1并要求修订四类入口；0.2.0稿等待审核与明确恢复，不能继续开发或迁移。状态见docs/waves/P0.1/state.json。
 
 
-版本：0.1.0｜状态：待审核，未实施｜日期：2026-10-13
+版本：0.2.0｜状态：暂停后的修订稿，待审核，未实施｜日期：2026-10-13
 
 ## 1. 基线和确定选型
 
@@ -19,8 +19,9 @@
 - ID 和 created_at 保留 TEXT，避免本次同时改变 ID/时间 API 的表示和旧记录值。timestamp_ms/revision 使用 BIGINT；尺寸 INTEGER；坐标/时长/进度 DOUBLE PRECISION。有限数值仍在应用边界校验。
 - 保留外键、复合 batch/video 关联、唯一 frame/batch/time、全局 annotation ID 唯一及状态 CHECK。新迁移不得用 `SELECT *` 依赖列位置。
 - 初始迁移 `00001_initial.sql` 表达 P0 业务结构；`00002_media_refs.sql` 添加视频/帧 `storage_provider`（local/mac，默认 local）、`media_sha256` 与 `media_size_bytes`。已有 storage_key 保留；Mac 用不透明 key，不放绝对路径或带凭证 URL。
-- 新增字段为内部信息；既有业务返回保持坐标、revision 与状态语义。前端所需 source/availability 字段作为有测试的兼容增量加入契约。
-- 视频另存 nullable `source_id` 用于Mac登记去重；新增 provider+source_id+media_sha256 唯一约束，local来源可为空。视频/帧 storage_key 唯一性改为 provider+storage_key，避免不同提供方的合法key冲突；已有local值不变。
+- 既有业务返回保持坐标、revision与状态语义，新增可见sourceKind/storageProvider供前端区分来源；内部storage_key/物理路径/凭证不返回。各入口availability由状态API按提供方和来源分别返回。
+- 视频新增source_kind（public_sample/upload/mac/dataset/legacy，旧记录默认legacy），nullable source_id用于稳定登记去重；以provider+source_kind+source_id+media_sha256唯一。upload可无source_id，Mac sourceId不是公司catalogFileId。视频/帧storage_key唯一性改为provider+storage_key，已有值不变。
+- 新增public_samples表管理有限预置sampleId、版本、作者/许可/页面、媒体摘要/元数据、缓存状态和可空video引用；不存视频bytes。样例seed/import按sampleId+version+hash幂等，不能重置已存在标注。source/provider映射为public_sample→local、upload/mac/dataset→mac，以CHECK和业务校验约束；legacy保持原provider。帧provider从所属video继承，不能由客户端覆盖。
 - 新增 `media_operations` 表保存云端 job ID、remote operation ID、provider、关联资源和安全状态；不用它承载媒体 bytes。表中不存 API Key、SSH key、Token、请求体或原始公司响应。
 - goose SQL 迁移随源码提交。`cmd/migrate` 显式执行，使用 PostgreSQL advisory lock 防止两个迁移命令并行；已执行文件不修改。server readiness 同时验证 DB ping 与预期 schema 版本，版本不符返回 503。
 

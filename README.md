@@ -6,7 +6,8 @@ P0 已交付人工标注闭环，并完成当前本地/合成材料范围的 14 
 
 - [项目宪法](CONSTITUTION.md)
 - [P0计划](P0-PLAN.md)
-- [P0.1计划：PostgreSQL与Mac媒体存储（待审核，未启动）](P0.1-PLAN.md)
+- [P0.1计划：PostgreSQL、四素材入口与Mac存储（已暂停，修订待审核）](P0.1-PLAN.md)
+- [公共示例与四类素材存储边界](specs/p0.1/sources-and-samples.md)
 - [后续波次前瞻：P1/P2](NEXT-WAVES.md)
 - [14项确认记录](docs/decisions/0001-confirmed-choices.md)
 - [Agent 角色、极高推理与负载安排](docs/decisions/0003-lean-agent-roles.md)
