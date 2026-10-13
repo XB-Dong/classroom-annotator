@@ -83,4 +83,14 @@ test -f backend/go.mod
   npm run mac-media
   if [[ "$e2e" == 1 ]]; then node scripts/run-api.mjs --e2e; else npm run local-api; fi
 )
+if [[ -n "${P01_RELEASE_ARTIFACT_DIR:-}" ]]; then
+  mkdir -p "$P01_RELEASE_ARTIFACT_DIR/artifacts" "$P01_RELEASE_ARTIFACT_DIR/frontend-dist"
+  cp "$P0_BACKEND_BINARY" "$P01_RELEASE_ARTIFACT_DIR/artifacts/backend-server"
+  cp "$P01_MIGRATE_BINARY" "$P01_RELEASE_ARTIFACT_DIR/artifacts/migrate"
+  cp "$P01_IMPORT_BINARY" "$P01_RELEASE_ARTIFACT_DIR/artifacts/import-sqlite"
+  cp "$P01_SEED_BINARY" "$P01_RELEASE_ARTIFACT_DIR/artifacts/seed-samples"
+  cp -R frontend/dist/. "$P01_RELEASE_ARTIFACT_DIR/frontend-dist/"
+  printf '%s\n' "$P0_EXPECTED_SHA" > "$P01_RELEASE_ARTIFACT_DIR/source-sha.txt"
+  (cd "$P01_RELEASE_ARTIFACT_DIR"; sha256sum artifacts/* > SHA256SUMS)
+fi
 echo "Verification evidence: $test_runtime"

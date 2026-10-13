@@ -53,4 +53,12 @@ jobs:
           P01_ACCEPTANCE_DATABASE_URL_FILE: ${{ runner.temp }}/p01-config/acceptance.url
           P01_IMPORT_DATABASE_URL_FILE: ${{ runner.temp }}/p01-config/import.url
           P01_ROLLBACK_DATABASE_URL_FILE: ${{ runner.temp }}/p01-config/rollback.url
+          P01_RELEASE_ARTIFACT_DIR: ${{ runner.temp }}/p01-release
         run: bash scripts/verify.sh --e2e
+      - name: Preserve verified Linux release artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: p01-linux-amd64-${{ github.sha }}
+          path: ${{ runner.temp }}/p01-release/
+          if-no-files-found: error
+          retention-days: 7
