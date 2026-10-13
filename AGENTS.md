@@ -6,6 +6,8 @@ Read `CONSTITUTION.md`, `P0-PLAN.md`, `docs/decisions/0001-confirmed-choices.md`
 
 For post-P0 demo operations, also read `docs/decisions/0006-authorized-cloud-demo.md` and `specs/cloud-demo-access.md`. The user has authorized the redacted handoff sample on the current demo cloud host. This supersedes the older Windows-only restriction for that host alone; never send real media or its access credentials to GLM. Preserve the optional password overlay during recovery/recreation.
 
+Decision `docs/decisions/0007-public-demo-entry.md` records the user's subsequent request for a public demo URL. Only the authenticated frontend HTTP entry may be additionally published; keep monitoring loopback and preserve the password overlay. Verify external reachability before claiming the public URL works.
+
 ## Scope and language
 
 - Keep code identifiers, comments, API fields, configuration keys, commit messages, and agent execution instructions in English.

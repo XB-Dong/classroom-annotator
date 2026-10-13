@@ -1,0 +1,9 @@
+# Public access includes the password gateway even if the separate overlay is omitted.
+services:
+  frontend:
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./deploy/password-access.conf:/etc/nginx/conf.d/access-control/password.conf:ro
+      - ${APP_AUTH_USERS_PATH:?set external htpasswd file}:/etc/nginx/app-secrets/htpasswd:ro
+    ports:
+      - "${PUBLIC_BIND_ADDRESS:-0.0.0.0}:${PUBLIC_HTTP_PORT:-80}:80"

@@ -1,5 +1,7 @@
 # P0 部署与恢复
 
+已授权的公网演示可以追加 `deploy/compose.public.yml`，在外部环境持久设置 `COMPOSE_FILE=docker-compose.yml:deploy/compose.password.yml:deploy/compose.public.yml`（Windows 使用分号）。须先配置并验证 password overlay；公网入口仍要求认证。可配置 `PUBLIC_BIND_ADDRESS/PUBLIC_HTTP_PORT`，默认新增 HTTP 80，同时保留 SSH loopback 8180。监控服务不受此 overlay 影响。发布/回滚也须保留三份配置，从云主机以外实际测试公网401/认证200后才交付地址。
+
 可选演示密码门禁：先在仓库外生成 Nginx 支持的 htpasswd 文件（例如用 `openssl passwd -apr1` 交互输入密码，保存为 `用户名:哈希`），在外部环境文件设置 `APP_AUTH_USERS_PATH` 为该文件的绝对路径，并持久设置 `COMPOSE_FILE=docker-compose.yml:deploy/compose.password.yml`（Linux/macOS；Windows Compose 使用分号分隔）。在发布根目录执行所有 Compose 命令，避免遗漏 overlay。运行 `docker compose --env-file /external/p0.env config --quiet`，检查 `run --rm --no-deps -T frontend nginx -t </dev/null` 后执行 `up -d --no-build frontend`；也可以显式使用完整 `-f docker-compose.yml -f deploy/compose.password.yml`，不能仅传 base 的 `-f`。原密码和哈希不得提交 Git；浏览器使用原生登录弹窗，`/health/live` 仅用于健康检查。可用 `node tests/scripts/access-check.mjs` 验证拒绝未认证请求；通过环境变量 `P0_DEMO_USER/P0_DEMO_PASSWORD/P0_DEMO_MEDIA_PATH` 运行正确凭证和图片验收。应用仍绑定 loopback，门禁不自动开放公网。
 
 目标是 Ubuntu / linux-amd64 / 2 CPU / 4 GiB 演示环境。Leader 负责实际发布。无 AI 服务、Docker socket 或公开业务端口。依赖 Docker Compose、已有的官方运行时镜像，以及本地构建的 Go 二进制和 Vite dist；云端不需要 Node/Go 构建镜像。
@@ -28,4 +30,4 @@ sha256sum /external/backups/p0/app-YYYYMMDDTHHMMSSZ.tgz
 
 恢复到新卷，保留原卷以便回滚：`docker volume create classroom-p0-app-restored`，然后 `docker run --rm --user 0 -v classroom-p0-app-restored:/restore -v /external/backups/p0:/backup:ro debian:bookworm-slim tar xzf /backup/app-YYYYMMDDTHHMMSSZ.tgz -C /restore`。在外部配置中将 `APP_DATA_VOLUME` 改为新卷，重建后端；核对已保存 revision、框、完成进度和导出图片字节。记录备份 SHA、应用 SHA、恢复检查结果。监控卷可独立备份；Grafana/Prometheus 配置已版本化。
 
-回滚保留上一版代码、dist、二进制和应用镜像。停止后端，备份当前卷，只切换业务镜像/必要数据配置，保留当前 `COMPOSE_FILE`、`APP_AUTH_USERS_PATH` 和门禁配置。回到门禁实施前的发布目录时，先复制当前 `nginx.conf`、`password-access.conf` 和 `compose.password.yml`；不能用旧 Nginx 配置覆盖认证 include。运行 `nginx -t`，通过同一外部环境文件 `up -d --no-build` 后重新执行 `access-check.mjs`（含真实媒体路径），核对 401、健康、已保存内容。数据库结构不兼容时使用上一版备份恢复到新卷；不要猜测迁移可逆。
+回滚保留上一版代码、dist、二进制和应用镜像。停止后端，备份当前卷，只切换业务镜像/必要数据配置，保留当前 `COMPOSE_FILE`、`APP_AUTH_USERS_PATH` 和门禁配置。回到门禁实施前的发布目录时，先复制当前 `nginx.conf`、`password-access.conf` 和 `compose.password.yml`；已启用公网时同时复制 `compose.public.yml`，避免持久配置引用的文件缺失。不能用旧 Nginx 配置覆盖认证 include。运行 `nginx -t`，通过同一外部环境文件 `up -d --no-build` 后重新执行 `access-check.mjs`（含真实媒体路径），核对 401、健康、已保存内容。数据库结构不兼容时使用上一版备份恢复到新卷；不要猜测迁移可逆。

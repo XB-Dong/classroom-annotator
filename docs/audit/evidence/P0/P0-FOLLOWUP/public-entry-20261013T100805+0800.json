@@ -1,0 +1,76 @@
+{
+  "timestamp": "2026-10-13T10:08:05.226000+08:00",
+  "scope": "user_requested_public_entry",
+  "authorizationDecision": "0007",
+  "businessImageSha": "f2d6d083efc0a7e8d3668f2593b0b22c3614c99b",
+  "publicOverlaySha256": "75f68baa2f9e0307d9d140f6e77cee29629685bf107996de771835dad4a604ca",
+  "httpPort": 80,
+  "existingLoopbackPort": 8180,
+  "externalHTTPChecks": {
+    "timestamp": "2026-10-13T02:06:00.433452+00:00",
+    "checks": [
+      {
+        "path": "/",
+        "authorized": false,
+        "status": 401,
+        "expected": 401
+      },
+      {
+        "path": "/health/live",
+        "authorized": false,
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "path": "/",
+        "authorized": true,
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "path": "/api/v1/videos",
+        "authorized": true,
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "path": "/",
+        "authorized": "wrong",
+        "status": 401,
+        "expected": 401
+      },
+      {
+        "path": "/media/frames/5975f9f7-21b1-4508-a823-b8294d9139b3.jpg",
+        "authorized": false,
+        "status": 401,
+        "expected": 401
+      },
+      {
+        "path": "/media/frames/5975f9f7-21b1-4508-a823-b8294d9139b3.jpg",
+        "authorized": true,
+        "status": 200,
+        "expected": 200
+      }
+    ],
+    "passed": true
+  },
+  "monitoringRemainsLoopback": true,
+  "finalServicesHealthy": 5,
+  "failedIntermediateExtends": "bind_sources_normalized_to_deploy/deploy_frontend_failed_to_start_then_repaired",
+  "review": {
+    "actor": "/root/p0_frontend_review",
+    "accepted": [
+      "include_public_overlay_in_rollback_copy_list"
+    ],
+    "rejected": [
+      "earlier_extends_overall_validity_based_on_target_only_check"
+    ],
+    "finalSourceReview": "PASS",
+    "reviewerRetractedEarlierConclusion": true,
+    "independentCloudRetest": false
+  },
+  "GLMNewReview": "not_run_provider_unavailable",
+  "GLMConfigurationChanged": false,
+  "privateMediaOrCredentialsCommitted": false,
+  "P1OrP2Started": false
+}
