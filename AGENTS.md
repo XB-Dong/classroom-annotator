@@ -8,6 +8,12 @@ For post-P0 demo operations, also read `docs/decisions/0006-authorized-cloud-dem
 
 Decision `docs/decisions/0007-public-demo-entry.md` records the user's subsequent request for a public demo URL. Only the authenticated frontend HTTP entry may be additionally published; keep monitoring loopback and preserve the password overlay. Verify external reachability before claiming the public URL works.
 
+## P0.1 planning gate
+
+The user explicitly started P0.1 on 2026-10-13. The previously approved review baseline below is now authorized; use P0.1 state for the active deadline and proceed through R0 review before implementation. P0 deadlines do not apply. The Leader may integrate and deploy verified P0.1 changes to the already authorized demo host.
+
+`P0.1-PLAN.md`, `specs/p0.1/`, and `docs/waves/P0.1/` are review drafts. The user has authorized documentation preparation only and explicitly withheld P0.1 execution. Do not install dependencies, implement PostgreSQL/media changes, migrate data, activate tunnels, or deploy until the user explicitly starts P0.1. Do not carry P0's expired deadline into this wave. Keep the stopped bridge candidate and external drafts separate from implemented source. After authorization, reload the approved P0.1 specification/task packet and retain the model, evidence, and repository-cleanliness policies below.
+
 ## Scope and language
 
 - Keep code identifiers, comments, API fields, configuration keys, commit messages, and agent execution instructions in English.
