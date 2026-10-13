@@ -74,7 +74,8 @@ await acceptance(async () => {
     AI_INTERNAL_TOKEN: fs.readFileSync(aiTokenFile, 'utf8'), PYTHONSTARTUP: '' }, pythonOrigin, '/health/ready',
     ['-m', 'uvicorn', 'classroom_ai.app:create_app', '--factory', '--host', '127.0.0.1',
       '--port', new URL(pythonOrigin).port, '--workers', '1', '--no-access-log']);
-  const resources = { samples: 0, goPeakRssKiB: 0, pythonPeakRssKiB: 0, combinedPeakRssKiB: 0,
+  const resources = { samples: 0, goPeakRssKiB: 0, followerPeakRssKiB: 0, pythonPeakRssKiB: 0, combinedPeakRssKiB: 0,
+    measuredProcesses: ['primary-go', 'test-follower-go', 'owned-python'],
     machine: { platform: os.platform(), arch: os.arch(), logicalCPUs: os.cpus().length,
       totalMemoryBytes: os.totalmem(), cpuModel: os.cpus()[0]?.model } };
   try {
@@ -90,10 +91,12 @@ await acceptance(async () => {
         catch { return 0; }
       };
       const goRSS = rss(backend.child.pid), pythonRSS = rss(python.child.pid);
+      const followerRSS = follower ? rss(follower.child.pid) : 0;
       resources.samples++;
       resources.goPeakRssKiB = Math.max(resources.goPeakRssKiB, goRSS);
+      resources.followerPeakRssKiB = Math.max(resources.followerPeakRssKiB, followerRSS);
       resources.pythonPeakRssKiB = Math.max(resources.pythonPeakRssKiB, pythonRSS);
-      resources.combinedPeakRssKiB = Math.max(resources.combinedPeakRssKiB, goRSS + pythonRSS);
+      resources.combinedPeakRssKiB = Math.max(resources.combinedPeakRssKiB, goRSS + pythonRSS + followerRSS);
     };
     sampleResources(); resourceTimer = setInterval(sampleResources, 1000); resourceTimer.unref();
     await new Promise(resolve => proxy.listen(Number(new URL(frontendOrigin).port), '127.0.0.1', resolve));
