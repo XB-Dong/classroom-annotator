@@ -3,7 +3,6 @@ x-logging: &logging
   driver: json-file
   options: { max-size: "10m", max-file: "3" }
 x-service: &service
-  platform: linux/amd64
   restart: unless-stopped
   logging: *logging
   security_opt: ["no-new-privileges:true"]
@@ -23,7 +22,7 @@ services:
       APP_VERSION: ${APP_VERSION:?set deployed full Git SHA}
       APP_FFMPEG: /usr/bin/ffmpeg
       APP_FFPROBE: /usr/bin/ffprobe
-      APP_MAX_UPLOAD_BYTES: ${APP_MAX_UPLOAD_BYTES:-1073741824}
+      APP_MAX_UPLOAD_BYTES: ${APP_MAX_UPLOAD_BYTES:-524288000}
       APP_QUEUE_SIZE: ${APP_QUEUE_SIZE:-8}
       APP_JOB_TIMEOUT_SECONDS: ${APP_JOB_TIMEOUT_SECONDS:-600}
       APP_MAX_FRAMES: ${APP_MAX_FRAMES:-1000}
@@ -33,9 +32,19 @@ services:
       APP_DATASET_API_KEY: ${APP_DATASET_API_KEY:-}
       APP_ALLOWED_PRIVATE_ORIGINS: ${APP_ALLOWED_PRIVATE_ORIGINS:-}
       APP_ALLOWED_MEDIA_ORIGINS: ${APP_ALLOWED_MEDIA_ORIGINS:-}
+      APP_AUTH_INVITE_CODE: ${APP_AUTH_INVITE_CODE:?set external invitation code}
+      APP_AUTH_TRUSTED_ORIGINS: ${APP_AUTH_TRUSTED_ORIGINS:?set exact browser origins}
+      APP_AUTH_COOKIE_SECURE: ${APP_AUTH_COOKIE_SECURE:-true}
+      APP_AUTH_TRUSTED_PROXIES: ${APP_AUTH_TRUSTED_PROXIES:-}
+      APP_AI_URL: ${APP_AI_URL:-http://ai:8090}
+      APP_AI_TOKEN_FILE: /app-secrets/ai-token
+      APP_HELP_API_URL: ${APP_HELP_API_URL:-}
+      APP_HELP_MODEL: ${APP_HELP_MODEL:-glm-4.7-flash}
+      APP_HELP_API_KEY_FILE: ${APP_HELP_API_KEY_FILE:-}
     volumes: ["app-data:/data"]
     expose: ["8080"]
-    mem_limit: 768m
+    mem_limit: 512m
+    memswap_limit: 512m
     cpus: "1.50"
     pids_limit: 128
     healthcheck:
@@ -71,7 +80,8 @@ services:
     command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.path=/prometheus", "--storage.tsdb.retention.time=3d", "--storage.tsdb.retention.size=512MB"]
     volumes: ["./deploy/prometheus.yml:/etc/prometheus/prometheus.yml:ro", "prometheus-data:/prometheus"]
     ports: ["127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"]
-    mem_limit: 512m
+    mem_limit: 256m
+    memswap_limit: 256m
     cpus: "0.35"
     pids_limit: 64
     healthcheck:
@@ -92,7 +102,8 @@ services:
       GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
     volumes: ["grafana-data:/var/lib/grafana", "./deploy/grafana/provisioning:/etc/grafana/provisioning:ro", "./deploy/grafana/dashboards:/var/lib/grafana/dashboards:ro"]
     ports: ["127.0.0.1:${GRAFANA_PORT:-3000}:3000"]
-    mem_limit: 768m
+    mem_limit: 256m
+    memswap_limit: 256m
     cpus: "0.35"
     pids_limit: 128
     healthcheck:
@@ -116,6 +127,30 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+  ai:
+    <<: *service
+    profiles: ["ai"]
+    image: ${AI_IMAGE:?set immutable inference image tag}
+    pull_policy: never
+    build:
+      context: .
+      dockerfile: deploy/ai.Dockerfile
+    environment:
+      AI_INTERNAL_TOKEN: ${AI_INTERNAL_TOKEN:?set matching external internal token}
+      AI_MODEL_PATH: /models/yolov9_n_wholebody34_0100_1x3x640x640.onnx
+    volumes:
+      - ${AI_MODEL_DIRECTORY:?set verified external model directory}:/models:ro
+    expose: ["8090"]
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: "1.00"
+    pids_limit: 64
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/health/ready', timeout=2)"]
+      interval: 20s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
 volumes:
   app-data: { external: true, name: "${APP_DATA_VOLUME:?create external app volume}" }
   prometheus-data: { external: true, name: "${PROMETHEUS_DATA_VOLUME:?create external Prometheus volume}" }

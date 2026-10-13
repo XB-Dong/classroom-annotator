@@ -1,0 +1,6 @@
+services:
+  backend:
+    environment:
+      APP_HELP_API_KEY_FILE: /app-secrets/help-api-key
+    volumes:
+      - ${HELP_API_KEY_HOST_FILE:?set restricted external provider key file}:/app-secrets/help-api-key:ro

@@ -1,6 +1,5 @@
 services:
   postgres:
-    platform: linux/amd64
     image: ${POSTGRES_IMAGE:?set verified immutable PostgreSQL 17 image}
     pull_policy: never
     restart: unless-stopped
@@ -35,7 +34,7 @@ services:
       APP_DB_QUERY_TIMEOUT_SECONDS: ${APP_DB_QUERY_TIMEOUT_SECONDS:-10}
       APP_DB_CONN_MAX_LIFETIME_SECONDS: ${APP_DB_CONN_MAX_LIFETIME_SECONDS:-1800}
       APP_DB_CONN_MAX_IDLE_SECONDS: ${APP_DB_CONN_MAX_IDLE_SECONDS:-300}
-    memswap_limit: 768m
+    memswap_limit: 512m
     ulimits:
       core: {soft: 0, hard: 0}
   frontend:
