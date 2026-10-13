@@ -1,5 +1,13 @@
+import { useEffect, useState } from 'react';
 import type { Frame } from '../../shared/api/types';
 const labels = { not_started: '未开始', in_progress: '标注中', completed: '已完成' };
+function FrameThumbnail({ frame, index }: { frame: Frame; index: number }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [frame.imageUrl]);
+  return failed
+    ? <span className="thumbnail-unavailable">缩略图暂不可用</span>
+    : <img src={frame.imageUrl} alt={`第 ${index + 1} 帧`} loading="lazy" onError={() => setFailed(true)} />;
+}
 export function FramePicker({
   frames,
   frameId,
@@ -26,7 +34,7 @@ export function FramePicker({
             disabled={busy}
             onClick={() => select(frame.id)}
           >
-            <img src={frame.imageUrl} alt={`第 ${index + 1} 帧`} loading="lazy" />
+            <FrameThumbnail frame={frame} index={index} />
             <span>
               <strong>帧 {String(index + 1).padStart(3, '0')}</strong>
               <small>采样时间 {(frame.timestampMs / 1000).toFixed(3)} 秒</small>

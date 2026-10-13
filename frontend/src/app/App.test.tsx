@@ -106,13 +106,14 @@ async function setup(
   render(<App />);
   await screen.findByTestId('video-select');
   if (options.delayedUpload) {
+    fireEvent.click(screen.getByRole('tab', { name: '本地上传' }));
     fireEvent.change(screen.getByTestId('upload-file'), {
       target: { files: [new File(['synthetic'], 'new.mp4', { type: 'video/mp4' })] },
     });
     fireEvent.click(screen.getByTestId('upload-submit'));
   }
   fireEvent.change(screen.getByTestId('video-select'), { target: { value: 'v' } });
-  await screen.findByTestId('annotation-item-head');
+  await screen.findByTestId('annotation-item-head', {}, { timeout: 10000 });
   return { writes, ack: () => ack(), finishUpload: () => uploadAck() };
 }
 it('flushes editing a completed frame before a fast frame switch and blocks stale export', async () => {

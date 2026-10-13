@@ -23,7 +23,13 @@ export async function request<T>(path: string, options?: RequestInit): Promise<T
       error.code ?? 'HTTP_ERROR',
       error.code === 'DATASET_NOT_CONFIGURED'
         ? '公司数据接口尚未配置，请联系部署管理员。'
-        : (error.message ?? `请求失败 (${response.status})`),
+        : error.code === 'MIXED_MEDIA_PROVIDERS'
+          ? '所选图片位于不同存储位置，请按存储位置分开选择后导出。'
+          : error.code === 'MEDIA_SOURCE_UNAVAILABLE'
+            ? 'Mac 媒体服务暂时离线，请稍后重试。'
+            : error.code === 'SAMPLE_UNAVAILABLE'
+              ? '示例尚未缓存或暂不可用，请稍后重试。'
+              : (error.message ?? `请求失败 (${response.status})`),
       error.requestId,
     );
   }

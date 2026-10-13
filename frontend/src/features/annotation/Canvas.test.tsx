@@ -1,8 +1,8 @@
-import { cleanup, render } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { useEffect, useImperativeHandle, useRef, type Ref } from 'react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import Konva from 'konva';
-import { HeadBox } from './Canvas';
+import { AnnotationCanvas, HeadBox } from './Canvas';
 import { applyNodeBox } from './nodeGeometry';
 const nodes = vi.hoisted(() => ({
   rect: undefined as Konva.Rect | undefined,
@@ -56,6 +56,46 @@ afterEach(() => {
   nodes.rect = undefined;
   nodes.transformer = undefined;
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
+it('shows a retry action when a frame image fails, then renders the real image after retry', () => {
+  const images: { onload?: () => void; onerror?: () => void; src?: string }[] = [];
+  class FakeImage {
+    onload?: () => void;
+    onerror?: () => void;
+    src?: string;
+    constructor() { images.push(this); }
+  }
+  vi.stubGlobal('Image', FakeImage);
+  vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
+  const frame = { id: 'frame', videoId: 'v', batchId: 'b', timestampMs: 0, width: 100, height: 100, imageUrl: '/media/frame.jpg', status: 'not_started' as const, revision: 0 };
+  const props = { frame, annotations: [], mode: 'select' as const, disabled: false, select: () => {}, change: () => {} };
+  render(<AnnotationCanvas {...props} />);
+  act(() => { images[0].onerror?.(); });
+  expect(screen.getByRole('alert').textContent).toContain('原图暂不可用');
+  fireEvent.click(screen.getByRole('button', { name: '重试加载原图' }));
+  expect(images).toHaveLength(2);
+  act(() => { images[1].onload?.(); });
+  expect(screen.getByTestId('annotation-image-bounds')).toBeTruthy();
+});
+it('keeps an already loaded image usable if a later image request fails', () => {
+  const images: { onload?: () => void; onerror?: () => void; src?: string }[] = [];
+  class FakeImage {
+    onload?: () => void;
+    onerror?: () => void;
+    src?: string;
+    constructor() { images.push(this); }
+  }
+  vi.stubGlobal('Image', FakeImage);
+  vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
+  const frame = { id: 'frame', videoId: 'v', batchId: 'b', timestampMs: 0, width: 100, height: 100, imageUrl: '/media/frame.jpg', status: 'not_started' as const, revision: 0 };
+  const props = { frame, annotations: [], mode: 'select' as const, disabled: false, select: () => {}, change: () => {} };
+  const view = render(<AnnotationCanvas {...props} />);
+  act(() => { images[0].onload?.(); });
+  view.rerender(<AnnotationCanvas {...props} frame={{ ...frame, imageUrl: '/media/frame-retry.jpg' }} />);
+  act(() => { images[1].onerror?.(); });
+  expect(screen.getByTestId('annotation-image-bounds')).toBeTruthy();
+  expect(screen.getByRole('status').textContent).toContain('已显示已加载的原图');
 });
 it('attaches installed Konva Transformer nodes when draw mode becomes select without reselection', () => {
   let model: [number, number, number, number] | null = null;

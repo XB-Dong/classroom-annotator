@@ -227,7 +227,7 @@ export function App() {
         </div>
         <div className="header-note">
           <span className="dot" />
-          人工标注工作台 <span className="version">P0</span>
+          人工标注工作台 <span className="version">P0.1</span>
         </div>
       </header>
       <div className="app-layout">
@@ -332,8 +332,8 @@ export function App() {
           ) : (
             <div className="empty intro">
               <div className="empty-icon">▧</div>
-              <h3>从一段课堂视频开始</h3>
-              <p>导入视频 → 按间隔抽帧 → 标注学生人头 → 导出训练数据</p>
+              <h3>从公共示例或自己的视频开始</h3>
+              <p>选择素材 → 按间隔抽帧 → 标注学生人头 → 导出训练数据</p>
               <p className="muted">仅已完成帧会进入 COCO 图片包，零人头帧也需显式完成。</p>
             </div>
           )}

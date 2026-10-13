@@ -18,11 +18,12 @@ describe('video import interfaces', () => {
       ),
     );
     render(<ImportPanel onVideo={onVideo} onJob={() => {}} />);
+    fireEvent.click(screen.getByRole('tab', { name: '本地上传' }));
     const file = new File(['synthetic'], 'synthetic.mp4', { type: 'video/mp4' });
     fireEvent.change(screen.getByTestId('upload-file'), { target: { files: [file] } });
     fireEvent.click(screen.getByTestId('upload-submit'));
     await waitFor(() => expect(onVideo).toHaveBeenCalledOnce());
-    const options = vi.mocked(fetch).mock.calls[0][1];
+    const options = vi.mocked(fetch).mock.calls.find(([url, options]) => url === '/api/v1/videos' && options?.method === 'POST')?.[1];
     expect((options?.body as FormData).get('file')).toBe(file);
   });
   it('shows an unconfigured company API without invented lessons', async () => {
@@ -37,7 +38,7 @@ describe('video import interfaces', () => {
       ),
     );
     render(<ImportPanel onVideo={() => {}} onJob={() => {}} />);
-    fireEvent.click(screen.getByText('公司数据'));
+    fireEvent.click(screen.getByRole('tab', { name: '公司接口' }));
     fireEvent.click(screen.getByText('加载公司课节'));
     expect(await screen.findByRole('alert')).toHaveProperty(
       'textContent',
@@ -79,13 +80,14 @@ describe('video import interfaces', () => {
     vi.stubGlobal('fetch', fetchMock);
     const job = vi.fn();
     render(<ImportPanel onVideo={() => {}} onJob={job} />);
-    fireEvent.click(screen.getByText('公司数据'));
+    fireEvent.click(screen.getByRole('tab', { name: '公司接口' }));
     fireEvent.click(screen.getByText('加载公司课节'));
     const buttons = await screen.findAllByText('导入学生全景 · 分段 1');
     expect(buttons).toHaveLength(1);
     fireEvent.click(buttons[0]);
     await waitFor(() => expect(job).toHaveBeenCalledOnce());
-    expect(JSON.parse(vi.mocked(fetch).mock.calls[1][1]?.body as string)).toEqual({
+    const importCall = vi.mocked(fetch).mock.calls.find(([url, options]) => url === '/api/v1/dataset/imports' && options?.method === 'POST');
+    expect(JSON.parse(importCall?.[1]?.body as string)).toEqual({
       catalogFileId: '42',
       name: '合成课程',
     });

@@ -95,6 +95,8 @@ export function AnnotationCanvas({
   const [size, setSize] = useState({ width: 700, height: 500 });
   const [image, setImage] = useState<HTMLImageElement>();
   const [imageError, setImageError] = useState(false);
+  const [imageRetry, setImageRetry] = useState(0);
+  const loadedFrameId = useRef<string>(undefined);
   const [draft, setDraft] = useState<Box>();
   const origin = useRef<{ x: number; y: number }>(undefined);
   useEffect(() => {
@@ -108,11 +110,15 @@ export function AnnotationCanvas({
   }, []);
   useEffect(() => {
     let active = true;
-    setImage(undefined);
+    if (loadedFrameId.current !== frame.id) setImage(undefined);
     setImageError(false);
     const img = new Image();
     img.onload = () => {
-      if (active) setImage(img);
+      if (active) {
+        loadedFrameId.current = frame.id;
+        setImage(img);
+        setImageError(false);
+      }
     };
     img.onerror = () => {
       if (active) setImageError(true);
@@ -121,7 +127,7 @@ export function AnnotationCanvas({
     return () => {
       active = false;
     };
-  }, [frame.imageUrl]);
+  }, [frame.id, frame.imageUrl, imageRetry]);
   const scale = Math.min(size.width / frame.width, size.height / frame.height);
   const width = frame.width * scale;
   const height = frame.height * scale;
@@ -163,9 +169,10 @@ export function AnnotationCanvas({
   const preview = draft && normalizeBox(draft, frame.width, frame.height);
   return (
     <div ref={container} className={`canvas-shell ${mode}`} data-testid="annotation-canvas">
-      {imageError ? (
+      {imageError && image && <div className="canvas-message" role="status">原图连接中断，已显示已加载的原图。标注可继续保存。 <button onClick={() => setImageRetry((value) => value + 1)}>重试加载原图</button></div>}
+      {imageError && !image ? (
         <div className="canvas-message" role="alert">
-          图片加载失败，请切换帧或刷新重试。
+          原图暂不可用，媒体服务可能离线。<button onClick={() => setImageRetry((value) => value + 1)}>重试加载原图</button>
         </div>
       ) : !image ? (
         <div className="canvas-message">正在加载原图…</div>

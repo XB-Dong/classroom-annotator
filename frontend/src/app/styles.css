@@ -165,6 +165,31 @@ h3 {
 .tabs {
   margin-bottom: 14px;
 }
+.source-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.source-tabs button {
+  min-width: 0;
+}
+.source-card {
+  padding: 10px;
+  border: 1px solid #e0e7f0;
+  border-radius: 8px;
+  margin: 10px 0;
+  overflow-wrap: anywhere;
+}
+.source-card strong {
+  display: block;
+}
+.source-links {
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+}
+.source-links a {
+  color: #2264d7;
+}
 .tabs button,
 .segmented button {
   background: transparent;
@@ -320,6 +345,14 @@ progress {
   border-radius: 4px;
   background: #dde5f0;
 }
+.frame-item .thumbnail-unavailable {
+  min-height: 48px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed #9aaac0;
+  border-radius: 4px;
+  color: #5b6b82;
+}
 .frame-item span {
   display: flex;
   flex-direction: column;
@@ -429,6 +462,15 @@ progress {
   font-size: 13px;
   padding: 25px;
   text-align: center;
+}
+.canvas-shell .canvas-message[role='status'] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  padding: 7px;
+  background: #253043;
 }
 .canvas-footer {
   display: flex;

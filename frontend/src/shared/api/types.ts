@@ -19,6 +19,45 @@ export interface Video {
   durationSeconds: number;
   status: string;
   createdAt: string;
+  sourceKind?: 'public_sample' | 'mac' | 'upload' | 'dataset' | 'legacy';
+  storageProvider?: 'local' | 'mac';
+}
+export interface PublicSample {
+  sampleId: string;
+  name: string;
+  description: string;
+  sourcePageUrl: string;
+  creator: string;
+  licenseName: string;
+  licenseUrl: string;
+  availability: 'ready' | 'unavailable';
+  width: number;
+  height: number;
+  durationSeconds: number;
+}
+export interface MacSource {
+  sourceId: string;
+  mediaKind: 'video' | 'image';
+  name: string;
+  width: number;
+  height: number;
+  durationSeconds?: number;
+  sha256: string;
+  sizeBytes: number;
+}
+export interface MacSourcePage {
+  contractVersion: '1.0.0';
+  items: MacSource[];
+  nextCursor: string | null;
+}
+export type SourceKind = 'public_sample' | 'mac' | 'upload' | 'dataset';
+export interface Availability {
+  available: boolean;
+  reasonCode: string | null;
+}
+export interface MediaStorageStatus {
+  providers: ({ provider: 'local' | 'mac' } & Availability)[];
+  sources: ({ sourceKind: SourceKind } & Availability)[];
 }
 export interface Job {
   id: string;
@@ -79,5 +118,5 @@ export interface DatasetPage {
   type: string;
   items: DatasetLesson[];
   total: number;
-  stats: Record<string, unknown>;
+  stats?: Record<string, unknown>;
 }
