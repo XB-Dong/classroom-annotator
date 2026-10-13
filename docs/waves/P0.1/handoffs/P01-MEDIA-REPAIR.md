@@ -1,6 +1,6 @@
 # P01-MEDIA-AGENT-001 修复交接
 
-状态：修复第 1/2 轮；沿用全局修复计数 2/6（含验收脚本修复 1 次）。代码提交 `b39d408be5e08e58fc89673ea56bd6595e732b7a`，基于原 Agent 提交 `4efd3e5398d6ec504a64f46f56e48530ad557117`。请求模型/推理强度为 `gpt-6-sol/high`；运行时实际 provider、model、reasoningEffort 无可核验元数据，均记为 `null`。
+状态：媒体修复第 2/2 轮已提交，沿用全局修复计数 4/6（含验收脚本修复 1 次）；待独立复审。第 1 轮代码提交 `b39d408be5e08e58fc89673ea56bd6595e732b7a`，基于原 Agent 提交 `4efd3e5398d6ec504a64f46f56e48530ad557117`。请求模型/推理强度为 `gpt-6-sol/high`；运行时实际 provider、model、reasoningEffort 无可核验元数据，均记为 `null`。
 
 ## 修复范围
 
@@ -25,3 +25,20 @@
 | Darwin arm64 | `D:/Project/cvte/runtime/p01-media-repair-evidence/media-agent-b39d408-darwin-arm64` | `E0841C2125F981D6F42A2F1D8B8D207E279C75CED9E32AC97287F61EE138A7D3` |
 
 尚未在 Mac 上启动或联调修复包；不宣称 Mac/云端完整链路通过。旧 `4efd3e5` Mac 包保持原样，待 Leader 独立复核后重新打包与激活。没有将真实媒体、公司凭证或运行时目录提交到 Git。
+
+## 第 2 轮：真实 HTTP 连接中断修复
+
+独立复审在真实 `net/http` TCP 连接中复现：上传请求发送合法 multipart 文件头及部分视频 bytes 后停止发送，取消接口超过 1 秒、租约/总时限后仍为 running、`Agent.Close` 等待客户端主动断开。外部证据在 `D:/Project/cvte/runtime/p01-media-rereview/`。本轮先把三项真实 TCP 测试纳入 Agent 包，原 `b39d408` 上运行得到 3 项失败、退出码 1；随后修复并补充独立的租约到期及到期前 renew→cancel 测试。
+
+修复代码提交：`0dff5895c87b2bc4ed2898cfecd8883f155b1378`。取消或到期时先通过 `http.ResponseController.SetReadDeadline` 使底层网络读取返回，再关闭请求体；若响应包装器不支持读 deadline，尝试 Hijack 并关闭连接，最后关闭请求体。已有 `httptest`/`io.Pipe` 退路仍通过。操作只在接收停止和 staging 清理后进入 cancelled/failed，租约到期保留 `TIMEOUT`，关闭时保留 `PROCESS_FAILED`。未更改上传意图、内容摘要、接收上限或原有清理归属逻辑。
+
+验证：真实 TCP 的 cancel、总 deadline、仅租约到期、关闭和续租后取消 5 项通过；包含这些回归及实际 FFmpeg 9 MP4→JPEG 抽帧的 `go test -p 1 ./internal/mediaagent -count=1 -timeout=180s -v` 退出码 0；`go vet -p 1 ./internal/mediaagent ./internal/mediaapi ./cmd/media-agent` 退出码 0；两平台构建退出码 0。Windows 测试不代表 Mac 实机联调。直接使用标准 `net/http` 响应写入器的中断已由真实 TCP 证明；对同时不提供读 deadline 和 Hijack、且请求体 Close 无法唤醒读取的第三方包装器，没有通过本轮证明中断能力，部署时不可据此宣称支持。
+
+第 2 轮构建使用 `-ldflags '-X main.version=0dff5895c87b2bc4ed2898cfecd8883f155b1378'`，Go 1.25.5，产物在仓库外：
+
+| 目标 | 文件 | SHA-256 |
+| --- | --- | --- |
+| Windows amd64 | `D:/Project/cvte/runtime/p01-media-repair2-evidence/media-agent-0dff589-windows-amd64.exe` | `819308A5EDC93F42E1E5DC841ADA9141A42F6619E9F105D5C93F4539EA780F57` |
+| Darwin arm64 | `D:/Project/cvte/runtime/p01-media-repair2-evidence/media-agent-0dff589-darwin-arm64` | `1EF90FC8A7F6A773EA166E53003A78C07F58F7FC25A9FE5D6D570782D8A7F5D0` |
+
+本轮尚未在 Mac 启动或部署。必须先由 Leader 完成独立复审，再决定重新打包与激活；不能继续增加媒体修复轮次或重置全局计数。
