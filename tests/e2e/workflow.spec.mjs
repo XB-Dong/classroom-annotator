@@ -130,11 +130,13 @@ async function openPreparedFrame(page, request) {
   await expect(canvas).toBeVisible();
   const bounds = await canvas.boundingBox();
   const point = (x, y) => ({ x: bounds.x + bounds.width * x, y: bounds.y + bounds.height * y });
-  return { frame: frames[0], point };
+  return { frame: frames[0], point, bounds };
 }
 
-test('P0-SAVE-001 real server acknowledgement cannot discard a newer canvas edit', async ({ page, request }) => {
-  const { frame, point } = await openPreparedFrame(page, request);
+test('P0-SAVE-001 real server acknowledgement cannot discard a newer canvas edit', async ({ page, request }, testInfo) => {
+  const { frame, point, bounds } = await openPreparedFrame(page, request);
+  const evidence = { dataType: 'synthetic', initialBounds: bounds };
+  let ackReleased = false;
   let first = true;
   let acknowledge;
   let captured;
@@ -148,16 +150,43 @@ test('P0-SAVE-001 real server acknowledgement cannot discard a newer canvas edit
     await release; // Delay only acknowledgement while user makes a second edit.
     await route.fulfill({ response });
   });
-  await page.getByTestId('draw-mode').click();
-  await drag(page, point(0.1, 0.1), point(0.3, 0.3));
-  await sent;
-  await drag(page, point(0.6, 0.1), point(0.8, 0.3));
-  acknowledge();
-  const final = await persisted(request, frame.id, state => state.annotations.length === 2 && state.revision >= 2);
-  await page.reload();
-  await page.getByTestId('video-select').selectOption(frame.videoId);
-  await page.getByTestId(`frame-item-${frame.id}`).click();
-  for (const annotation of final.annotations) await expect(page.getByTestId(`annotation-item-${annotation.id}`)).toBeVisible();
+  try {
+    await page.getByTestId('draw-mode').click();
+    await drag(page, point(0.1, 0.1), point(0.3, 0.3));
+    await sent;
+    const committed = await snapshot(request, frame.id);
+    evidence.firstServerSnapshot = { annotations: committed.annotations.length, revision: committed.revision };
+    const canvas = page.getByTestId('annotation-canvas').locator('.konvajs-content');
+    await expect(canvas).toBeVisible();
+    const currentBounds = await canvas.boundingBox();
+    expect(currentBounds).toBeTruthy();
+    const currentPoint = (x, y) => ({ x: currentBounds.x + currentBounds.width * x, y: currentBounds.y + currentBounds.height * y });
+    const cachedPoints = { start: point(0.6, 0.1), end: point(0.8, 0.3) };
+    const newPoints = { start: currentPoint(0.6, 0.1), end: currentPoint(0.8, 0.3) };
+    evidence.currentBounds = currentBounds;
+    evidence.cachedPoints = cachedPoints;
+    evidence.cachedPointsInsideCurrentImage = Object.fromEntries(Object.entries(cachedPoints).map(([name, p]) => [name,
+      p.x >= currentBounds.x && p.x <= currentBounds.x + currentBounds.width &&
+      p.y >= currentBounds.y && p.y <= currentBounds.y + currentBounds.height]));
+    evidence.newPoints = newPoints;
+    await drag(page, newPoints.start, newPoints.end);
+    evidence.localAnnotationCountAfterSecondGesture = await page.locator('[data-testid^="annotation-item-"]').count();
+    await expect(page.locator('[data-testid^="annotation-item-"]')).toHaveCount(2);
+    evidence.localAnnotationCountBeforeAck = await page.locator('[data-testid^="annotation-item-"]').count();
+    acknowledge(); ackReleased = true;
+    const final = await persisted(request, frame.id, state => {
+      evidence.finalServerSnapshot = { annotations: state.annotations.length, revision: state.revision };
+      return state.annotations.length === 2 && state.revision >= 2;
+    });
+    await page.reload();
+    await page.getByTestId('video-select').selectOption(frame.videoId);
+    await page.getByTestId(`frame-item-${frame.id}`).click();
+    for (const annotation of final.annotations) await expect(page.getByTestId(`annotation-item-${annotation.id}`)).toBeVisible();
+  } finally {
+    acknowledge();
+    evidence.ackReleasedBeforeCleanup = ackReleased;
+    await testInfo.attach('delayed-ack-geometry', { body: Buffer.from(JSON.stringify(evidence, null, 2)), contentType: 'application/json' });
+  }
 });
 
 test('P0-SAVE-001 stale browser revision shows conflict and preserves server snapshot', async ({ page, request }) => {

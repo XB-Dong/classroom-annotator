@@ -1,5 +1,9 @@
 # Agent Instructions
 
+## P1 necessary continuation (latest user override)
+
+On 2026-10-14 after R11, the user explicitly removed the additional-round limit and authorized necessary further rounds to close P1: "不再给你限制追加限制，收束P1，可以进行必要的追加轮次". Continue existing P1 repair, complete verification and gated delivery without asking for a new allocation each round. The original8 and approved additional3 rounds remain historical; never reset their counters or erase failures. There is no active fixed wave-round cap. Keep each attempt tied to a concrete investigated cause and actual evidence; stop unchanged/infinite retries, reassess after repeated failures. Do not add features or enter P2. Leader alone integrates/deploys. All release gates, requested models, no-tunnel/no-Windows-Docker/single-heavy-process rules remain active.
+
 ## P1 bounded delivery continuation (latest user override)
 
 On 2026-10-14 after R8 resolved its three target failures and exposed a later test phase, the user explicitly approved bounded P1 completion: at most three further full-CI repair rounds, at most two fixes per new root cause, retained cumulative audit, unchanged release gates, and no new features. Preserve the original 8-round allocation and Test3 exception as history; the active wave maximum is now11. Count continued task repairs cumulatively without resetting them; the latest per-new-cause policy governs this additional allocation. Leader alone integrates/deploys. Do not enter P2 or silently exceed the three additional rounds.

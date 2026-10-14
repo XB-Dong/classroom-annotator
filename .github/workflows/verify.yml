@@ -65,6 +65,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Common verification
         env:
+          TMPDIR: ${{ runner.temp }}
           P01_GO_DATABASE_URL_FILE: ${{ runner.temp }}/p01-config/go.url
           P01_DATABASE_URL_FILE: ${{ runner.temp }}/p01-config/postgres.url
           P01_ACCEPTANCE_DATABASE_URL_FILE: ${{ runner.temp }}/p01-config/acceptance.url

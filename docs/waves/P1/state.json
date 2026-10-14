@@ -19,7 +19,7 @@
   "proposedP1MaxRepairRounds": 8,
   "maxRepairRoundsPerTask": 2,
   "repairBudgetApproved": true,
-  "repairRoundsUsed": 11,
+  "repairRoundsUsed": 12,
   "requestedLeaderModel": "gpt-6.1-sol",
   "requestedLeaderReasoningEffort": "high",
   "actualLeaderModel": null,
@@ -28,12 +28,12 @@
   "nativeWorkerLimit": 3,
   "localHeavyProcessLimit": 1,
   "tunnelPolicy": "retire_during_authorized_p1_no_tunnel_runtime_dependency",
-  "productAcceptanceStatus": "R8_R9_R10_targets_green_R11_obsolete_offline_source_assertion_pending",
+  "productAcceptanceStatus": "R11_all_api_and_7_of_8_browser_passed_delayed_ack_case_failed_R12_diagnostic_patch_pending",
   "deploymentStatus": "protected_P0_preserved_P1_not_deployed",
   "realApiVerificationStatus": "bounded_help_provider_timeouts_windows_and_cloud",
   "macRealDeploymentStatus": "not_run_deferred",
   "planReviewStatus": "previous_readonly_architecture_review_plus_leader_help_addendum_self_review_not_product_verification",
-  "reportRef": "docs/audit/reports/report-20261014T101917+0800.md",
+  "reportRef": "docs/audit/reports/report-20261014T111206+0800.md",
   "preparedAt": "2026-10-14T01:24:44.359872+08:00",
   "reviewDispositionRef": "docs/waves/P1/PLAN-REVIEW-DISPOSITION.md",
   "preparationReportRef": "docs/audit/reports/report-20261014T012444+0800.md",
@@ -52,9 +52,9 @@
   "authorizationText": "P1启动。",
   "authorizationRecordedAt": "2026-10-14T01:31:45.886062+08:00",
   "planApproved": true,
-  "maxRepairRoundsForWave": 11,
-  "round": "R11",
-  "lastCheckpointAt": "2026-10-14T10:19:17.767447+08:00",
+  "maxRepairRoundsForWave": null,
+  "round": "R12",
+  "lastCheckpointAt": "2026-10-14T11:12:06.015567+08:00",
   "approvedPlanCommit": "5fcb41d9f2950235293992e2bd1707684b69ef1e",
   "taskRepairCounts": {
     "P1-FRONT-001": 2,
@@ -63,7 +63,7 @@
     "P1-AI-SERVICE-001": 1,
     "P1-AI-REVIEW-001": 2,
     "P1-BASE-001": 1,
-    "P1-TEST-001": 6
+    "P1-TEST-001": 7
   },
   "localBuildPolicy": "one_heavy_process_use_named_mutex",
   "specStatus": "approved_design_runtime_contract_freeze_in_r0",
@@ -194,8 +194,19 @@
       ],
       "reason": "Align inherited offline-public test with approved P1 retirement: active local_directory replaces mac; retain retired provider status and real restart/extract/JPEG/annotation/credited ZIP closure",
       "redEvidence": "runtime/p1-preparation/ci-38498889938/11_Common verification.txt: public-samples.spec.mjs64 TypeError available of undefined",
-      "greenEvidence": "pending_full_CI",
+      "greenEvidence": "CI38500890486 offline public restart passed; later delayed ACK browser failed",
       "limitsPreserved": "No product change; restart and complete public annotation/COCO/JPEG/attribution assertions remain"
+    },
+    {
+      "round": 12,
+      "rootTasks": [
+        "P1-TEST-001"
+      ],
+      "reason": "Measure current canvas geometry during held real ACK and require two local boxes before release; align actual CI temp path with evidence upload glob",
+      "redEvidence": "runtime/p1-preparation/ci-38500890486/11_Common verification.txt; 2_checks.txt line1724",
+      "greenEvidence": "pending_full_CI",
+      "diagnosticLimit": "R11 trace absent; geometry is a source-supported hypothesis, not proved prior runtime cause",
+      "limitsPreserved": "Real first committed PUT; held ACK; second real drag; two local boxes before release; final2/revision>=2/reload same IDs; no production change"
     }
   ],
   "cloudRetirement": {
@@ -206,19 +217,18 @@
   },
   "tlsStatus": "issued_certificate_bundle_copied_nginx_not_installed",
   "latestCI": {
-    "sha": "29108b2b37d46a405b940e1d366ff04e1aa49413",
-    "runId": 38498889938,
-    "status": "failed_later_offline_public_sample_phase",
-    "r8Target3": "passed",
-    "r9Target2": "passed",
-    "r10SchedulerLoss": "passed",
+    "sha": "8918262e29f8a2ae021499e4ab4baf013b6d3199",
+    "runId": 38500890486,
+    "status": "failed_delayed_ack_browser_case",
     "apiSuitePassed": 22,
     "fixtureSuitePassed": 14,
-    "failedChecks": [
-      "offline_public_sample_dereferences_removed_active_mac_source"
-    ],
-    "browser": "not_run",
-    "multiarchContainers": "not_run"
+    "browserPassed": 7,
+    "browserFailed": 1,
+    "fiveContextTenMinuteWorkload": "passed",
+    "offlinePublicRestart": "passed",
+    "aiStopManualDegradation": "not_reached",
+    "multiarchContainers": "not_run",
+    "rawArtifactEvidence": "missing_due_proved_TMPDIR_upload_path_mismatch"
   },
   "schemaVersion": 8,
   "cloudReleasePreparation": {
@@ -258,7 +268,7 @@
     "authorization": "好，批准了，先将你的P1这个干完。"
   },
   "publicationStatus": {
-    "codeSha": "29108b2b37d46a405b940e1d366ff04e1aa49413",
+    "codeSha": "8918262e29f8a2ae021499e4ab4baf013b6d3199",
     "branch": "p1/leader",
     "remoteMainChanged": false
   },
@@ -292,6 +302,36 @@
       "scheduler_transitive_lock_barrier": 1,
       "scheduler_fault_restored_before_watch_detection": 1,
       "offline_public_test_obsolete_active_mac_source": 1
+    },
+    "supersededBy": "necessaryContinuation"
+  },
+  "necessaryContinuation": {
+    "approved": true,
+    "authorization": "不再给你限制追加限制，收束P1，可以进行必要的追加轮次",
+    "recordedAt": "2026-10-14T11:12:06.015567+08:00",
+    "activeFixedRoundCap": null,
+    "scope": "Close existing P1, investigated necessary repairs, unchanged acceptance gates, no new features",
+    "historicalCountersRetained": true,
+    "additionalRoundsUsed": 1,
+    "newRootCauseAttempts": {
+      "delayed_ack_canvas_geometry": 1,
+      "ci_evidence_temp_path_mismatch": 1
     }
+  },
+  "glmR11CodeReview": {
+    "status": "timeout_not_pass",
+    "durationSeconds": 300,
+    "completeFileReads": 4,
+    "evidence": "runtime/glm/evidence/P1-R11-local-contract"
+  },
+  "glmBrowserModality": {
+    "model": "glm-4.7-flash",
+    "imageProbeStatus": 400,
+    "errorCode": 1210,
+    "allowedContentTypes": [
+      "text"
+    ],
+    "actualBrowserStatus": "not_run",
+    "compatibility": "real DOM/box/mouse tools with image responses omitted; Root separately inspects saved images"
   }
 }
