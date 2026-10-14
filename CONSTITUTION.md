@@ -1,7 +1,9 @@
 # 教室人员标注平台：项目宪法
 
-版本：0.7.1｜状态：P0已交付；P0.1已收束partial；P1计划待审核｜日期：2026-10-14
+版本：0.8.0｜状态：P1快速收束partial；P2已获授权并启动｜日期：2026-10-14
 工作时区：Asia/Shanghai（UTC+08:00）
+
+当前状态以 [P2计划](docs/plans/P2-PLAN.md)、[P2状态](docs/waves/P2/state.json) 和 [决策0011](docs/decisions/0011-p2-adaptive-quality-and-presentation.md) 为准。旧章节里的准备期、Windows路径和已过期截止属于历史，不覆盖本次启动指令。P1仍为partial，生产迁移不在本次范围。
 
 ## 1. 任务与目标
 

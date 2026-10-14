@@ -1,3 +1,7 @@
+# Current P2 authorization (2026-10-14)
+
+The human explicitly authorized P2 planning followed by autonomous startup without another approval. P2 is active. Load docs/plans/P2-PLAN.md, specs/p2/*.md, docs/waves/P2/TASK-PACKET.md and docs/waves/P2/state.json. This supersedes historical P0/P1 preparation/start/deadline/no-P2 instructions below for the current wave only. Keep P1 partial_closed_fast_path. No production migration, tunnel restoration or private-media disclosure. Use native development subagents with isolated external worktrees as specified in Coordination. Product DeepSeek credentials are only for document help, not a replacement for independent GLM review. Record unavailable gates truthfully and continue independent authorized work.
+
 # Agent Instructions
 
 ## P1 authorized GLM fallback for closure

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "wave": "P2",
+  "planVersion": "0.1.0",
+  "status": "running",
+  "executionAuthorized": true,
+  "implementationStarted": false,
+  "timezone": "Asia/Shanghai",
+  "startedAt": "2026-10-14T19:07:17+08:00",
+  "deadline": null,
+  "authorizationText": "先完成p2计划和相关md等等沉淀，不需我批准，只要确认可以启动p2自行启动。现在开始吧。",
+  "baselineRemoteMainSha": "033de6c2fbb48a5df2ca1b4f7dcfece41a22d6da",
+  "baselineProductSha": "04f56004aa616c430059c7f8ae24a06f07f46a39",
+  "localSnapshotBaselineCommit": "84ab441",
+  "gitHistoryStatus": "local_snapshot_repository_not_remote_clone",
+  "githubSyncStatus": "blocked_missing_git_credentials_connector_404",
+  "p1Status": "partial_closed_fast_path",
+  "planRef": "docs/plans/P2-PLAN.md",
+  "requestedLeaderModel": null,
+  "actualLeaderModel": null,
+  "actualLeaderReasoningEffort": null,
+  "nativeWorkerRequestedModel": "gpt-6.1-sol",
+  "nativeWorkerRequestedReasoningEffort": "high",
+  "actualNativeWorkerModel": null,
+  "localHeavyProcessLimit": 1,
+  "productionOperationsAuthorized": false,
+  "tasks": {
+    "P2-FRONT-001": "ready",
+    "P2-QC-001": "ready",
+    "P2-TEST-001": "ready",
+    "P2-REPO-001": "running",
+    "P2-DECK-001": "planned"
+  },
+  "options": {
+    "smartExtraction": "design_only_deferred",
+    "adjacentPropagation": "design_only_deferred",
+    "exportQualityCheck": "approved_in_scope"
+  },
+  "independentGlmReviewStatus": "not_run_tooling_unverified",
+  "repairCounts": {},
+  "evidenceRefs": []
+}

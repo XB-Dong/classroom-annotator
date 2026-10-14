@@ -1,0 +1,23 @@
+# P2 自适应与渐进交互规格
+
+版本：0.1.0｜P2-UI-001 / P2-UX-001
+
+## 原则与参考
+
+以主任务画布为中心，素材/复核为 supporting pane。常用操作稳定可见，低频统计/批量操作/详细设置使用有语义的展开控件。保留当前纸白、墨色、蓝色主操作的视觉，不引入整套 UI 框架。
+
+参考：[W3C Reflow](https://www.w3.org/WAI/WCAG21/Understanding/reflow)、[W3C C33 长字符串换行](https://www.w3.org/WAI/WCAG22/Techniques/css/C33)、[Material canonical layouts](https://m3.material.io/foundations/layout/canonical-examples/overview)、[NN/g Progressive Disclosure](https://www.nngroup.com/articles/progressive-disclosure/)。采用这些原则不等于取得 WCAG 全站认证。
+
+## 可观察行为
+
+- UI-1：320/360/390/768/1024/1280/1440/1920 px 下整页无非预期横滚，文本和输入不得压出容器。画布原始内容可有自己的平移范围。
+- UI-2：高度 568/720/900 px 与 200% 文本放大时，保存/完成/导出/错误可通过正常纵向滚动访问，无固定层遮挡。
+- UI-3：长中文文件名、无空格长串、长账号名、错误文案、引用链接换行；主要动作文字完整，省略名称需可访问全名。
+- UI-4：素材栏和复核栏按可用宽度重排，宽屏保持大画布；缩小再放大不丢草稿、不改保存坐标、不隐式提交。
+- UI-5：指南展开不遮挡工作区；登录/注册、空库、选视频、选帧、忙碌、离线/失败、409、风险列表均检查。
+- UX-1：进阶默认收起，展开状态有 accessible name 和键盘支持；隐藏不能阻止关键失败/保存反馈出现。
+- UX-2：尺寸测试使用实际浏览器几何测量和截图，不以 jsdom 测试或固定一张截图宣称全覆盖。
+
+## 测试分层
+
+组件验证展开行为/焦点和操作不丢失；Playwright 合成 API 固定状态独立验证视口、长文案、按钮可达、overflow 与交叠；另在真实本机 Go/PG/媒体链路跑核心标注/保存/导出。模拟 UI 场景不算真实模型候选验收。不同浏览器未执行时标 not_run。
