@@ -522,13 +522,16 @@ export function Editor({ frame, draftScope, onSaved, onController, onStateChange
         <button className="danger full" disabled={!selected || locked} onClick={remove}>
           删除选中框
         </button>
-        <div className="shortcut-help">
-          Delete 删除选中框
-          <br />
-          Ctrl / ⌘ + Z 撤销
-          <br />
-          Shift + Ctrl / ⌘ + Z 重做
-        </div>
+        <details className="shortcut-help">
+          <summary>键盘快捷键</summary>
+          <p>
+            Delete 删除选中框
+            <br />
+            Ctrl / ⌘ + Z 撤销
+            <br />
+            Shift + Ctrl / ⌘ + Z 重做
+          </p>
+        </details>
       </aside>
     </div>
   );

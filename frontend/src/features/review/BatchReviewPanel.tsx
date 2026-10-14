@@ -14,7 +14,6 @@ export function BatchReviewPanel({
   beforeStart: () => Promise<boolean>;
   onJob: (job: Job) => void;
 }) {
-  const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
@@ -58,10 +57,8 @@ export function BatchReviewPanel({
   }
   return (
     <section className="batch-review">
-      <button aria-expanded={open} onClick={() => setOpen(!open)}>
-        批量 AI 预标注
-      </button>
-      {open && (
+      <details>
+        <summary>批量 AI 预标注</summary>
         <div className="batch-review-options">
           <p>最多 20 张；只生成候选，逐项人工审核后才能完成或导出。已完成图片不参与。</p>
           <button
@@ -95,7 +92,7 @@ export function BatchReviewPanel({
             {busy ? '正在提交批量 AI…' : `开始批量 AI（${chosen.length} 张）`}
           </button>
         </div>
-      )}
+      </details>
       {error && (
         <p className="notice error" role="alert">
           {error}

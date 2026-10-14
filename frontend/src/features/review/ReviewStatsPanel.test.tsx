@@ -5,6 +5,18 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
 });
+it('shows a statistics failure outside the collapsed statistics disclosure', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => {
+      throw new Error('synthetic outage');
+    }),
+  );
+  render(<ReviewStatsPanel videoId="v" batchId="b" refresh={0} />);
+  const error = await screen.findByRole('alert');
+  expect(error.closest('details')).toBeNull();
+  expect(screen.getByText(/本批次复核统计/).closest('details')?.open).toBe(false);
+});
 it('renders fraction rates as percentages with explicit denominators and null as no samples', async () => {
   vi.stubGlobal(
     'fetch',

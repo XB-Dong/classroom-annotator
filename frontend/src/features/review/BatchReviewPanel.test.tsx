@@ -17,6 +17,27 @@ const frames: Frame[] = Array.from({ length: 23 }, (_, i) => ({
   status: i === 22 ? 'completed' : 'in_progress',
   revision: 0,
 }));
+it('uses a collapsed native disclosure and retains the chosen frames across toggles', () => {
+  render(
+    <BatchReviewPanel
+      batchId="b"
+      frames={frames}
+      blocked={false}
+      beforeStart={async () => true}
+      onJob={() => {}}
+    />,
+  );
+  const summary = screen.getByText('批量 AI 预标注');
+  expect(summary.tagName).toBe('SUMMARY');
+  const disclosure = summary.closest('details')!;
+  expect(disclosure.open).toBe(false);
+  fireEvent.click(summary);
+  expect(disclosure.open).toBe(true);
+  fireEvent.click(screen.getByText('选择前 20 张未完成图片'));
+  fireEvent.click(summary);
+  fireEvent.click(summary);
+  expect(screen.getByRole('button', { name: '开始批量 AI（20 张）' })).toBeTruthy();
+});
 it('submits only explicitly selected unfinished frames and limits each batch to 20', async () => {
   const beforeStart = vi.fn(async () => true);
   const onJob = vi.fn();
@@ -62,5 +83,7 @@ it('does not queue batch inference when the active manual save cannot settle', a
   fireEvent.click(screen.getByText('选择前 20 张未完成图片'));
   fireEvent.click(screen.getByText('开始批量 AI（20 张）'));
   await screen.findByText(/请先保存或处理当前帧草稿/);
+  fireEvent.click(screen.getByText('批量 AI 预标注'));
+  expect(screen.getByRole('alert').closest('details')).toBeNull();
   expect(calls).not.toHaveBeenCalled();
 });

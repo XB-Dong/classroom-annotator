@@ -37,7 +37,7 @@ function AccountWorkspace() {
         <div className="brand-mark">
           <NotebookMark />
         </div>
-        <div>
+        <div className="brand-title">
           <h1>课堂人头标注</h1>
           <p>认真标注 · 清楚复核</p>
         </div>

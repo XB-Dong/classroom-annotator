@@ -151,7 +151,7 @@ h3 {
   background: var(--paper);
   border-right: 1px solid var(--line);
   padding: 18px 14px;
-  max-height: calc(100vh - 80px);
+  max-height: none;
 }
 .video-sidebar section + section {
   border-color: var(--line);
@@ -160,7 +160,7 @@ h3 {
 }
 .workspace {
   padding: 18px;
-  height: calc(100vh - 80px);
+  height: auto;
 }
 .workspace-header {
   margin-bottom: 14px;
@@ -517,14 +517,11 @@ progress {
   grid-column: 2;
   grid-row: 1;
   margin: 0;
-  height: calc(100vh - 80px);
+  height: auto;
   overflow: auto;
   border-top: 0;
   border-right: 0;
   padding: 18px;
-}
-.help-open .annotation-panel {
-  display: none;
 }
 .manual-sections {
   display: flex;
@@ -580,152 +577,7 @@ progress {
 .account-actions .workspace-identity {
   font-size: 14px;
 }
-@media (max-width: 1280px) {
-  .workspace {
-    padding: 14px 12px;
-  }
-  .annotation-panel {
-    width: 240px;
-    padding: 12px;
-  }
-  .frame-sidebar {
-    width: 108px;
-  }
-  .app-header {
-    padding-left: 18px;
-    padding-right: 18px;
-  }
-}
-@media (max-width: 1023px) {
-  .help-open .app-content {
-    display: flex;
-    flex-direction: column;
-  }
-  .help-open .help-shell {
-    width: 100%;
-    height: auto;
-    max-height: 480px;
-  }
-  .help-open .annotation-panel {
-    display: flex;
-  }
-  .app-layout {
-    grid-template-columns: 220px minmax(0, 1fr);
-  }
-  .workspace {
-    height: auto;
-    min-height: calc(100vh - 80px);
-  }
-  .workbench {
-    flex-direction: column;
-    min-height: 650px;
-  }
-  .frame-sidebar {
-    width: auto;
-    max-height: 180px;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-  }
-  .frame-list {
-    flex-direction: row;
-    min-height: 100px;
-  }
-  .frame-item {
-    width: 125px;
-    flex: none;
-  }
-  .frame-item img {
-    height: 50px;
-  }
-  .frame-item small {
-    display: none;
-  }
-  .editor {
-    flex-direction: column;
-  }
-  .annotation-panel {
-    width: auto;
-    max-height: 300px;
-    display: flex;
-    border-left: 0;
-    border-top: 1px solid var(--line);
-  }
-  .annotation-panel .annotation-list {
-    max-height: 150px;
-    min-height: 70px;
-  }
-  .auth-layout {
-    gap: 28px;
-  }
-  .auth-intro h2 {
-    font-size: 26px;
-  }
-}
-@media (max-width: 700px) {
-  .app-header {
-    padding: 12px;
-    flex-wrap: wrap;
-  }
-  .app-header h1 {
-    font-size: 18px;
-  }
-  .app-header p {
-    font-size: 14px;
-  }
-  .account-actions {
-    width: 100%;
-    justify-content: space-between;
-    margin-left: 0;
-  }
-  .app-layout {
-    display: flex;
-  }
-  .video-sidebar {
-    display: block;
-    padding: 16px;
-    max-height: 420px;
-    overflow: auto;
-  }
-  .video-sidebar section + section {
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1px solid var(--line);
-  }
-  .workspace {
-    padding: 14px 10px;
-  }
-  .canvas-footer {
-    font-size: 14px;
-  }
-  .workspace-header {
-    gap: 10px;
-  }
-  .batch-bar {
-    gap: 10px;
-  }
-  .auth-layout {
-    display: block;
-    padding: 24px 16px;
-  }
-  .auth-intro {
-    margin-bottom: 24px;
-  }
-  .auth-intro h2 {
-    font-size: 24px;
-    margin: 10px 0;
-  }
-  .auth-intro > p,
-  .workflow-note {
-    display: none;
-  }
-  .auth-card {
-    padding: 22px;
-  }
-  .help-shell {
-    margin: 12px;
-    padding: 16px;
-  }
-}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     scroll-behavior: auto;
@@ -789,8 +641,6 @@ progress {
   margin-bottom: 12px;
   border-radius: 8px;
   flex: none;
-  max-height: 220px;
-  overflow: auto;
 }
 .batch-review-options {
   padding: 8px 0;
@@ -834,17 +684,323 @@ progress {
   flex: none;
   max-height: 220px;
 }
-@media (max-width: 1280px) {
+
+/* Let content reflow before it reaches the edge of a flex or grid track. */
+.app {
+  overflow-wrap: anywhere;
+}
+.app-content,
+.app-content > *,
+.app-header > *,
+.account-actions > *,
+.app-layout > *,
+.workspace > *,
+.workspace-header > *,
+.workbench > *,
+.editor > *,
+.panel-title > *,
+.fields > *,
+.batch-bar > *,
+.job > div > * {
+  min-width: 0;
+}
+button,
+input,
+select,
+textarea {
+  min-width: 0;
+  max-width: 100%;
+}
+button,
+.badge {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+summary {
+  cursor: pointer;
+  min-height: 40px;
+  padding: 8px 0;
+  font-weight: 600;
+}
+summary:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+}
+.app-header,
+.account-actions,
+.panel-title,
+.job > div,
+.pager {
+  flex-wrap: wrap;
+}
+.brand-mark {
+  flex: 0 0 44px;
+}
+.brand-title {
+  flex: 1 1 180px;
+}
+.account-actions {
+  flex: 0 1 auto;
+  justify-content: flex-end;
+}
+.workspace-identity {
+  max-width: 28rem;
+}
+.workspace-identity strong {
+  overflow-wrap: anywhere;
+}
+.workspace {
+  height: auto;
+  container: workspace / inline-size;
+}
+.video-sidebar {
+  max-height: none;
+  overflow: visible;
+}
+.workspace-header {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.workspace-header > div:first-child {
+  flex: 1 1 240px;
+}
+.workspace-header h2 {
+  max-width: none;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+.export-control {
+  align-items: flex-start;
+}
+.batch-bar {
+  flex-wrap: wrap;
+}
+.batch-bar label {
+  flex: 1 1 260px;
+  width: auto;
+  max-width: 100%;
+}
+.batch-progress {
+  flex: 1 1 160px;
+}
+.fields,
+.range-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.range-fields label:first-child {
+  grid-column: auto;
+}
+.extraction-form > details {
+  margin-bottom: 12px;
+}
+.tabs,
+.segmented {
+  flex-wrap: wrap;
+}
+.segmented {
+  min-width: 0;
+}
+.tabs button,
+.segmented button {
+  min-width: 0;
+  white-space: normal;
+}
+.workbench {
+  flex: none;
+  min-height: 0;
+  overflow: visible;
+}
+.frame-sidebar {
+  max-height: 850px;
+  min-width: 0;
+  border-radius: 10px 0 0 10px;
+}
+.editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  align-items: start;
+}
+.canvas-area {
+  min-height: 440px;
+}
+.canvas-shell {
+  flex: 1 0 auto;
+  min-height: clamp(280px, 52vh, 640px);
+}
+.canvas-toolbar > .segmented {
+  flex: 1 1 240px;
+}
+.canvas-toolbar .badge {
+  margin-left: 0;
+}
+.canvas-toolbar > * {
+  flex-shrink: 0;
+  max-width: 100%;
+}
+.canvas-toolbar > .segmented {
+  flex-shrink: 1;
+}
+.canvas-footer {
+  flex-direction: row;
+  gap: 4px 16px;
+}
+.annotation-panel {
+  width: auto;
+  max-height: none;
+  overflow: visible;
+}
+.annotation-panel > * {
+  flex-shrink: 0;
+}
+.annotation-item,
+.candidate-item {
+  flex-shrink: 0;
+}
+.annotation-panel .shortcut-help {
+  display: block;
+}
+.review-batch-bar {
+  max-height: none;
+  overflow: visible;
+}
+.batch-frame-options {
+  grid-template-columns: repeat(auto-fit, minmax(min(145px, 100%), 1fr));
+}
+.batch-frame-options input {
+  flex: 0 0 20px;
+  min-height: 20px;
+}
+.review-stat-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(130px, 100%), 1fr));
+}
+.review-stats summary {
+  min-height: 40px;
+}
+.auth-layout {
+  grid-template-columns: minmax(0, 420px) minmax(0, 430px);
+  gap: clamp(24px, 4vw, 64px);
+}
+.help-open .app-content {
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+}
+.help-open .help-shell {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+/* Adapt to the actual workspace width, including an expanded guide pane. */
+@container workspace (max-width: 1000px) {
+  .editor {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .annotation-panel {
-    width: 270px;
+    border-left: 0;
+    border-top: 1px solid var(--line);
   }
 }
-@media (max-width: 1023px) {
-  .annotation-panel {
-    width: auto;
-    max-height: 420px;
+@container workspace (max-width: 700px) {
+  .workbench {
+    flex-direction: column;
   }
-  .review-panel {
+  .frame-sidebar {
+    width: 100%;
+    max-height: 250px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    border-radius: 10px 10px 0 0;
+  }
+  .frame-list {
+    flex-direction: row;
     flex: none;
+    max-height: 160px;
+  }
+  .frame-item {
+    width: 145px;
+    flex: 0 0 145px;
+  }
+  .frame-item img {
+    height: 64px;
+  }
+  .editor {
+    width: 100%;
+  }
+}
+@media (max-width: 1500px) {
+  .help-open .app-content {
+    display: flex;
+    flex-direction: column;
+  }
+  .help-open .help-shell {
+    width: 100%;
+    border-right: 0;
+    border-left: 0;
+  }
+  .help-open .app-content > :not(.help-shell) {
+    width: 100%;
+  }
+}
+@media (max-width: 900px) {
+  .app-layout {
+    display: flex;
+    flex-direction: column;
+  }
+  .video-sidebar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 20px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .video-sidebar section + section {
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .workspace {
+    padding: 16px;
+  }
+  .auth-layout {
+    grid-template-columns: minmax(0, 430px);
+    padding: 24px 16px;
+  }
+  .auth-intro h2 {
+    font-size: 26px;
+  }
+}
+@media (max-width: 560px) {
+  .app-header {
+    padding: 12px;
+  }
+  .account-actions {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+  }
+  .workspace-identity {
+    flex: 1 1 100%;
+  }
+  .video-sidebar {
+    display: block;
+    padding: 16px;
+  }
+  .video-sidebar section + section {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+  }
+  .workspace {
+    padding: 16px 10px;
+  }
+  .workspace-header > div:first-child {
+    flex-basis: 100%;
+  }
+  .canvas-footer {
+    flex-direction: column;
+  }
+  .help-open .help-shell,
+  .auth-card {
+    padding: 16px;
   }
 }
