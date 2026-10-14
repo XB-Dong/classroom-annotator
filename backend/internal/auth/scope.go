@@ -65,7 +65,7 @@ func Scope(r ResourceAuthorizer) gin.HandlerFunc {
 		if !check("batch", c.Query("batchId")) {
 			return
 		}
-		if path == "/api/v1/exports" && c.Request.Method == "POST" {
+		if (path == "/api/v1/exports" || path == "/api/v1/exports/quality-check") && c.Request.Method == "POST" {
 			raw, e := io.ReadAll(io.LimitReader(c.Request.Body, 1024*1024+1))
 			if e != nil || len(raw) > 1024*1024 {
 				authError(c, 400, "INVALID_REQUEST", "Invalid export request")
