@@ -931,7 +931,7 @@ summary:focus-visible {
   .frame-list {
     flex-direction: row;
     flex: none;
-    max-height: 160px;
+    max-height: none;
   }
   .frame-item {
     width: 145px;
