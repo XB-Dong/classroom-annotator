@@ -8,6 +8,10 @@
 
 参考：[W3C Reflow](https://www.w3.org/WAI/WCAG21/Understanding/reflow)、[W3C C33 长字符串换行](https://www.w3.org/WAI/WCAG22/Techniques/css/C33)、[Material canonical layouts](https://m3.material.io/foundations/layout/canonical-examples/overview)、[NN/g Progressive Disclosure](https://www.nngroup.com/articles/progressive-disclosure/)。采用这些原则不等于取得 WCAG 全站认证。
 
+## 文案补充约束
+
+用户要求正式、简洁。登录页只保留平台名称、账号登录/注册、必要输入及错误；去掉口号、手账式宣传、重复流程介绍和拟人话术。使用指南保留标题和操作内容，不加装饰性引导语；注册格式要求只在注册模式展示。
+
 ## 可观察行为
 
 - UI-1：320/360/390/768/1024/1280/1440/1920 px 下整页无非预期横滚，文本和输入不得压出容器。画布原始内容可有自己的平移范围。

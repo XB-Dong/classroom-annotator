@@ -1,0 +1,4 @@
+{"observedAt": "2026-10-14T23:11:25+08:00", "event": "dual_device_demo_verified", "productSHA": "9e671124c538f03ea3bd9c37abdd906ca8602894", "scope": "Mac_and_public_QA_synthetic_only", "productionMigration": false}
+{"observedAt": "2026-10-14T23:11:25+08:00", "event": "user_local_only_materials_constraint", "action": "external_backup_and_remove_presentation_paths_from_P2_branch_history", "pushStatus": "pending_clean_repair"}
+{"observedAt": "2026-10-14T23:11:25+08:00", "event": "company_API_rule_and_local_configuration", "metadata": "direct_and_actual_Go_200", "mediaDownloaded": false, "privateKeyLocation": "external_Mac_only"}
+{"observedAt": "2026-10-14T23:11:25+08:00", "event": "initial_CI_failure_preserved", "runs": [38583867733, 38584181952], "finding": "same_resize_assertion", "action": "local_repair_before_next_push_and_deduplicate_triggers"}

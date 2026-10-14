@@ -38,8 +38,7 @@ function AccountWorkspace() {
           <NotebookMark />
         </div>
         <div className="brand-title">
-          <h1>课堂人头标注</h1>
-          <p>认真标注 · 清楚复核</p>
+          <h1>课堂人头标注平台</h1>
         </div>
         <div className="account-actions">
           {auth.session && (
@@ -320,7 +319,7 @@ function Workspace() {
               标注工作台{' '}
               {frame ? ` / 帧 ${frames.findIndex((item) => item.id === frame.id) + 1}` : ''}
             </span>
-            <h2>{video?.name || '准备开始标注'}</h2>
+            <h2>{video?.name || '选择视频'}</h2>
           </div>
           {videoId && batchId && progress && (
             <ExportButton

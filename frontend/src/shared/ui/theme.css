@@ -427,38 +427,13 @@ progress {
 .auth-layout {
   min-height: calc(100vh - 80px);
   display: grid;
-  grid-template-columns: minmax(260px, 420px) minmax(320px, 430px);
+  grid-template-columns: minmax(0, 430px);
   justify-content: center;
   align-content: center;
   gap: 64px;
   padding: 40px 24px;
 }
-.auth-intro {
-  align-self: center;
-}
-.auth-intro .eyebrow {
-  color: var(--ochre);
-}
-.auth-intro h2 {
-  font-size: 32px;
-  line-height: 1.5;
-  margin: 18px 0;
-}
-.auth-intro p {
-  line-height: 1.9;
-  color: var(--muted);
-}
-.workflow-note {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 24px;
-}
-.workflow-note span {
-  padding: 7px 10px;
-  background: var(--paper);
-  border-bottom: 2px solid var(--line);
-}
+
 .auth-card {
   padding: 28px;
   background: var(--paper);
@@ -491,13 +466,7 @@ progress {
 .auth-card .primary {
   margin-top: 5px;
 }
-.auth-footer {
-  margin-top: 20px;
-  padding-top: 14px;
-  border-top: 1px solid var(--line);
-  color: var(--muted);
-  font-size: 14px;
-}
+
 .help-shell {
   border: 1px solid var(--line);
   background: var(--paper);
@@ -894,10 +863,6 @@ summary:focus-visible {
 .review-stats summary {
   min-height: 40px;
 }
-.auth-layout {
-  grid-template-columns: minmax(0, 420px) minmax(0, 430px);
-  gap: clamp(24px, 4vw, 64px);
-}
 .help-open .app-content {
   grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
 }
@@ -983,9 +948,7 @@ summary:focus-visible {
     grid-template-columns: minmax(0, 430px);
     padding: 24px 16px;
   }
-  .auth-intro h2 {
-    font-size: 26px;
-  }
+
 }
 @media (max-width: 560px) {
   .app-header {
