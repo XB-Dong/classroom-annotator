@@ -59,9 +59,14 @@ test('P01-SAMPLE-001 cached public samples preserve identity/annotations and cre
 
 test('P01-SAMPLE-002 public extraction/save/export survives owned backend restart without a media bridge', async ({ request }) => {
   test.skip(process.env.P01_OFFLINE_PHASE !== '1', 'Runs only after the owned backend has actually restarted');
-  const storage = await (await request.get('/api/v1/media-storage/status')).json();
+  const status = await request.get('/api/v1/media-storage/status');
+  expect(status.status()).toBe(200);
+  const storage = await status.json();
   expect(storage.sources.find(item => item.sourceKind === 'public_sample').available).toBe(true);
-  expect(storage.sources.find(item => item.sourceKind === 'mac').available).toBe(false);
+  expect(storage.sources.some(item => item.sourceKind === 'mac')).toBe(false);
+  expect(storage.sources.find(item => item.sourceKind === 'local_directory').available).toBe(true);
+  expect(storage.providers.find(item => item.provider === 'mac')).toMatchObject({
+    available: false, reasonCode: 'REMOTE_STORAGE_RETIRED' });
   expect(storage.sources.find(item => item.sourceKind === 'upload').available).toBe(true);
   const sample = await firstSample(request);
   const video = await register(request, sample);

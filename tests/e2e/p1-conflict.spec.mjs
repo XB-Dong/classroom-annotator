@@ -15,6 +15,7 @@ test('P1-CAS-001 two account browsers collide without automatic overwrite and re
       await view.getByTestId('video-select').selectOption(video.id);
       await view.getByTestId(`frame-item-${frame.id}`).click();
       await expect(view.getByTestId('annotation-canvas')).toBeVisible();
+      await expect(view.getByTestId('annotation-canvas').locator('.konvajs-content')).toBeVisible();
       await view.getByTestId('draw-mode').click();
     }
     let arrived = 0;
