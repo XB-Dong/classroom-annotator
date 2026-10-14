@@ -85,7 +85,7 @@ export function AuthPage() {
               required
               minLength={3}
               maxLength={32}
-              pattern="[A-Za-z0-9_-]{3,32}"
+              pattern={'[A-Za-z0-9_\\-]{3,32}'}
               value={username}
               disabled={busy}
               onChange={(event) => setUsername(event.target.value)}

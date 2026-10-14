@@ -21,8 +21,9 @@ func TestProviderSendsEntireManualAndOnlyQuestion(t *testing.T) {
 			t.Error("missing provider authorization")
 		}
 		var body struct {
-			Model    string `json:"model"`
-			Messages []struct {
+			Model     string `json:"model"`
+			MaxTokens int    `json:"max_tokens"`
+			Messages  []struct {
 				Role    string `json:"role"`
 				Content string `json:"content"`
 			} `json:"messages"`
@@ -32,6 +33,9 @@ func TestProviderSendsEntireManualAndOnlyQuestion(t *testing.T) {
 		}
 		if body.Model != "glm-4.7-flash" || len(body.Messages) != 3 || body.Messages[1].Content != d.Content || body.Messages[2].Content != "如何处理高风险框？" {
 			t.Error("entire exact manual and only question must be sent")
+		}
+		if body.MaxTokens <= 0 || body.MaxTokens > 384 {
+			t.Error("guide response budget must be positive and bounded for the15second provider deadline")
 		}
 		seen = true
 		w.Header().Set("Content-Type", "application/json")

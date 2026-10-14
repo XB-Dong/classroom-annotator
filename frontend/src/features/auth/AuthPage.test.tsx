@@ -20,6 +20,27 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+it('enforces username syntax with the modern browser Unicode Sets pattern', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => new Response('{}', { status: 401 })),
+  );
+  render(
+    <AuthProvider>
+      <Gate />
+    </AuthProvider>,
+  );
+  const input = await screen.findByRole('textbox', { name: '用户名' });
+  const pattern = input.getAttribute('pattern');
+  expect(pattern).toBeTruthy();
+  const browserPattern = new RegExp(`^(?:${pattern})$`, 'v');
+  expect(browserPattern.test('reviewer_01')).toBe(true);
+  expect(browserPattern.test('member-2')).toBe(true);
+  for (const invalid of ['ab', 'member.name', 'member name', '标注员']) {
+    expect(browserPattern.test(invalid)).toBe(false);
+  }
+});
+
 it('registers with invite code, then separately signs in using the entered credentials', async () => {
   const calls: Array<[string, RequestInit | undefined]> = [];
   vi.stubGlobal(

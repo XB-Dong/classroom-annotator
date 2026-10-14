@@ -1,5 +1,9 @@
 # Agent Instructions
 
+## P1 authorized GLM fallback for closure
+
+The user explicitly approved a company-Key-callable GLM alternative on2026-10-14 after repeated429/1305 from glm-4.7-flash. Decision0010 records actual small probes: glm-4.7-flashx429/1113, glm-4-flash200 with provider-reported same model, actual tool calling and whole-document JSON. Use company-glm/glm-4-flash through the existing external OpenCode client and APP_HELP_MODEL=glm-4-flash for this closure only. Keep earlier failures/raw evidence and all release gates. No package purchase, provider change, automatic image capability, native model change, or P2 carryover is authorized. Actual browser and real Go-route gates still require execution.
+
 ## P1 necessary continuation (latest user override)
 
 On 2026-10-14 after R11, the user explicitly removed the additional-round limit and authorized necessary further rounds to close P1: "不再给你限制追加限制，收束P1，可以进行必要的追加轮次". Continue existing P1 repair, complete verification and gated delivery without asking for a new allocation each round. The original8 and approved additional3 rounds remain historical; never reset their counters or erase failures. There is no active fixed wave-round cap. Keep each attempt tied to a concrete investigated cause and actual evidence; stop unchanged/infinite retries, reassess after repeated failures. Do not add features or enter P2. Leader alone integrates/deploys. All release gates, requested models, no-tunnel/no-Windows-Docker/single-heavy-process rules remain active.
