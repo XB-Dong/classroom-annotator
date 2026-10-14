@@ -22,4 +22,4 @@ P1 最终状态仍为 `partial_closed_fast_path`，详见 [快速收束报告](d
 
 统一验证入口：`bash scripts/verify.sh` 或 Windows `scripts/verify.ps1`。完整验证必须准备独立测试数据库、FFmpeg和外部运行目录，不能在生产库执行。各模块说明见 [frontend](frontend/README.md)、[backend](backend/README.md)、[ai-service](ai-service/README.md)。
 
-此Mac当前从GitHub main归档建立本地快照审计仓，未取得远端Git对象历史/推送凭据；源基线SHA和本地快照提交分别记录，不把快照伪称clone，不将本地提交说成已推送。
+此Mac现已使用用户在GitHub CLI授权的XB-Dong身份完成真实克隆并取回完整Git历史，核对远端main仍为033de6c。当前P2分支以该真实main为基线；此前临时快照提交保留为本地审计引用，原工作树与失败证据不丢失。推送/CI结果以P2报告记录为准。
