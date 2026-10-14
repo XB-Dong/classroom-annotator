@@ -8,6 +8,8 @@ The human explicitly authorized P2 planning then autonomous startup on 2026-10-1
 
 - Code identifiers, comments, API/config keys, commit messages and agent execution instructions are English. User-facing plans, decisions and reports are Chinese. Preserve raw evidence language.
 - Keep media, model weights, credentials, databases, raw logs, dependencies, build caches and worktrees outside the canonical source repository. Only sanitized evidence indexes belong in Git.
+- Defense slides, speaker scripts, Q&A and presentation sources are local-only outside the repository; never commit or push them.
+- The company dataset API may be used directly by the Mac deployment on the company network; credentials and signed media URLs stay external. Never enable it on public QA or restore a bridge/tunnel. Read docs/deployment/MAC-COMPANY-DATASET.zh.md before use.
 - Never print credentials, authenticated URLs or private media. Use synthetic/public demonstrations. No production migration, tunnel restoration, bulk private-media processing or scope expansion.
 
 ## Architecture and ownership

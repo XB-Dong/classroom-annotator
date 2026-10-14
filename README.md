@@ -12,7 +12,7 @@ P1 最终状态仍为 `partial_closed_fast_path`，详见 [快速收束报告](d
 - [全部文档导航](docs/README.md) · [项目宪法](CONSTITUTION.md) · [Agent规则](AGENTS.md)
 - [用户手册](docs/product/ANNOTATOR-GUIDE.zh.md) · [当前架构](specs/architecture.md) · [API](specs/contracts/api.md)
 - [部署运行手册](docs/deployment/P1-RUNBOOK.zh.md) · [统一测试](tests/README.md) · [审计报告](docs/audit/reports)
-- [答辩任务书](docs/presentations/P2/BRIEF.zh.md) · [P0历史计划](docs/plans/archive/P0-PLAN.md) · [P0.1历史计划](docs/plans/archive/P0.1-PLAN.md) · [P1历史计划](docs/plans/archive/P1-PLAN.md)
+- [P0历史计划](docs/plans/archive/P0-PLAN.md) · [P0.1历史计划](docs/plans/archive/P0.1-PLAN.md) · [P1历史计划](docs/plans/archive/P1-PLAN.md)
 
 ## 功能与运行边界
 
