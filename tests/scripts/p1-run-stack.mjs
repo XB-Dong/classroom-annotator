@@ -8,7 +8,7 @@ import { createHash } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { acceptance, dedicatedConnection, externalPath, openPostgres, assertEmptyBusiness } from '../helpers/postgres.mjs';
-import { command, dedicatedServer } from '../helpers/process.mjs';
+import { command, dedicatedServer, waitFor } from '../helpers/process.mjs';
 import { unusedLoopbackPort } from '../helpers/runtime.mjs';
 import { credentials } from '../helpers/p1-session.mjs';
 import { sourceFixture } from '../helpers/source-fixture.mjs';
@@ -74,6 +74,8 @@ await acceptance(async () => {
   });
   let backend, python, follower, syntheticAI, resourceTimer;
   const backendEnvironment = { ...env, APP_DATABASE_URL: databaseProxy.connectionString };
+  const startPrimary = () => dedicatedServer(process.env.P0_BACKEND_BINARY, backendEnvironment, backendOrigin,
+    '/health/ready', [], { stderrMarker: 'task ownership lost; manual HTTP remains available' });
   const startPython = () => dedicatedServer(process.env.P1_PYTHON_BINARY, {
     PYTHONPATH: fileURLToPath(new URL('../../ai-service/src/', import.meta.url)), AI_MODEL_PATH: process.env.P1_MODEL_PATH,
     AI_INTERNAL_TOKEN: fs.readFileSync(aiTokenFile, 'utf8'), PYTHONSTARTUP: '' }, pythonOrigin, '/health/ready',
@@ -88,7 +90,7 @@ await acceptance(async () => {
     await assertEmptyBusiness(pool);
     await command(process.env.P01_SEED_BINARY, ['--catalog', catalogFile, '--report', path.join(root, 'sample-seed.json')], env);
     python = await startPython();
-    backend = await dedicatedServer(process.env.P0_BACKEND_BINARY, backendEnvironment, backendOrigin);
+    backend = await startPrimary();
     const sampleResources = () => {
       if (os.platform() !== 'linux') return;
       const rss = pid => {
@@ -135,10 +137,14 @@ await acceptance(async () => {
         follower = await dedicatedServer(process.env.P0_BACKEND_BINARY, env, followerOrigin);
       } else if (action === 'stop-follower') {
         if (follower) await follower.stop(); follower = undefined;
-      } else if (action === 'disconnect-primary-db') databaseProxy.disconnect();
-      else if (action === 'reconnect-primary-db') databaseProxy.reconnect();
+      } else if (action === 'disconnect-primary-db') {
+        assert.equal(backend.stderrMarkerObserved(), false, 'Primary scheduler already lost ownership before the fault');
+        databaseProxy.disconnect();
+        // Keep the fault active until the held-session watchdog cancels task work.
+        await waitFor(() => backend.stderrMarkerObserved(), 5000, 'Primary scheduler ownership loss');
+      } else if (action === 'reconnect-primary-db') databaseProxy.reconnect();
       else if (action === 'restart-primary') {
-        await backend.stop(); backend = await dedicatedServer(process.env.P0_BACKEND_BINARY, backendEnvironment, backendOrigin);
+        await backend.stop(); backend = await startPrimary();
       } else throw new Error('Unknown test-owned action');
     });
     try {
@@ -163,7 +169,7 @@ await acceptance(async () => {
     }
     await command(process.env.P01_SEED_BINARY, ['--catalog', catalogFile, '--report', path.join(root, 'sample-reseed.json')], env);
     await backend.stop();
-    backend = await dedicatedServer(process.env.P0_BACKEND_BINARY, backendEnvironment, backendOrigin);
+    backend = await startPrimary();
     await run(['test', 'integration/public-samples.spec.mjs', '--project=api', '--grep', 'P01-SAMPLE-002'], { P01_OFFLINE_PHASE: '1' });
     if (process.argv.includes('--e2e')) {
       // Preserve the real IP authentication limiter between independent suites.

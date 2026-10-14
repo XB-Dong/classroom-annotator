@@ -34,11 +34,20 @@ export async function waitFor(predicate, timeout = 30_000, label = 'Acceptance c
   throw new Error(`${label} timed out`);
 }
 
-export async function dedicatedServer(binary, environment, origin, readinessRoute = '/health/ready', args = []) {
+export async function dedicatedServer(binary, environment, origin, readinessRoute = '/health/ready', args = [], { stderrMarker = '' } = {}) {
+  assert.ok(typeof stderrMarker === 'string' && stderrMarker.length <= 1024, 'Dedicated stderr marker must be a bounded string');
   const child = spawn(externalPath(binary, 'Acceptance executable'), args, {
     env: { ...process.env, APP_AUTH_INVITE_CODE: 'synthetic-ci-invite', APP_AUTH_COOKIE_SECURE: 'false',
       APP_AUTH_TRUSTED_ORIGINS: origin, ...environment, APP_ADDR: origin.replace('http://', '') },
-    stdio: ['ignore', 'ignore', 'ignore'],
+    stdio: ['ignore', 'ignore', stderrMarker ? 'pipe' : 'ignore'],
+  });
+  let markerObserved = false, markerTail = '';
+  if (stderrMarker) child.stderr.on('data', chunk => {
+    if (markerObserved) return;
+    const output = markerTail + chunk.toString();
+    markerObserved = output.includes(stderrMarker);
+    // Retain only enough text to recognize a marker split across chunks.
+    markerTail = markerObserved || stderrMarker.length === 1 ? '' : output.slice(-(stderrMarker.length - 1));
   });
   let startupError;
   child.once('error', error => { startupError = error; });
@@ -63,6 +72,6 @@ export async function dedicatedServer(binary, environment, origin, readinessRout
       assert.equal(child.exitCode, null, 'Dedicated server exited during startup');
       try { return (await fetch(`${origin}${readinessRoute}`, { signal: AbortSignal.timeout(1000) })).ok; } catch { return false; }
     }, 30_000, 'Dedicated acceptance process readiness');
-    return { stop, child };
+    return { stop, child, stderrMarkerObserved: () => markerObserved };
   } catch (error) { await stop(); throw error; }
 }
