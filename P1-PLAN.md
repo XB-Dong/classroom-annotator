@@ -1,5 +1,9 @@
 # P1计划：手绘工作台、AI辅助审核与多人协作
 
+## R8获批续作记录（2026-10-14）
+
+用户明确批准：“好，批准了，先将你的P1这个干完。”本次继续最后R8及其完整验收、达标发布与报告；Test父任务上限明确从2调整为3，波次上限仍8，其余父任务上限保留。旧08:30期限及定时发布节点作为历史窗口保存；当前续作按完成P1的最新指令执行，不虚构新的截止时间，不进入P2。完整CI、GLM真实体验、迁移/恢复、TLS、30分钟监控等验收要求不降低。未经许可的额外修复不得通过更名或重置计数进行。
+
 > For agentic workers: This is a review draft, not execution authorization. After explicit user approval and start, use superpowers:subagent-driven-development or superpowers:executing-plans. Load this plan, the P1 specifications and task packet. Do not inherit an expired deadline, silently change contracts, or operate a tunnel. Only the Leader integrates and deploys.
 
 版本：0.2.0｜状态：用户已批准并启动；实际进度见state.json｜日期：2026-10-14

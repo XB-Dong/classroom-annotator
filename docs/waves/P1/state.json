@@ -1,11 +1,11 @@
 {
   "wave": "P1",
   "planVersion": "0.2.0",
-  "status": "awaiting_user_budget_exception",
+  "status": "running",
   "executionAuthorized": true,
   "implementationStarted": true,
   "timezone": "Asia/Shanghai",
-  "deadline": "2026-10-14T08:30:00+08:00",
+  "deadline": null,
   "deadlineConfirmedByUser": true,
   "startedAt": "2026-10-14T01:31:45.886062+08:00",
   "planRef": "P1-PLAN.md",
@@ -19,7 +19,7 @@
   "proposedP1MaxRepairRounds": 8,
   "maxRepairRoundsPerTask": 2,
   "repairBudgetApproved": true,
-  "repairRoundsUsed": 7,
+  "repairRoundsUsed": 8,
   "requestedLeaderModel": "gpt-6.1-sol",
   "requestedLeaderReasoningEffort": "high",
   "actualLeaderModel": null,
@@ -28,12 +28,12 @@
   "nativeWorkerLimit": 3,
   "localHeavyProcessLimit": 1,
   "tunnelPolicy": "retire_during_authorized_p1_no_tunnel_runtime_dependency",
-  "productAcceptanceStatus": "module_PG_race_and19_API_checks_passed_three_legacy_export_fixture_checks_failed_full_CI_blocked",
+  "productAcceptanceStatus": "approved_exact_R8_fixture_patch_applied_full_CI_green_pending",
   "deploymentStatus": "protected_P0_preserved_P1_not_deployed",
   "realApiVerificationStatus": "bounded_help_provider_timeouts_windows_and_cloud",
   "macRealDeploymentStatus": "not_run_deferred",
   "planReviewStatus": "previous_readonly_architecture_review_plus_leader_help_addendum_self_review_not_product_verification",
-  "reportRef": "docs/audit/reports/report-20261014T044733+0800.md",
+  "reportRef": "docs/audit/reports/report-20261014T091218+0800.md",
   "preparedAt": "2026-10-14T01:24:44.359872+08:00",
   "reviewDispositionRef": "docs/waves/P1/PLAN-REVIEW-DISPOSITION.md",
   "preparationReportRef": "docs/audit/reports/report-20261014T012444+0800.md",
@@ -53,8 +53,8 @@
   "authorizationRecordedAt": "2026-10-14T01:31:45.886062+08:00",
   "planApproved": true,
   "maxRepairRoundsForWave": 8,
-  "round": "R7_verification_failed",
-  "lastCheckpointAt": "2026-10-14T04:47:33.235256+08:00",
+  "round": "R8",
+  "lastCheckpointAt": "2026-10-14T09:12:18.041826+08:00",
   "approvedPlanCommit": "5fcb41d9f2950235293992e2bd1707684b69ef1e",
   "taskRepairCounts": {
     "P1-FRONT-001": 2,
@@ -63,7 +63,7 @@
     "P1-AI-SERVICE-001": 1,
     "P1-AI-REVIEW-001": 2,
     "P1-BASE-001": 1,
-    "P1-TEST-001": 2
+    "P1-TEST-001": 3
   },
   "localBuildPolicy": "one_heavy_process_use_named_mutex",
   "specStatus": "approved_design_runtime_contract_freeze_in_r0",
@@ -156,6 +156,16 @@
       ],
       "reason": "Independent harness correction: distinct actual public fixture bytes, completed import video identity, individual risky review decisions; production rules and all workload assertions retained",
       "evidence": "runtime/p1-preparation/ci-38459938533/11_Common verification.txt; runtime/p1-harness-preflight/preflight-20261014.md; actual Linux rerun pending"
+    },
+    {
+      "round": 8,
+      "rootTasks": [
+        "P1-TEST-001"
+      ],
+      "reason": "User-approved exact owned export-selector fixture patch;400 assertions and authentication remain unchanged",
+      "redEvidence": "runtime/p1-preparation/ci-38463091137/11_Common verification.txt",
+      "greenEvidence": "pending_actual_Linux_CI",
+      "userApprovedException": "Test root3 of3; wave8 of8; no reset"
     }
   ],
   "cloudRetirement": {
@@ -218,16 +228,28 @@
     "testRootUsed": 2,
     "testRootCurrentLimit": 2,
     "proposedTestRootLimit": 3,
-    "approved": false,
+    "approved": true,
     "patch": "D:\\Project\\cvte\\runtime\\p1-preparation\\R8-owned-export-fixtures.proposed.patch",
     "patchSHA256": "14bc58c80922c7857b5e03aa73ac8806a8e1daa6e9653f4fca49f15d882a253a",
-    "patchApplied": false,
+    "patchApplied": true,
     "scope": "Only existing invalid export-selector tests use actual owned resource IDs; preserve400 assertions",
-    "sourceRule": "P1-PLAN.md section8: each root task maximum2 repair rounds"
+    "sourceRule": "P1-PLAN.md section8: each root task maximum2 repair rounds",
+    "approvedAt": "2026-10-14T09:12:18.041826+08:00",
+    "authorization": "好，批准了，先将你的P1这个干完。"
   },
   "publicationStatus": {
     "codeSha": "dcf046e2ca4bf916d0faa83aaaa55c7d86d51932",
     "branch": "p1/leader",
     "remoteMainChanged": false
+  },
+  "originalDeadline": "2026-10-14T08:30:00+08:00",
+  "deadlinePolicy": "latest_user_finish_P1_instruction_resumes_after_original_window_no_new_clock_deadline",
+  "taskRepairLimitOverrides": {
+    "P1-TEST-001": {
+      "maximum": 3,
+      "userApproved": true,
+      "authorization": "好，批准了，先将你的P1这个干完。",
+      "recordedAt": "2026-10-14T09:12:18.041826+08:00"
+    }
   }
 }

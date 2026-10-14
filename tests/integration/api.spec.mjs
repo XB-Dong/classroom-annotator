@@ -77,7 +77,18 @@ for (const [name, selectors] of [
   ['batch without video', { batchId: 'synthetic-batch' }],
   ['mixed batch and frames', { frameIds: ['synthetic-frame'], batchId: 'synthetic-batch' }],
 ]) test(`P0-EXP-001 rejects ${name}`, async ({ request }) => {
-  await safeError(await request.post('/api/v1/exports', { data: selectors }), 400);
+  let payload = selectors;
+  if (selectors.videoId || selectors.batchId || selectors.frameIds?.length) {
+    const video = await upload(request);
+    const { job, frames } = await extract(request, video.id);
+    expect(job.batchId).toBeTruthy();
+    expect(frames[0]?.id).toBeTruthy();
+    payload = { ...selectors,
+      ...(selectors.videoId ? { videoId: video.id } : {}),
+      ...(selectors.batchId ? { batchId: job.batchId } : {}),
+      ...(selectors.frameIds?.length ? { frameIds: [frames[0].id] } : {}) };
+  }
+  await safeError(await request.post('/api/v1/exports', { data: payload }), 400);
 });
 
 test('P0-VID-001 corrupt upload and invalid extraction do not publish', async ({ request }) => {

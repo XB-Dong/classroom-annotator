@@ -1,5 +1,9 @@
 # Agent Instructions
 
+## P1 R8 continuation authorization
+
+On 2026-10-14 the user explicitly approved the proposed R8 test-fixture patch and instructed the Leader to finish P1. The original 08:30 deadline and release clock nodes are historical for this resumed window; preserve them in audit history. Continue R8 verification and gated delivery without inventing a replacement deadline or entering P2. Keep the wave repair maximum at 8; the approved exception raises P1-TEST-001 to 3 repairs only. Other root limits remain unchanged. Preserve all CI, independent GLM browser, migration/restore, TLS and thirty-minute observation gates. Any additional repair outside this explicit allocation requires a concrete disposition, not silent task renaming or budget resets.
+
 ## Current P1 execution authorization (supersedes preparation and historical wording)
 
 The user explicitly started approved P1 plan0.2.0 on2026-10-14. Execute the active plan and task packet continuously within scope. State.json is the source of actual start/deadline:2026-10-14T08:30:00+08:00. Leader alone integrates/deploys and freezes shared contracts. No per-round confirmation is needed. Do not reapply the historical preparation-only gate below.
