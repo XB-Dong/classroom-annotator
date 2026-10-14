@@ -35,6 +35,7 @@ The human explicitly authorized P2 planning then autonomous startup on 2026-10-1
 - Define requirements/specs/examples/failure behavior before implementation. Preserve real Red and Green for behavior changes; dependency failures do not count as behavioral Red.
 - Run appropriate checks and retain commands/timestamps/exit codes/exact local commits. Label mocked, actual API, real model, local, CI and deployed evidence separately. Do not fabricate accuracy, recall, speedups, deployment, browser actions or full coverage.
 - One heavy local process at a time. Reassess a root cause after two failed repairs; preserve cumulative history. No endless retries, test weakening, task-renaming budget resets or unnecessary CI pushes.
+- Reproduce and fix known failures locally before pushing. Avoid duplicate push/PR CI, retain necessary checks, and do not rerun an unchanged full suite solely for audit text edits.
 - Each wave keeps state, timestamped events, handoffs, evidence index and report. Preserve historical failures and source versions. Documentation privacy redaction must record hashes/retained originals externally and must not erase technical outcomes.
 - P2 has no user-specified new deadline. Do not reuse P0/P1 clocks. Completed requires all current mandatory gates, including independent review; missing gates mean partial with concrete limitations.
 - Deliver reviewable local changes, current evidence and reports, then stop at the wave boundary. Do not enter the next wave automatically.

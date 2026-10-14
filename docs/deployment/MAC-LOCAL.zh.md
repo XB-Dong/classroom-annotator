@@ -28,6 +28,18 @@ Go配置外部HTTPS endpoint、model和key-file路径。当前本机DeepSeek单�
 
 ## 2026-10-14 P2已核实入口
 
-本机入口`http://127.0.0.1:8180/`，外部运行包装器`/Users/kdl/.local/share/classroom-annotator/mac-20261014/compose.sh`；只读状态使用`compose.sh ps`。当前产品提交9e671124c538f03ea3bd9c37abdd906ca8602894，七服务healthy。当前包装器引用仓库外的精确GitHub归档构建副本，不能编辑canonical源码后就假定已热更新。凭证文件不应复制到此手册或聊天。
+本机入口`http://127.0.0.1:8180/`，外部运行包装器`/Users/kdl/.local/share/classroom-annotator/mac-20261014/compose.sh`；只读状态使用`compose.sh ps`。当前产品提交bf18d30f8853e75cdac6abea160dde54c89dd18b，七服务healthy。当前包装器引用仓库外的精确GitHub归档构建副本，不能编辑canonical源码后就假定已热更新。凭证文件不应复制到此手册或聊天。
 
 云端HTTPS仍为公开QA，具体版本/保护核验/恢复前提见[P2双端报告](../audit/reports/report-20261014T230000+0800.md)，不是原P0生产数据迁移。
+
+## Mac重启后恢复本机入口
+
+现有Colima profile为`cvte`，arm64、Virtualization.Framework、virtiofs；当前已运行。默认PATH不包含Homebrew时，直接用绝对路径调用colima仍可能因找不到lima而报依赖缺失，应显式补齐PATH，不能因此重复安装或另建profile。
+
+```sh
+PATH="/opt/homebrew/bin:$PATH" /opt/homebrew/bin/colima start --profile cvte
+/Users/kdl/.local/share/classroom-annotator/mac-20261014/compose.sh up -d --no-build
+/Users/kdl/.local/share/classroom-annotator/mac-20261014/compose.sh ps
+```
+
+不删除卷、不重置账号、不恢复旧媒体隧道。临时测试Vite5192及独立测试PG已停止并保留数据，产品七服务继续运行。

@@ -1,16 +1,50 @@
 {
   "schemaVersion": 1,
   "wave": "P2",
-  "observedAt": "2026-10-14T23:11:25+08:00",
+  "observedAt": "2026-10-14T23:36:23+08:00",
   "status": "partial",
   "p1StatusUnchanged": true,
   "externalEvidenceRoot": "/Users/kdl/.local/share/classroom-annotator/p2-20261014",
   "source": {
     "mainBaseline": "033de6c2fbb48a5df2ca1b4f7dcfece41a22d6da",
     "fullActualUIProvisionalSHA": "381d70bb7fa02953251ced84566c257a85725da8",
-    "currentDeployedProductSHA": "9e671124c538f03ea3bd9c37abdd906ca8602894",
-    "productBytesEquivalent": true,
-    "historyCleanup": "presentation_paths_removed_from_P2_branch_preserved_external_backup_pending_push"
+    "historyCleanup": "P2_branch_history_presentation_paths_removed_remote_404_verified_main_unchanged",
+    "firstUnifiedProductSHA": "9e671124c538f03ea3bd9c37abdd906ca8602894",
+    "currentDeployedProductSHA": "bf18d30f8853e75cdac6abea160dde54c89dd18b",
+    "equivalencePairs": [
+      {
+        "left": "381d70bb7fa02953251ced84566c257a85725da8",
+        "right": "9e671124c538f03ea3bd9c37abdd906ca8602894",
+        "scope": [
+          "frontend",
+          "backend",
+          "ai-service",
+          "deploy",
+          "scripts",
+          "specs/contracts"
+        ],
+        "byteEquivalent": true
+      },
+      {
+        "left": "9e671124c538f03ea3bd9c37abdd906ca8602894",
+        "right": "bf18d30f8853e75cdac6abea160dde54c89dd18b",
+        "scope": [
+          "backend",
+          "ai-service"
+        ],
+        "byteEquivalent": true
+      }
+    ],
+    "ciProvenance": {
+      "observedAt": "2026-10-14T23:30:35+08:00",
+      "main": "033de6c2fbb48a5df2ca1b4f7dcfece41a22d6da",
+      "PRHead": "bf18d30f8853e75cdac6abea160dde54c89dd18b",
+      "PRMerge": "a39f599b7cfb6c39bebd17f6477812a54069358d",
+      "PRMergeTreeEquivalentToHead": true,
+      "deploymentBuiltFromPRHeadArchive": true,
+      "CITrigger": "pull_request_only_for_feature_branch",
+      "newRun": 38588562501
+    }
   },
   "checks": {
     "frontendUnit": {
@@ -21,10 +55,8 @@
       "passed": 30,
       "seconds": 44.3
     },
-    "actualMacUI": "passed",
-    "actualPublicQAUI": "passed",
-    "currentDualDeviceHelp": "HTTP200",
-    "currentDualDeviceRealONNX": "completed_zero_candidates_on_synthetic_images",
+    "actualMacUI": "latest_bf18d30_full_pipeline_passed",
+    "actualPublicQAUI": "latest_bf18d30_full_pipeline_passed",
     "MacCompanyMetadata": "direct_and_Go_HTTP200_no_download",
     "ciInitialRuns": [
       {
@@ -56,6 +88,29 @@
       "build": 0,
       "actualTargetedWorkflows": 2,
       "CIIntegration": "P2_responsive_file_added_to_actual_browser_run_list"
+    },
+    "helpAndRealONNX": {
+      "testedSource": "9e671124c538f03ea3bd9c37abdd906ca8602894",
+      "bothHelpHTTPStatus": 200,
+      "bothONNXJobStatus": "completed",
+      "candidatesOnSyntheticImages": 0,
+      "latestBackendSourceByteEquivalent": true,
+      "paidCallsNotRepeatedAfterCopyChange": true
+    },
+    "currentCI": {
+      "id": 38588562501,
+      "headSHA": "bf18d30f8853e75cdac6abea160dde54c89dd18b",
+      "status": "completed",
+      "conclusion": "success",
+      "allFourJobs": true,
+      "duplicatePushRun": false
+    },
+    "pollingFixLocal": {
+      "unit": 106,
+      "component": 8,
+      "browserCombined": 32,
+      "actualCloudBaselineRed": "93_of_720_frames_flicker_on_750ms_delayed_real_GET",
+      "newVersionCI": "pending"
     }
   },
   "boundaries": {
@@ -188,6 +243,96 @@
       "externalRelativePath": "evidence/local-only-history-audit.json",
       "sha256": "a0bc675ba368ba089d1e39f79077a011b13bc4f5f20379581d9ee82195ab4d21",
       "bytes": 219
+    },
+    {
+      "externalRelativePath": "evidence/final-source-build.json",
+      "sha256": "606212995b1bc8e6ea4d50da5864590d549deb153259a7e551e6402b71d21483",
+      "bytes": 1046
+    },
+    {
+      "externalRelativePath": "evidence/final-images.json",
+      "sha256": "75384b3fc27d8cf9ed61b2df85f88a0113eec3b5ac0fc784990b1e30f58ac44c",
+      "bytes": 571
+    },
+    {
+      "externalRelativePath": "evidence/final-cloud-backup.json",
+      "sha256": "4043afac6beabf5185213ceed19dc21659e5f30841cb65e53610478fa9303bcb",
+      "bytes": 434
+    },
+    {
+      "externalRelativePath": "evidence/final-cloud-deploy.json",
+      "sha256": "023b1c4166c0e9aed545f8f25aab674fb70950906db06a080a4ec0fd209bb07c",
+      "bytes": 696
+    },
+    {
+      "externalRelativePath": "evidence/final-mac-ui/result.json",
+      "sha256": "51f44a2e6ac0e3e106a6b77924ecc7667dc7c5de456d40cbe8aba76202fa9acd",
+      "bytes": 6978
+    },
+    {
+      "externalRelativePath": "evidence/final-cloud-ui/result.json",
+      "sha256": "5186fb54a45e45bacc041437b96742c9751d563f24c6aef3a59e5f784772f668",
+      "bytes": 7128
+    },
+    {
+      "externalRelativePath": "evidence/formal-cloud-final-inventory.json",
+      "sha256": "1a4fa0caea3f8e5fc5c20e290a4e419126894491608242168d8040d23513ac24",
+      "bytes": 14173
+    },
+    {
+      "externalRelativePath": "evidence/formal-mac-final-inventory.json",
+      "sha256": "d608100bb1402cd23059a2523b8ea6a1f55be1ca67b8f9394387975e266e3bdb",
+      "bytes": 1092
+    },
+    {
+      "externalRelativePath": "evidence/formal-company-Go.json",
+      "sha256": "a9ba0a8eeddbf4f93a7c4c9433c39ecb25c78f3680b5409691e0988cf3f30d90",
+      "bytes": 244
+    },
+    {
+      "externalRelativePath": "evidence/formal-cloud-company-isolation.json",
+      "sha256": "b227749a11d494dd431f3b3c9469bca874f3c89098a6c9e2b3a94a7dd9f3dc5e",
+      "bytes": 86
+    },
+    {
+      "externalRelativePath": "evidence/ci-source-provenance.json",
+      "sha256": "8c3af93ac5b81a38d407b6b2cce7e52c071a2117682c85022bd159dba700f73f",
+      "bytes": 378
+    },
+    {
+      "externalRelativePath": "evidence/remote-local-only-path-check.json",
+      "sha256": "e0c4f2171d30156556a3575397de9b68e1b3948fcf6f69b459c5eecaaaedd9c8",
+      "bytes": 162
+    },
+    {
+      "externalRelativePath": "evidence/test-process-cleanup.json",
+      "sha256": "0e15d96ceb7ec0ce0d14d913586710e3eeb6a1e95c07fd943282f72f40fcba83",
+      "bytes": 273
+    },
+    {
+      "externalRelativePath": "evidence/ci-38588562501-final.json",
+      "sha256": "28e22ac4363b1fbfdd94dfc66cd015b4e78b874177104dc6dd952db104e631fe",
+      "bytes": 10044
+    },
+    {
+      "externalRelativePath": "evidence/polling-flicker/component-evidence.json",
+      "sha256": "ae9f5a0ebb60121dd83ffbaeebc1b6b30e35b8529a67cf7a6604acf5fb38ae0a",
+      "bytes": 3030
+    },
+    {
+      "externalRelativePath": "evidence/polling-flicker/red-cloud.json",
+      "sha256": "61cb736b93f026bad3bd2fece2140fe41a1ef111bb35fad86ba87dbbbebc5385",
+      "bytes": 2681
+    },
+    {
+      "externalRelativePath": "evidence/polling-flicker/browser-red.log",
+      "sha256": "e385ae85961d56e2d06fa85337ff2dbb7302ac8606dc1302a7c29b2efa0fd5ea",
+      "bytes": 5881
+    },
+    {
+      "externalRelativePath": "evidence/polling-flicker/browser-green.log",
+      "sha256": "2ce81e0d93cab0c55b61c7f10916e6412c328ab7bb6ce39af364209e67b63be5",
+      "bytes": 5617
     }
   ]
 }

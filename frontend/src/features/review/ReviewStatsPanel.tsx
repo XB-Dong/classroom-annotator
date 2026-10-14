@@ -1,24 +1,28 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { idPath, request } from '../../shared/api/client';
 import type { ReviewStats } from '../../shared/api/types';
-export function ReviewStatsPanel({
-  videoId,
-  batchId,
-  refresh,
-  onRiskFrames,
-}: {
+interface Props {
   videoId: string;
   batchId: string;
   refresh: number;
   onRiskFrames?: (ids: string[] | undefined) => void;
-}) {
+}
+
+export function ReviewStatsPanel(props: Props) {
+  // A scope change removes the old batch before paint; a refresh keeps its view.
+  return <ScopedReviewStatsPanel key={JSON.stringify([props.videoId, props.batchId])} {...props} />;
+}
+
+function ScopedReviewStatsPanel({ videoId, batchId, refresh, onRiskFrames }: Props) {
   const [stats, setStats] = useState<ReviewStats>();
   const [error, setError] = useState<string>();
+  const requested = useRef(false);
   useEffect(() => {
     let active = true;
-    setStats(undefined);
-    setError(undefined);
-    onRiskFrames?.(undefined);
+    if (!requested.current) {
+      requested.current = true;
+      onRiskFrames?.(undefined);
+    }
     void request<ReviewStats>(`/videos/${idPath(videoId)}/review-stats?batchId=${idPath(batchId)}`)
       .then((result) => {
         if (active) {
