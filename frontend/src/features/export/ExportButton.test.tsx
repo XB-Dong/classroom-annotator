@@ -60,7 +60,7 @@ it('keeps the original export available after advisory checking fails', async ()
   expect(screen.getByText(/仍可使用上方导出/)).toBeTruthy();
 });
 
-it('ignores a late check after switching batches and invalidates results on a saved revision change', async () => {
+it('ignores a late check after switching batches', async () => {
   let release!: () => void;
   vi.stubGlobal('fetch', vi.fn(async () => {
     await new Promise<void>((resolve) => { release = resolve; });
@@ -71,5 +71,17 @@ it('ignores a late check after switching batches and invalidates results on a sa
   fireEvent.click(screen.getByRole('button', { name: '开始质量检查' }));
   view.rerender(<ExportButton videoId="v" batchId="other" completed={1} revisionKey="g:1" />);
   await act(async () => release());
+  expect(screen.queryByText('两个框高度重叠，请人工确认。')).toBeNull();
+});
+
+it('retains a same-revision report and discards it when a saved revision changes', async () => {
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(report), { headers: { 'Content-Type': 'application/json' } })));
+  const view = render(<ExportButton videoId="v" batchId="b" completed={1} revisionKey="f:2" />);
+  fireEvent.click(screen.getByText('导出前质量检查（可选）'));
+  fireEvent.click(screen.getByRole('button', { name: '开始质量检查' }));
+  await screen.findByText('两个框高度重叠，请人工确认。');
+  view.rerender(<ExportButton videoId="v" batchId="b" completed={1} revisionKey="f:2" />);
+  expect(screen.getByText('两个框高度重叠，请人工确认。')).toBeTruthy();
+  view.rerender(<ExportButton videoId="v" batchId="b" completed={1} revisionKey="f:3" />);
   expect(screen.queryByText('两个框高度重叠，请人工确认。')).toBeNull();
 });

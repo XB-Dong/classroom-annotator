@@ -327,7 +327,7 @@ function Workspace() {
               videoId={videoId}
               batchId={batchId}
               completed={progress.completed}
-              revisionKey={`${reviewRefresh}:${frames.map((item) => `${item.id}:${item.revision}`).join(',')}`}
+              revisionKey={frames.map((item) => `${item.id}:${item.revision}`).join(',')}
               onLocateFrame={(id) => {
                 if (id !== frameId && frames.some((item) => item.id === id))
                   void navigate(() => setFrameId(id));
