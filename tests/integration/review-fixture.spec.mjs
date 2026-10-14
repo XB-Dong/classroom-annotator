@@ -186,7 +186,8 @@ test('P1-REVIEW-001 raw risky fixture candidates block bulk accept but permit an
   expect(accepted.riskReasons).toEqual(raw.riskReasons); expect(accepted.reviewState).toBe('accepted');
   expect(value.annotations).toEqual([{ id: accepted.annotationId, bbox: raw.bbox, source: 'ai', candidateId: raw.id, runId: raw.runId }]);
   value = await decideIndividually(request, frame, value, value.candidates.filter(c => c.reviewState === 'pending')
-    .map(c => ({ candidateId: c.id, decision: 'rejected' })));
+    .map(c => ({ candidateId: c.id, decision: 'rejected',
+      reasonCode: c.bbox[0] === 70 ? 'ALREADY_LABELED' : 'NOT_STUDENT_HEAD' })));
   expectStats(await stats(request, video), { ...boxCounts, pending: 0, accepted: 1, rejected: 2,
     unresolvedRiskCandidates: 0, unresolvedRiskImages: 0 });
 });

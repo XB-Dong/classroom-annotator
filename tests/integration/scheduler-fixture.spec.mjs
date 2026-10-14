@@ -60,9 +60,12 @@ test('P1-AIRACE/CAS-001 second actual API preserves the first active job and bot
       const pending = [primaryWrite, follower.put(`/api/v1/frames/${target.id}/annotations`, { data: values[1] })];
       pending.forEach(promise => { void promise.catch(() => {}); });
       try {
-        await waitFor(async () => Number((await pool.query(`SELECT count(*) FROM pg_stat_activity
-          WHERE datname=current_database() AND pid<>$1 AND state='active' AND wait_event_type='Lock'
-          AND $1::integer=ANY(pg_blocking_pids(pid))`, [pid])).rows[0].count) >= 2,
+        await waitFor(async () => Number((await pool.query(`WITH RECURSIVE blocked(pid) AS (
+          SELECT $1::integer
+          UNION
+          SELECT a.pid FROM pg_stat_activity a JOIN blocked b ON b.pid=ANY(pg_blocking_pids(a.pid))
+          WHERE a.datname=current_database() AND a.state='active' AND a.wait_event_type='Lock'
+        ) SELECT count(*) FROM blocked WHERE pid<>$1`, [pid])).rows[0].count) >= 2,
         5000, 'Both separate API processes reached the PostgreSQL row barrier');
         await barrier.query('COMMIT');
       } finally { await barrier.query('ROLLBACK'); }
