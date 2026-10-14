@@ -5,3 +5,4 @@
 !deploy/artifacts/migrate
 !deploy/artifacts/import-sqlite
 !deploy/artifacts/seed-samples
+!deploy/artifacts/bootstrap-user
