@@ -15,6 +15,7 @@ test('P01-SAMPLE-003 default public browser entry displays attribution and compl
   const video = await (await imported).json();
   await page.getByTestId('video-select').selectOption(video.id);
   await page.getByTestId('interval-seconds').fill('1');
+  await page.getByText('指定抽帧范围（可选）', { exact: true }).click();
   await page.getByTestId('start-seconds').fill('0');
   await page.getByTestId('end-seconds').fill('3');
   const submitted = page.waitForResponse(response => response.url().endsWith('/extractions') && response.request().method() === 'POST');

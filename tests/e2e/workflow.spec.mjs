@@ -31,6 +31,7 @@ test('P0-E2E-001 browser upload/extract/draw/move/resize/delete/autosave/refresh
   const video = await videoResponse.json();
   await page.getByTestId('video-select').selectOption(video.id);
   await page.getByTestId('interval-seconds').fill('1');
+  await page.getByText('指定抽帧范围（可选）', { exact: true }).click();
   await page.getByTestId('start-seconds').fill('0');
   await page.getByTestId('end-seconds').fill('3');
   const extracted = page.waitForResponse(response => response.url().endsWith('/extractions') && response.request().method() === 'POST');
