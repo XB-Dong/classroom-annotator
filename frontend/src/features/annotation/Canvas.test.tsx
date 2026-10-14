@@ -147,12 +147,16 @@ it('shows a retry action when a frame image fails, then renders the real image a
     images[0].onerror?.();
   });
   expect(screen.getByRole('alert').textContent).toContain('原图暂不可用');
+  expect(screen.queryByRole('img', { name: '当前标注原图' })).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: '重试加载原图' }));
   expect(images).toHaveLength(2);
   act(() => {
     images[1].onload?.();
   });
   expect(screen.getByTestId('annotation-image-bounds')).toBeTruthy();
+  expect(screen.getByRole('img', { name: '当前标注原图' })).toBe(
+    screen.getByTestId('annotation-image-bounds'),
+  );
 });
 it('keeps an already loaded image usable if a later image request fails', () => {
   const images: { onload?: () => void; onerror?: () => void; src?: string }[] = [];

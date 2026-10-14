@@ -219,7 +219,12 @@ export function AnnotationCanvas({
       ) : !image ? (
         <div className="canvas-message">正在加载原图…</div>
       ) : (
-        <div data-testid="annotation-image-bounds" style={{ width, height, flexShrink: 0 }}>
+        <div
+          role="img"
+          aria-label="当前标注原图"
+          data-testid="annotation-image-bounds"
+          style={{ width, height, flexShrink: 0 }}
+        >
           <Stage
             ref={stage}
             width={width}

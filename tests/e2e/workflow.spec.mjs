@@ -126,6 +126,7 @@ async function openPreparedFrame(page, request) {
   await page.goto('/');
   await page.getByTestId('video-select').selectOption(video.id);
   await page.getByTestId(`frame-item-${frames[0].id}`).click();
+  await expect(page.getByRole('img', { name: '当前标注原图' })).toBeVisible();
   const canvas = page.getByTestId('annotation-canvas').locator('.konvajs-content');
   await expect(canvas).toBeVisible();
   const bounds = await canvas.boundingBox();

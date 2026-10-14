@@ -19,7 +19,7 @@
   "proposedP1MaxRepairRounds": 8,
   "maxRepairRoundsPerTask": 2,
   "repairBudgetApproved": true,
-  "repairRoundsUsed": 12,
+  "repairRoundsUsed": 13,
   "requestedLeaderModel": "gpt-6.1-sol",
   "requestedLeaderReasoningEffort": "high",
   "actualLeaderModel": null,
@@ -28,12 +28,12 @@
   "nativeWorkerLimit": 3,
   "localHeavyProcessLimit": 1,
   "tunnelPolicy": "retire_during_authorized_p1_no_tunnel_runtime_dependency",
-  "productAcceptanceStatus": "R11_all_api_and_7_of_8_browser_passed_delayed_ack_case_failed_R12_diagnostic_patch_pending",
+  "productAcceptanceStatus": "R12_full_ci_pending_R13_accessibility_red_green_passed",
   "deploymentStatus": "protected_P0_preserved_P1_not_deployed",
   "realApiVerificationStatus": "bounded_help_provider_timeouts_windows_and_cloud",
   "macRealDeploymentStatus": "not_run_deferred",
   "planReviewStatus": "previous_readonly_architecture_review_plus_leader_help_addendum_self_review_not_product_verification",
-  "reportRef": "docs/audit/reports/report-20261014T111206+0800.md",
+  "reportRef": "docs/audit/reports/report-20261014T112846+0800.md",
   "preparedAt": "2026-10-14T01:24:44.359872+08:00",
   "reviewDispositionRef": "docs/waves/P1/PLAN-REVIEW-DISPOSITION.md",
   "preparationReportRef": "docs/audit/reports/report-20261014T012444+0800.md",
@@ -53,11 +53,11 @@
   "authorizationRecordedAt": "2026-10-14T01:31:45.886062+08:00",
   "planApproved": true,
   "maxRepairRoundsForWave": null,
-  "round": "R12",
-  "lastCheckpointAt": "2026-10-14T11:12:06.015567+08:00",
+  "round": "R13",
+  "lastCheckpointAt": "2026-10-14T11:28:46.442019+08:00",
   "approvedPlanCommit": "5fcb41d9f2950235293992e2bd1707684b69ef1e",
   "taskRepairCounts": {
-    "P1-FRONT-001": 2,
+    "P1-FRONT-001": 3,
     "P1-HELP-001": 1,
     "P1-AUTH-CAS-001": 2,
     "P1-AI-SERVICE-001": 1,
@@ -207,6 +207,16 @@
       "greenEvidence": "pending_full_CI",
       "diagnosticLimit": "R11 trace absent; geometry is a source-supported hypothesis, not proved prior runtime cause",
       "limitsPreserved": "Real first committed PUT; held ACK; second real drag; two local boxes before release; final2/revision>=2/reload same IDs; no production change"
+    },
+    {
+      "round": 13,
+      "rootTasks": [
+        "P1-FRONT-001"
+      ],
+      "reason": "Actual loaded annotation image is an unnamed generic div pruned by supported MCP/accessibility snapshots; name exact image region without changing editing logic",
+      "redEvidence": "runtime/p1-r13-a11y/red.txt:1 failed4 passed missing accessible image",
+      "greenEvidence": "runtime/p1-r13-a11y/green.txt:5 passed; Root typecheck/lint exit0; full exact CI pending",
+      "limitsPreserved": "No image/candidate/geometry simulation; actual loaded inner region; not available while image failed; drawing/CAS unchanged"
     }
   ],
   "cloudRetirement": {
@@ -268,7 +278,7 @@
     "authorization": "好，批准了，先将你的P1这个干完。"
   },
   "publicationStatus": {
-    "codeSha": "8918262e29f8a2ae021499e4ab4baf013b6d3199",
+    "codeSha": "ad26a774e9b571e9336b6b6c8deb66698f4beb36",
     "branch": "p1/leader",
     "remoteMainChanged": false
   },
@@ -312,10 +322,11 @@
     "activeFixedRoundCap": null,
     "scope": "Close existing P1, investigated necessary repairs, unchanged acceptance gates, no new features",
     "historicalCountersRetained": true,
-    "additionalRoundsUsed": 1,
+    "additionalRoundsUsed": 2,
     "newRootCauseAttempts": {
       "delayed_ack_canvas_geometry": 1,
-      "ci_evidence_temp_path_mismatch": 1
+      "ci_evidence_temp_path_mismatch": 1,
+      "loaded_canvas_accessible_region_missing": 1
     }
   },
   "glmR11CodeReview": {
@@ -333,5 +344,12 @@
     ],
     "actualBrowserStatus": "not_run",
     "compatibility": "real DOM/box/mouse tools with image responses omitted; Root separately inspects saved images"
+  },
+  "r12Verification": {
+    "sourceSha": "ad26a774e9b571e9336b6b6c8deb66698f4beb36",
+    "runId": 38505054766,
+    "status": "in_progress",
+    "recordedAt": "2026-10-14T11:28:46.442019+08:00",
+    "noCancellationRequested": true
   }
 }
