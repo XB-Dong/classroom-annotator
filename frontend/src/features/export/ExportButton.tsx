@@ -1,15 +1,21 @@
 import { useState } from 'react';
 import { json, request } from '../../shared/api/client';
+import { ExportQualityCheck } from './ExportQualityCheck';
+import './quality.css';
 export function ExportButton({
   videoId,
   batchId,
   completed,
   blocked = false,
+  revisionKey = '',
+  onLocateFrame,
 }: {
   videoId: string;
   batchId: string;
   completed: number;
   blocked?: boolean;
+  revisionKey?: string;
+  onLocateFrame?: (frameId: string) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
@@ -46,6 +52,13 @@ export function ExportButton({
           {error}
         </span>
       )}
+      <ExportQualityCheck
+        key={`${videoId}:${batchId}:${revisionKey}`}
+        videoId={videoId}
+        batchId={batchId}
+        blocked={busy || blocked || completed === 0}
+        onLocateFrame={onLocateFrame}
+      />
     </div>
   );
 }

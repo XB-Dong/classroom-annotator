@@ -1,0 +1,35 @@
+.export-control {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+  max-width: 100%;
+  gap: 8px;
+}
+.export-quality {
+  width: 100%;
+  max-width: 440px;
+  min-width: 0;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.export-quality summary {
+  cursor: pointer;
+  padding: 6px 0;
+}
+.quality-results {
+  max-height: 340px;
+  overflow-y: auto;
+}
+.quality-results ul {
+  margin: 0;
+  padding-left: 20px;
+}
+.quality-results li {
+  margin: 10px 0;
+}
+.quality-results li > * {
+  display: block;
+  max-width: 100%;
+  margin-top: 4px;
+}

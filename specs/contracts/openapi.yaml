@@ -3157,6 +3157,124 @@
           }
         }
       }
+    },
+    "/api/v1/exports/quality-check": {
+      "post": {
+        "operationId": "checkExportQuality",
+        "summary": "Read-only advisory checks on an export snapshot",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bounded advisory quality report; truncated means incomplete coverage",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportQualityReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Invalid/upstream failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Safe error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4487,6 +4605,108 @@
           },
           "errorCode": {
             "type": "string"
+          }
+        }
+      },
+      "ExportQualityReport": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "rulesVersion",
+          "checkedFrames",
+          "checkedAnnotations",
+          "totalFindings",
+          "truncated",
+          "frameRevisions",
+          "findings"
+        ],
+        "properties": {
+          "rulesVersion": {
+            "type": "string",
+            "enum": [
+              "P2-QC-1"
+            ]
+          },
+          "checkedFrames": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "checkedAnnotations": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "totalFindings": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Detected findings only, not a complete total when truncated"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "frameRevisions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "frameId",
+                "revision"
+              ],
+              "properties": {
+                "frameId": {
+                  "type": "string"
+                },
+                "revision": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "findings": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "code",
+                "severity",
+                "frameId",
+                "annotationIds",
+                "message"
+              ],
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "enum": [
+                    "TINY_BOX",
+                    "LARGE_BOX",
+                    "DUPLICATE_BOX"
+                  ]
+                },
+                "severity": {
+                  "type": "string",
+                  "enum": [
+                    "warning"
+                  ]
+                },
+                "frameId": {
+                  "type": "string"
+                },
+                "annotationIds": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 2,
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }

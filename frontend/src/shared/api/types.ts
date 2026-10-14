@@ -220,3 +220,18 @@ export interface DatasetPage {
   total: number;
   stats?: Record<string, unknown>;
 }
+export interface ExportQualityReport {
+  rulesVersion: string;
+  checkedFrames: number;
+  checkedAnnotations: number;
+  totalFindings: number;
+  truncated: boolean;
+  frameRevisions: { frameId: string; revision: number }[];
+  findings: {
+    code: 'TINY_BOX' | 'LARGE_BOX' | 'DUPLICATE_BOX';
+    severity: 'warning';
+    frameId: string;
+    annotationIds: string[];
+    message: string;
+  }[];
+}
