@@ -39,7 +39,7 @@ Actual tests include rectangular/portrait rounding, clipping/head filtering/NMS,
 
 ## Real model results and limits
 
-Configured AI_TEST_MODEL_PATH and AI_TEST_SAMPLE_DIRECTORY use the exact external artifact and authorized Windows-only sample directory. No real image path or bytes are committed. Eight PNG frames are converted to JPEG in memory and sent through actual FastAPI TestClient+ORT; original PNG is also sent through the same HTTP endpoint. The test is skipped and counts not_run if paths are absent.
+Configured AI_TEST_MODEL_PATH and AI_TEST_SAMPLE_DIRECTORY use the exact external artifact and restricted local test sample directory. No real image path or bytes are committed. Eight PNG frames are converted to JPEG in memory and sent through actual FastAPI TestClient+ORT; original PNG is also sent through the same HTTP endpoint. The test is skipped and counts not_run if paths are absent.
 
 Latest real-http-results.json contains original dimensions, input hashes, all actual candidates/risk flags, model/pipeline identity and timing. Counts:10,14,9,13,13,10,13,12. Internal preprocessing/inference/decode pipeline timing284.9–292.7ms; actual in-process HTTP TestClient wall time308.8–316.9ms, excluding JPEG encoding and network/Go/PG. Entire pytest-process peak working set207.4MiB, not isolated service RSS or cloud resource measurement. Initial tiling probe used per-tile JPEG re-encoding; production crops directly in memory and therefore has slightly different counts/times. Do not mix those two records.
 

@@ -1,13 +1,15 @@
-# P0 架构规格
+# 当前系统架构
 
-版本：1.0.0｜状态：已冻结，Astra审核通过
+版本：2.0.0｜2026-10-14｜P1实现基线与P2迭代
 
-React/TypeScript/Vite/React Konva 前端调用 Go/Gin。Go 唯一业务数据入口，SQLite 保存视频、任务、批次、帧、标注和 revision。能力包 videos/extraction/annotations/exports，平台包 config/sqlite/observability。使用显式 SQL、事务和 repository 边界，不引入 ORM。SQLite 驱动选纯 Go modernc.org/sqlite，锁定可用版本。Python 模块只保留文档边界，不安装/运行。
+浏览器 React/TypeScript/Vite/React Konva 经 Nginx 访问 Go/Gin，Go 是唯一业务API与数据入口，database/sql+pgx连接PostgreSQL17。数据库显式goose迁移，当前P1 schema为8；应用角色只有业务DML，迁移/bootstrap单独运行。SQLite仅是旧数据导入来源，不是当前业务库。P0历史架构保留在 [归档](archive/p0-architecture.md)。
 
-存储根目录配置，媒体/数据库位于仓库外。上传用临时文件、大小限制和 ffprobe 校验，成功后原子转存；失败清理，文件名不作系统路径。随机稳定ID。工作队列有界，单项 FFmpeg 抽帧，Context 取消/超时；启动时将上次 running/queued/cancelling 未完成工作标为 failed/interrupted，并清理未发布暂存，不假装恢复外部子进程。任务进度单调0–1，终态不可逆。取消进入cancelling后确认子进程退出与暂存清理再成为cancelled；成功发布必须在事务中确认仍为running。
+Python/FastAPI/ONNX Runtime CPU是独立推理HTTP服务，不直接访问业务数据库。Go负责有界任务、候选存储、人工审核、revision CAS和导出门禁。预标注候选与正式标签隔离，过期revision结果不能覆盖人工数据。整文档使用指南由Go调用外部可配置HTTPS供应商，不发送媒体/任务/凭证，不执行业务工具。
 
-服务地址、存储路径、数据库、FFmpeg/ffprobe路径、API地址/key、并发/超时/上传上限/最大帧数/允许媒体来源都通过经过校验的配置。错误返回安全 code/message/requestId；重启中断使用status=failed、安全error=INTERRUPTED，不新增未定义状态。外部导入默认禁止回环/私网/云元数据，实际内网或合成fixture必须显式配置允许来源；API和媒体分开HTTP客户端，API重定向只能同origin，每次媒体重定向和解析出的连接目的地址都校验，API key不得透传媒体。HTTP超时/重定向/下载体积受限。
+媒体存当前部署主机的外部卷，Go/FFmpeg/PG/Python同机组成独立整栈。不依赖Mac桥接、relay或反向隧道。历史mac provider保持显式不可用，不猜测映射路径。上传经暂存/ffprobe，抽帧使用独立批次与原子发布，取消/重启清理未发布产物。
 
-抽帧暂存不在/media服务目录；全部JPEG验证后先rename到不可变批次目录，再事务插入frames并标任务completed。启动时清理未完成暂存与未被数据库引用的最终批次目录；DB不发布缺失媒体的frame。旋转视频以实际输出JPEG尺寸作为frame原图尺寸，画布和COCO沿用此尺寸，不盲用编码stream宽高。
+标注持久化采用事务expectedRevision CAS，冲突409且不部分写入。导出从repeatable-read快照读取已完成帧和正式框，保留显式完成零框图；媒体SHA/尺寸/候选审核/provenance仍必须验证。P2新增的只读质量提醒不替代这些硬门禁、不修改数据库。
 
-Nginx 静态构建并代理 /api、/media，后端不公开存储目录；Compose 业务与监控仅绑定127.0.0.1。Prometheus/Grafana/node exporter按P0计划容量配置，指标标签仅有限枚举。前端源、后端源、端到端测试隔离所有权。实现、测试、部署各记录实际SHA。GitHub CI使用统一脚本；重任务串行以适配2核4GB演示机。
+前端按features分能力，保存控制与画布几何独立，账号/工作区/部署隔离草稿。P2优化自适应布局和进阶按需展开，不更换画布库或引入复杂UI框架。规格见 [P2](p2/acceptance.md)。
+
+Compose包含Nginx/Go/PG/ONNX及Prometheus/Grafana/node exporter。监控仅loopback，数据库/AI仅容器内部。配置、权重、数据、日志、缓存、工作树均在代码外。arm64/amd64镜像及二进制必须匹配。生产状态与QA/本机结果只以具体版本报告为准。

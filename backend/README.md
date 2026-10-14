@@ -1,31 +1,15 @@
 # Backend
 
-Build with Go 1.25: `go build -o backend-server ./cmd/server`. SQLite uses the pinned pure-Go modernc driver. FFmpeg and ffprobe must be installed at runtime. `go test ./...` runs capability tests; real media integration runs when FFmpeg/ffprobe are on PATH and otherwise reports a skip.
+The active backend is Go/Gin with database/sql + pgx and PostgreSQL 17. See go.mod for the exact Go toolchain, the migration directory for the current schema, and ../docs/deployment/P1-RUNBOOK.zh.md for deployment. SQLite is supported only as an explicit legacy import source, not the running database.
 
-Required: `APP_DATA_DIR` is an absolute directory outside a source checkout (`DATA_DIR` is an alias). Data is stored as `app.sqlite`, `videos/`, immutable `frames/<batchId>/`, and private `staging/`.
+Run explicit `cmd/migrate` and `cmd/bootstrap-user` commands with external restricted configuration before the app. The application role uses business DML, not automatic schema creation. Runtime data, media, secrets, logs and Go caches stay outside this checkout. `APP_DATA_DIR` is an absolute external media root; `APP_DATABASE_URL` points at PostgreSQL. Configuration keys and limits are declared in `.env.example` and `internal/platform/config`.
 
-| Variable | Default |
-| --- | --- |
-| APP_ADDR | :8080 |
-| APP_VERSION | dev (or build `-ldflags -X main.version=<sha>`) |
-| APP_FFMPEG / APP_FFPROBE | ffmpeg / ffprobe |
-| APP_MAX_UPLOAD_BYTES | 1073741824 |
-| APP_QUEUE_SIZE | 8 |
-| APP_MAX_FRAMES | 1000 |
-| APP_JOB_TIMEOUT_SECONDS | 600 |
-| APP_HTTP_TIMEOUT_SECONDS | 30 |
-| APP_DATASET_API_URL | unset; origin, e.g. https://company.example |
-| APP_DATASET_ID | unset; required for company API |
-| APP_DATASET_API_KEY | unset; X-API-Key for API only |
-| APP_ALLOWED_PRIVATE_ORIGINS | unset; comma-separated exact origins explicitly permitted for company/fixtures |
-| APP_ALLOWED_MEDIA_ORIGINS | unset; optional comma-separated media-origin restriction |
+`cmd/server` registers auth, uploads/sources, extraction, annotation CAS, preannotation/review, whole-document help, and exports. Go is the sole business/data entry point. Python ONNX is an optional internal service without database access. Retired remote-media records remain explicitly unavailable and are not silently mapped to local files.
 
-Company list routing is `/api/v1/datasets/{APP_DATASET_ID}/lessons?page=&page_size=`. Playback routing is `/api/v1/catalog-files/{catalogFileId}/play-url`. Private/loopback/link-local destinations are rejected by default, including redirect and resolved connection targets. API redirects must retain the original origin; media requests never receive the API key. Do not put credentials or signed URLs in logs.
+Annotation saves use transactional expectedRevision CAS. Stale writes return409 without partial changes. Exports contain only completed frames and formal reviewed labels, including explicitly completed zero-head frames, with original JPEG and COCO JSON in a closed ZIP. Repeatable-read snapshots, provenance/review gates, and media identity checks are independent of advisory quality hints.
 
-One worker runs persisted bounded jobs. On startup unfinished jobs become failed with `INTERRUPTED`; staging and unpublished final directories are reconciled. Cancellation returns `cancelling` until work has exited and cleaned up; a cleanup failure remains `failed/CLEANUP_FAILED`. Only completed batches publish frames. Annotation and COCO export capabilities are registered through `httpapi.Extension` in the server entry point.
+Company API routing follows the configured observed adapter contract. HTTP redirects/resolved destinations are validated, and media requests never receive the API key. Do not log credentials or signed URLs. Product help sends only the versioned public manual and a question through a bounded HTTPS client. Its key is external and readable only by Go.
 
-Annotations use atomic expected-revision snapshots. A stale revision returns 409 without partial changes. Exports include only completed frames, including explicitly completed zero-head frames, with original JPEG bytes and COCO JSON in one closed ZIP. Invalid selectors return 400; an otherwise valid scope with no completed frames returns 422. See `specs/contracts/api.md` version 1.0.1 for the complete HTTP contract.
+`go test ./...` requires a dedicated PostgreSQL17 test namespace. Set P01_TEST_DATABASE_URL to the external isolated p01_test_go target in process memory; never use the application database. FFmpeg/ffprobe must be available for actual media checks. Record real execution and skips separately. The canonical checks are scripts/verify.sh and tests/README.md.
 
-Upload body deadlines start before multipart reads and cover file transfer and probing. FFmpeg integration verifies first-frame-at-or-after sampling, unavailable tails and rotation using actual media; validated environments include Windows FFmpeg 9.0.2, cloud-host 4.4.2 and the deployed Debian runtime 5.1.9.
-
-Backup: stop the service before copying the complete data directory (database, WAL/SHM when present, videos and frames). Restore into a separate configured directory and start the same schema-compatible version. The schema is creation-only version 1; downgrade across future migrations requires a matching pre-upgrade backup. Never copy only app.sqlite while the service is running.
+Backup PostgreSQL and its matching media manifest as a consistent set, then restore into an independent target. Do not copy app.sqlite as a current backup or fall back to SQLite after PostgreSQL writes. Formal production migration is outside the current P2 authorization.

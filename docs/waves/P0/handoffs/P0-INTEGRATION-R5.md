@@ -16,6 +16,6 @@ Leader 在整合提交 `ee2c927aa99b3e30a84449c92d41dba18ffadf42` 执行统一 v
 
 GitHub 已发布候选分支 p0/leader 的 `64b65df`，实际 CI [38294607717](https://github.com/XB-Dong/classroom-annotator/actions/runs/38294607717) completed/success。首次 Git Data API 发布途中遇到 502；重试从经服务端验证的已上传提交继续，没有改写历史、force push 或泄漏 Git 凭证。主分支尚未更新到产品版本，最终审核门槛完成后由 Leader 发布。
 
-授权真实课堂样本只在 Windows 专用短时后端验证上传/抽帧：1920×1080、20 秒，目标 0/5000/10000/15000ms 四帧均成功。不创建训练标签，不上传云端或外部模型。公司真实 API 状态 `not_run`，不构成当前 P0 阻塞。
+受限测试样本只在 Windows 专用短时后端验证上传/抽帧：1920×1080、20 秒，目标 0/5000/10000/15000ms 四帧均成功。不创建训练标签，不上传云端或外部模型。公司真实 API 状态 `not_run`，不构成当前 P0 阻塞。
 
 尚待：GLM 第二次实际产品体验及 Leader 逐项核验，发布/回滚核验、最终报告与主分支交付。主会话实际 Sol/high 与请求 xhigh 的偏差仍在 model-check.json 公开记录，用户选择尚未返回；没有把子 Agent 设置当作主会话切换。

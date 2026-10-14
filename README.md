@@ -1,30 +1,25 @@
 # Classroom Annotator
 
-教室人员标注平台：视频导入、抽帧、人头标注、人工审核与数据导出。
+课堂视频的人头标注平台。三模块：React/TypeScript/Konva 前端、Go/Gin/PostgreSQL17 业务后端、Python/FastAPI/ONNX CPU 推理服务。同机媒体卷，人工标注可在 AI 故障时继续。
 
-当前：P0.1已按用户要求收束为partial，通过CI的候选尚未切换公网。P1正在准备审核，重点为手绘工作台、真实AI预标注/高风险复核、注册与多用户冲突、整文档增强使用指南、无隧道同机部署；截止已确认2026-10-14 08:30，但尚未授权执行。现行入口见 [P1计划](P1-PLAN.md)、[规格与验收](specs/p1/acceptance.md)、[P0.1收束报告](docs/audit/reports/report-20261013T205401+0800.md)。下文P0说明属于历史已发布基线。
+当前 **P2 已获用户授权启动**，重点是窗口伸缩布局、扩展前端测试、按需展开的进阶操作、导出前可疑框提醒、文档维护和约20分钟答辩材料。具体能力状态以 [P2状态](docs/waves/P2/state.json) 和时间戳报告为准，不把计划当实测。智能抽帧与跨帧传播本轮只做设计评估。
 
-P0 已交付人工标注闭环，并完成当前本地/合成材料范围的 14 项门槛。查看 [P0 交付报告](docs/audit/reports/report-20261013T032912+0800.md)、[执行状态](docs/waves/P0/state.json) 与 [验收清单](docs/waves/P0/acceptance.json)。模型配置偏差和 GLM 在核心操作结束后超时均如实记录。真实公司 API 尚未联调；材料驱动的合成 API 导入已验证。
+P1 最终状态仍为 `partial_closed_fast_path`，详见 [快速收束报告](docs/audit/reports/report-20261014T151947+0800.md)。公开素材 QA、Mac 本机验证和生产发布分别记录。未进行生产数据切换，准确率/召回率/节时比例没有真值测量。
 
-- [项目宪法](CONSTITUTION.md)
-- [P0计划](P0-PLAN.md)
-- [P0.1计划：已收束的历史波次](P0.1-PLAN.md)
-- [P1计划：手绘工作台、AI复核与多人协作（待审核）](P1-PLAN.md)
-- [公共示例与四类素材存储边界](specs/p0.1/sources-and-samples.md)
-- [后续波次前瞻：P1/P2](NEXT-WAVES.md)
-- [14项确认记录](docs/decisions/0001-confirmed-choices.md)
-- [Agent 角色、极高推理与负载安排](docs/decisions/0003-lean-agent-roles.md)
-- [P0 本地材料验收范围](docs/decisions/0004-local-materials-acceptance.md)
-- [交付后真实样本云端许可与密码门禁](docs/decisions/0006-authorized-cloud-demo.md)
-- [追加密码保护的公网演示入口](docs/decisions/0007-public-demo-entry.md)
-- [最新排查与真实课堂云端展示报告](docs/audit/reports/report-20261013T090951+0800.md)
-- [Agent 执行规则](AGENTS.md)
-- [时间戳报告](docs/audit/reports/)
+## 阅读入口
 
-单仓库保留三模块边界：P0 实现 React/TypeScript 前端与 Go 业务后端，Python 推理模块由后续波次实现。实现状态以报告和验证证据为准。
+- [P2计划](docs/plans/P2-PLAN.md) · [规格与验收](specs/p2/acceptance.md) · [任务包](docs/waves/P2/TASK-PACKET.md)
+- [全部文档导航](docs/README.md) · [项目宪法](CONSTITUTION.md) · [Agent规则](AGENTS.md)
+- [用户手册](docs/product/ANNOTATOR-GUIDE.zh.md) · [当前架构](specs/architecture.md) · [API](specs/contracts/api.md)
+- [部署运行手册](docs/deployment/P1-RUNBOOK.zh.md) · [统一测试](tests/README.md) · [审计报告](docs/audit/reports)
+- [答辩任务书](docs/presentations/P2/BRIEF.zh.md) · [P0历史计划](docs/plans/archive/P0-PLAN.md) · [P0.1历史计划](docs/plans/archive/P0.1-PLAN.md) · [P1历史计划](docs/plans/archive/P1-PLAN.md)
 
-现有功能包括本地上传、固定间隔抽帧与独立批次、画框/移动/调整/删除、撤销重做、串行自动保存、草稿恢复与 revision 冲突、显式完成和进度、完成帧 COCO/JPEG ZIP 导出。AI 预标注属于 P1。
+## 功能与运行边界
 
-前后端分别见 [frontend](frontend/README.md) 和 [backend](backend/README.md)。[统一验收说明](tests/README.md)、[部署说明](deploy/README.md) 和 [云端验收/恢复步骤](deploy/ACCEPTANCE.md) 说明如何复做检查。统一入口为 `scripts/verify.ps1`（Windows）或 `bash scripts/verify.sh`（Linux）；源码外配置 FFmpeg、缓存和测试数据目录。
+已有视频上传/公开示例/同机来源/可配置公司API、固定间隔抽帧与独立批次、人头框编辑/撤销重做、revision保存与冲突、注册登录、ONNX候选/风险复核、完成帧COCO/JPEG ZIP导出及整文档问答。具体环境配置与实际验证见报告；功能存在不等于公司真实API已联调或生产验收完成。
 
-演示应用原通过授权 SSH 转发访问；用户追加公网入口要求后，当前云端已新增带密码的 HTTP 80。具体主机地址与密码在仓库外，不在源码硬编码；普通 Chrome/Edge 使用账号 demo 登录。Windows SSH 入口 `http://127.0.0.1:8180` 仍保留，Prometheus/Grafana 仍绑定 loopback，转发端口为 `:9090`、`:3000`。Grafana 密码独立配置。P0 原验收云端使用合成视频；当前云端已导入 `channel4-20s-redacted.mp4` 真实脱敏样本。外部 GLM 仍只获准代码/独立合成数据审核，不能访问真实媒体实例。见 [展示与门禁规格](specs/cloud-demo-access.md)。
+部署使用 Docker Compose、Nginx、FFmpeg、PostgreSQL17。配置、权重、素材、数据库、日志和构建缓存均置于仓库外。问答密钥只给 Go，浏览器/Python不接触。Mac的容器/代理/arm64实际前提见对应部署记录，不能照抄历史Windows代理或amd64工件。
+
+统一验证入口：`bash scripts/verify.sh` 或 Windows `scripts/verify.ps1`。完整验证必须准备独立测试数据库、FFmpeg和外部运行目录，不能在生产库执行。各模块说明见 [frontend](frontend/README.md)、[backend](backend/README.md)、[ai-service](ai-service/README.md)。
+
+此Mac当前从GitHub main归档建立本地快照审计仓，未取得远端Git对象历史/推送凭据；源基线SHA和本地快照提交分别记录，不把快照伪称clone，不将本地提交说成已推送。
