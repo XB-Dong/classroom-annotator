@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "wave": "P2",
   "planVersion": "0.1.0",
-  "status": "partial",
+  "status": "partial_closed_fast_path",
   "executionAuthorized": true,
   "implementationStarted": true,
   "timezone": "Asia/Shanghai",
@@ -27,10 +27,11 @@
   "tasks": {
     "P2-FRONT-001": "implemented_verified",
     "P2-QC-001": "implemented_verified",
-    "P2-TEST-001": "102_unit_30_mocked_2_actual_targeted_and_both_latest_deployed_full_UI_passed_CI_in_progress",
+    "P2-TEST-001": "106_unit_32_browser_latest_CI_passed_independent_review_not_run",
     "P2-REPO-001": "implemented_GitHub_history_adopted_presentations_removed_local_only",
     "P2-DECK-001": "local_only_16_slides_20min_full_script_32_QA_render_verified",
-    "P2-POLL-001": "implemented_local_106_unit_32_browser_passed_dual_deploy_pending"
+    "P2-POLL-001": "implemented_verified_dual_deploy_and_CI",
+    "P2-COPY-001": "three_personnel_label_headings_verified_typecheck_build_dual_frontend_deployed"
   },
   "options": {
     "smartExtraction": "design_only_deferred",
@@ -46,13 +47,14 @@
   "evidenceRefs": [
     "docs/audit/evidence/P2/acceptance.json",
     "docs/audit/reports/report-20261014T230000+0800.md",
-    "docs/audit/reports/report-20261015T001534+0800.md"
+    "docs/audit/reports/report-20261015T001534+0800.md",
+    "docs/audit/reports/report-20261015T091308+0800.md"
   ],
-  "lastCheckpointAt": "2026-10-15T00:15:34+08:00",
+  "lastCheckpointAt": "2026-10-15T09:13:08+08:00",
   "githubAccount": "XB-Dong",
   "branch": "codex/p2-adaptive-quality",
   "originalSnapshotHistoryRef": "codex/p2-snapshot-preserved",
-  "productAcceptanceStatus": "latest_formal_copy_102_unit_30_mocked_and_both_actual_full_UI_passed",
+  "productAcceptanceStatus": "106_unit_32_browser_dual_actual_polling_green_company_import_extract_green",
   "nativeCapacityFailures": {
     "P2-TEST-001": 2,
     "P2-DECK-001": 1
@@ -60,16 +62,20 @@
   "capacityDisposition": "no_model_substitution_Leader_executed_existing_Test_suite_presentation_resumed_same_model",
   "inheritedP1CountsPreserved": true,
   "requiredFormalReviewGate": "not_passed_partial_until_independent_GLM_gate_completed",
-  "currentDeploymentCandidateSha": "bf18d30f8853e75cdac6abea160dde54c89dd18b",
+  "currentDeploymentCandidateSha": "1dc91857f39e548aa53bf916261fe5e5493e3b80",
   "productionMigrationStatus": "not_run_not_authorized",
   "dualDeviceDemoAuthorized": true,
   "dualDeviceDecisionRef": "docs/decisions/0012-p2-dual-device-demo.md",
   "presentationStoragePolicy": "local_only_no_GitHub",
   "companyDatasetPolicy": "Mac_company_network_only_no_cloud_no_bulk_download",
-  "companyDatasetMetadataStatus": "Mac_direct_and_actual_Go_HTTP200_no_media_download",
-  "ciStatus": "baseline_bf18_four_jobs_success_polling_fix_106_unit_32_browser_green_new_CI_pending",
+  "companyDatasetMetadataStatus": "Mac_actual_single_Go_import_and_FFmpeg_three_frames_and_JPEG_HTTP200_verified",
+  "ciStatus": "38596604334_all_four_jobs_success",
   "handoffRef": "docs/waves/P2/HANDOFF.md",
-  "currentFollowup": "P2-POLL-001_user_reported_statistics_flicker",
-  "latestReportRef": "docs/audit/reports/report-20261015T001534+0800.md",
-  "companyVideoWalkthrough": "explicit_user_authorized_single_Mac_video_import_prepare_then_user_manual_annotation_export"
+  "currentFollowup": "none_wave_closed_by_user_time_limit",
+  "latestReportRef": "docs/audit/reports/report-20261015T091308+0800.md",
+  "companyVideoWalkthrough": "local_text_delivered_user_annotation_and_export_not_run",
+  "closureMode": "user_requested_fast_path_time_limit",
+  "closedAt": "2026-10-15T09:13:08+08:00",
+  "remainingDisposition": "deferred_due_user_time_limit_not_formal_release",
+  "currentFrontendSha": "384a926a9ea47dcfd4d8a627ff10baaed16bbc07"
 }

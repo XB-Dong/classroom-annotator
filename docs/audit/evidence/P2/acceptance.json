@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "wave": "P2",
-  "observedAt": "2026-10-14T23:36:23+08:00",
-  "status": "partial",
+  "observedAt": "2026-10-15T09:13:08+08:00",
+  "status": "partial_closed_fast_path",
   "p1StatusUnchanged": true,
   "externalEvidenceRoot": "/Users/kdl/.local/share/classroom-annotator/p2-20261014",
   "source": {
@@ -10,7 +10,7 @@
     "fullActualUIProvisionalSHA": "381d70bb7fa02953251ced84566c257a85725da8",
     "historyCleanup": "P2_branch_history_presentation_paths_removed_remote_404_verified_main_unchanged",
     "firstUnifiedProductSHA": "9e671124c538f03ea3bd9c37abdd906ca8602894",
-    "currentDeployedProductSHA": "bf18d30f8853e75cdac6abea160dde54c89dd18b",
+    "currentDeployedProductSHA": "1dc91857f39e548aa53bf916261fe5e5493e3b80",
     "equivalencePairs": [
       {
         "left": "381d70bb7fa02953251ced84566c257a85725da8",
@@ -44,20 +44,21 @@
       "deploymentBuiltFromPRHeadArchive": true,
       "CITrigger": "pull_request_only_for_feature_branch",
       "newRun": 38588562501
-    }
+    },
+    "currentFrontendSHA": "384a926a9ea47dcfd4d8a627ff10baaed16bbc07"
   },
   "checks": {
     "frontendUnit": {
-      "passed": 102,
+      "passed": 106,
       "files": 21
     },
     "mockedResponsiveChromium": {
-      "passed": 30,
+      "passed": 32,
       "seconds": 44.3
     },
     "actualMacUI": "latest_bf18d30_full_pipeline_passed",
     "actualPublicQAUI": "latest_bf18d30_full_pipeline_passed",
-    "MacCompanyMetadata": "direct_and_Go_HTTP200_no_download",
+    "MacCompanyMetadata": "actual_Go_single_import_FFmpeg_three_frames_authenticated_JPEG_reads_passed",
     "ciInitialRuns": [
       {
         "id": 38583867733,
@@ -98,8 +99,8 @@
       "paidCallsNotRepeatedAfterCopyChange": true
     },
     "currentCI": {
-      "id": 38588562501,
-      "headSHA": "bf18d30f8853e75cdac6abea160dde54c89dd18b",
+      "id": 38596604334,
+      "headSHA": "1dc91857f39e548aa53bf916261fe5e5493e3b80",
       "status": "completed",
       "conclusion": "success",
       "allFourJobs": true,
@@ -110,18 +111,31 @@
       "component": 8,
       "browserCombined": 32,
       "actualCloudBaselineRed": "93_of_720_frames_flicker_on_750ms_delayed_real_GET",
-      "newVersionCI": "pending"
+      "newVersionCI": "success"
+    },
+    "pollingFixActual": {
+      "Mac": "passed_720_samples_zero_flicker",
+      "publicQA": "passed_721_samples_zero_flicker"
+    },
+    "companyVideoAnnotationExport": "not_run_user_walkthrough_only",
+    "personnelWording": {
+      "frontendSHA": "384a926a9ea47dcfd4d8a627ff10baaed16bbc07",
+      "typecheck": 0,
+      "build": 0,
+      "bothFrontendDeployed": true,
+      "fullCI": "not_repeated_copy_only_skip_ci"
     }
   },
   "boundaries": {
-    "companyMediaDownloaded": false,
+    "companyMediaDownloaded": true,
     "companyCredentialInRepository": false,
     "privateMediaSentToReviewModels": false,
     "p0ImageAndMountsUnchanged": true,
     "originalQAMediaHashesVerified": 79,
     "schema": 8,
     "tunnelRestored": false,
-    "presentationMaterials": "local_only_excluded_from_GitHub"
+    "presentationMaterials": "local_only_excluded_from_GitHub",
+    "companyMediaScope": "one_video_Mac_only"
   },
   "evidenceFiles": [
     {
@@ -333,6 +347,56 @@
       "externalRelativePath": "evidence/polling-flicker/browser-green.log",
       "sha256": "2ce81e0d93cab0c55b61c7f10916e6412c328ab7bb6ce39af364209e67b63be5",
       "bytes": 5617
+    },
+    {
+      "externalRelativePath": "evidence/company-walkthrough-prepared.json",
+      "sha256": "86b5b2108d894b593ee14f10a35d941ae60ba287ed090e8512f14cb1e91af579",
+      "bytes": 483
+    },
+    {
+      "externalRelativePath": "evidence/company-certificate-chain.json",
+      "sha256": "bcfb8e35ad0fd4beb752d694941638ee7a4142498aae018e5a1b0f0401f51f28",
+      "bytes": 415
+    },
+    {
+      "externalRelativePath": "evidence/ci-38596604334-direct.json",
+      "sha256": "8089e2ed93ee202cc9d57bed957a593263a34fb1754f1db9a0cfaf0bcaae1142",
+      "bytes": 9886
+    },
+    {
+      "externalRelativePath": "evidence/polling-flicker/green2-mac.json",
+      "sha256": "dd7e6a6c29231c5b7670760b598e42bfd5daf9e4c7c498250c0fd01ca5177c7f",
+      "bytes": 640
+    },
+    {
+      "externalRelativePath": "evidence/polling-flicker/green2-cloud.json",
+      "sha256": "17284a872b09789176460737884b4296a166bbc723ed25c3069c6ead52155bb8",
+      "bytes": 642
+    },
+    {
+      "externalRelativePath": "evidence/polling-flicker/observer-network-disposition.json",
+      "sha256": "e0d563db03609d46c40e0a999cda8c9a5de258205985f689ab2c393d90c5de0d",
+      "bytes": 185
+    },
+    {
+      "externalRelativePath": "evidence/wording-checks.json",
+      "sha256": "8d88245100a2a533af7a8ea320e43a3a7c9cf040bf4e7f1b3165198ab0d56cf5",
+      "bytes": 105
+    },
+    {
+      "externalRelativePath": "evidence/wording-mac-deploy.json",
+      "sha256": "ea0ab158bf556893ec85db7094c74e52e0e2a64d65c824cccdd1b492846b4eed",
+      "bytes": 235
+    },
+    {
+      "externalRelativePath": "evidence/wording-cloud-deploy.json",
+      "sha256": "ed8299e9a7f0013d36da53605915e92ddf91a52fef13a8ea623dd3933f6bfde0",
+      "bytes": 228
     }
-  ]
+  ],
+  "closure": {
+    "reason": "user_time_limit",
+    "remaining": "deferred_not_formally_complete",
+    "report": "docs/audit/reports/report-20261015T091308+0800.md"
+  }
 }
