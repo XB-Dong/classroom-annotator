@@ -444,7 +444,7 @@ export function Editor({ frame, draftScope, onSaved, onController, onStateChange
       </section>
       <aside className="annotation-panel">
         <div className="panel-title">
-          <h2>人头标注</h2>
+          <h2>人员标注</h2>
           <span className="count">{view.snapshot.annotations.length}</span>
         </div>
         <p className="muted">只标学生可见人头；遮挡时框住可见部分。</p>

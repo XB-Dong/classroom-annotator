@@ -38,7 +38,7 @@ function AccountWorkspace() {
           <NotebookMark />
         </div>
         <div className="brand-title">
-          <h1>课堂人头标注平台</h1>
+          <h1>课堂人员标注平台</h1>
         </div>
         <div className="account-actions">
           {auth.session && (
