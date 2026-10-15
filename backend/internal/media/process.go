@@ -56,8 +56,8 @@ func (p Process) Probe(ctx context.Context, path string) (Metadata, error) {
 	return Metadata{dto.Streams[0].Width, dto.Streams[0].Height, d}, nil
 }
 func (p Process) Extract(ctx context.Context, input string, target int64, output string) error {
-	// Output seeking decodes before discarding frames prior to target. No input fast seek.
-	cmd := exec.CommandContext(ctx, p.FFmpeg, "-nostdin", "-v", "error", "-i", input, "-ss", fmt.Sprintf("%d.%03d", target/1000, target%1000), "-map", "0:v:0", "-frames:v", "1", "-q:v", "2", "-pix_fmt", "yuvj420p", "-threads", "1", "-y", output)
+	// Input seeking skips to a nearby keyframe; accurate seeking decodes to the target.
+	cmd := exec.CommandContext(ctx, p.FFmpeg, "-nostdin", "-v", "error", "-ss", fmt.Sprintf("%d.%03d", target/1000, target%1000), "-accurate_seek", "-i", input, "-map", "0:v:0", "-frames:v", "1", "-q:v", "2", "-pix_fmt", "yuvj420p", "-threads", "1", "-y", output)
 	cmd.Stdout = io.Discard
 	cmd.Stderr = io.Discard
 	if e := cmd.Run(); e != nil {
