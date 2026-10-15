@@ -66,7 +66,6 @@ export function HelpPanel({ close }: { close: () => void }) {
     <aside className="help-shell" id="help-panel" aria-label="使用指南">
       <div className="panel-title">
         <div>
-          <span className="eyebrow">随手查一查</span>
           <h2>使用指南</h2>
         </div>
         <button onClick={close} aria-label="收起使用指南">

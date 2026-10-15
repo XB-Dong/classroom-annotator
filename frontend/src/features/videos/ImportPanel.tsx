@@ -132,6 +132,11 @@ export function ImportPanel({
               onChange={(e) => setFile(e.target.files?.[0])}
             />
           </label>
+          {file && (
+            <p className="muted small">
+              已选择：<span>{file.name}</span>
+            </p>
+          )}
           <p className="muted small">上传后可设置间隔，创建独立抽帧批次。</p>
           <button
             className="primary full"

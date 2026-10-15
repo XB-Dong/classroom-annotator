@@ -59,29 +59,39 @@ export function ExtractionForm({ video, onJob }: { video: Video; onJob: (j: Job)
             onChange={(e) => setInterval(e.target.value)}
           />
         </label>
-        <label>
-          开始（秒）
-          <input
-            data-testid="start-seconds"
-            type="number"
-            min="0"
-            step="0.001"
-            value={start}
-            onChange={(e) => setStart(e.target.value)}
-          />
-        </label>
-        <label>
-          结束（秒）
-          <input
-            data-testid="end-seconds"
-            type="number"
-            step="0.001"
-            placeholder={String(Math.ceil(video.durationSeconds * 1000) / 1000)}
-            value={end}
-            onChange={(e) => setEnd(e.target.value)}
-          />
-        </label>
       </div>
+      <details>
+        <summary>指定抽帧范围（可选）</summary>
+        <div className="fields range-fields">
+          <label>
+            开始（秒）
+            <input
+              data-testid="start-seconds"
+              type="number"
+              min="0"
+              step="0.001"
+              value={start}
+              onChange={(e) => setStart(e.target.value)}
+            />
+          </label>
+          <label>
+            结束（秒）
+            <input
+              data-testid="end-seconds"
+              type="number"
+              step="0.001"
+              placeholder={String(Math.ceil(video.durationSeconds * 1000) / 1000)}
+              value={end}
+              onChange={(e) => setEnd(e.target.value)}
+            />
+          </label>
+        </div>
+      </details>
+      {(start !== '0' || end !== '') && (
+        <p className="muted small">
+          当前范围：{start}–{end || video.durationSeconds.toFixed(3)} 秒
+        </p>
+      )}
       <button
         data-testid="extract-submit"
         className="primary full"

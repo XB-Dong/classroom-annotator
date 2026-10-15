@@ -21,6 +21,7 @@ func Register(g *gin.RouterGroup, s *store.Store, registry prometheus.Registerer
 		maxFrames = limits[0]
 	}
 	service := Service{Store: s, MaxFrames: maxFrames}
+	registerQualityCheck(g, service)
 	g.POST("/exports", func(c *gin.Context) {
 		var body exportRequest
 		if !httpapi.Decode(c, &body) {

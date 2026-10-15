@@ -30,29 +30,9 @@ export function AuthPage() {
   }
   return (
     <main className="auth-layout">
-      <section className="auth-intro">
-        <span className="eyebrow">课堂手账 / ANNOTATION WORKSPACE</span>
-        <h2>
-          把每一个人头，
-          <br />
-          认真框好。
-        </h2>
-        <p>
-          从素材到抽帧，从人工标注到复核。
-          <br />
-          在同一个工作区里，让每次修改都有据可查。
-        </p>
-        <div className="workflow-note">
-          <span>01 选素材</span>
-          <span>02 标注与复核</span>
-          <span>03 导出数据</span>
-        </div>
-      </section>
       <section className="auth-card" aria-labelledby="auth-title">
-        <h2 id="auth-title">{mode === 'login' ? '欢迎回到工作台' : '加入共享工作区'}</h2>
-        <p className="muted">
-          {mode === 'login' ? '登录后继续你的标注与复核。' : '向管理员获取邀请码，创建自己的账号。'}
-        </p>
+        <h2 id="auth-title">{mode === 'login' ? '登录工作区' : '注册账号'}</h2>
+        {mode === 'register' && <p className="muted">注册需要管理员提供的邀请码。</p>}
         <div className="tabs" aria-label="账号入口">
           <button
             className={mode === 'login' ? 'active' : ''}
@@ -90,7 +70,7 @@ export function AuthPage() {
               disabled={busy}
               onChange={(event) => setUsername(event.target.value)}
             />
-            <small>3–32 位英文字母、数字、下划线或短横线。</small>
+            {mode === 'register' && <small>3–32 位英文字母、数字、下划线或短横线。</small>}
           </label>
           <label>
             密码
@@ -104,7 +84,7 @@ export function AuthPage() {
               disabled={busy}
               onChange={(event) => setPassword(event.target.value)}
             />
-            <small>12–128 字节；中文字符会占多个字节。</small>
+            {mode === 'register' && <small>12–128 字节；中文字符会占多个字节。</small>}
           </label>
           {mode === 'register' && (
             <label>
@@ -133,7 +113,6 @@ export function AuthPage() {
             {busy ? '正在提交…' : mode === 'register' ? '创建账号' : '登录工作区'}
           </button>
         </form>
-        <p className="auth-footer">需要操作说明？顶部“使用指南”可直接查阅手册。</p>
       </section>
     </main>
   );

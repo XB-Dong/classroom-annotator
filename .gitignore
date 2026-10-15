@@ -70,3 +70,8 @@ Thumbs.db
 .vscode/
 .worktrees/
 backend/internal/help/resources/
+
+# Presentation materials are local-only by explicit user request
+docs/presentations/
+*.ppt
+*.pptx

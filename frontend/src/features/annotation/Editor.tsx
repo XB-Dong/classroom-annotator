@@ -444,7 +444,7 @@ export function Editor({ frame, draftScope, onSaved, onController, onStateChange
       </section>
       <aside className="annotation-panel">
         <div className="panel-title">
-          <h2>人头标注</h2>
+          <h2>人员标注</h2>
           <span className="count">{view.snapshot.annotations.length}</span>
         </div>
         <p className="muted">只标学生可见人头；遮挡时框住可见部分。</p>
@@ -522,13 +522,16 @@ export function Editor({ frame, draftScope, onSaved, onController, onStateChange
         <button className="danger full" disabled={!selected || locked} onClick={remove}>
           删除选中框
         </button>
-        <div className="shortcut-help">
-          Delete 删除选中框
-          <br />
-          Ctrl / ⌘ + Z 撤销
-          <br />
-          Shift + Ctrl / ⌘ + Z 重做
-        </div>
+        <details className="shortcut-help">
+          <summary>键盘快捷键</summary>
+          <p>
+            Delete 删除选中框
+            <br />
+            Ctrl / ⌘ + Z 撤销
+            <br />
+            Shift + Ctrl / ⌘ + Z 重做
+          </p>
+        </details>
       </aside>
     </div>
   );

@@ -1,0 +1,402 @@
+{
+  "schemaVersion": 1,
+  "wave": "P2",
+  "observedAt": "2026-10-15T09:13:08+08:00",
+  "status": "partial_closed_fast_path",
+  "p1StatusUnchanged": true,
+  "externalEvidenceRoot": "/Users/kdl/.local/share/classroom-annotator/p2-20261014",
+  "source": {
+    "mainBaseline": "033de6c2fbb48a5df2ca1b4f7dcfece41a22d6da",
+    "fullActualUIProvisionalSHA": "381d70bb7fa02953251ced84566c257a85725da8",
+    "historyCleanup": "P2_branch_history_presentation_paths_removed_remote_404_verified_main_unchanged",
+    "firstUnifiedProductSHA": "9e671124c538f03ea3bd9c37abdd906ca8602894",
+    "currentDeployedProductSHA": "1dc91857f39e548aa53bf916261fe5e5493e3b80",
+    "equivalencePairs": [
+      {
+        "left": "381d70bb7fa02953251ced84566c257a85725da8",
+        "right": "9e671124c538f03ea3bd9c37abdd906ca8602894",
+        "scope": [
+          "frontend",
+          "backend",
+          "ai-service",
+          "deploy",
+          "scripts",
+          "specs/contracts"
+        ],
+        "byteEquivalent": true
+      },
+      {
+        "left": "9e671124c538f03ea3bd9c37abdd906ca8602894",
+        "right": "bf18d30f8853e75cdac6abea160dde54c89dd18b",
+        "scope": [
+          "backend",
+          "ai-service"
+        ],
+        "byteEquivalent": true
+      }
+    ],
+    "ciProvenance": {
+      "observedAt": "2026-10-14T23:30:35+08:00",
+      "main": "033de6c2fbb48a5df2ca1b4f7dcfece41a22d6da",
+      "PRHead": "bf18d30f8853e75cdac6abea160dde54c89dd18b",
+      "PRMerge": "a39f599b7cfb6c39bebd17f6477812a54069358d",
+      "PRMergeTreeEquivalentToHead": true,
+      "deploymentBuiltFromPRHeadArchive": true,
+      "CITrigger": "pull_request_only_for_feature_branch",
+      "newRun": 38588562501
+    },
+    "currentFrontendSHA": "384a926a9ea47dcfd4d8a627ff10baaed16bbc07"
+  },
+  "checks": {
+    "frontendUnit": {
+      "passed": 106,
+      "files": 21
+    },
+    "mockedResponsiveChromium": {
+      "passed": 32,
+      "seconds": 44.3
+    },
+    "actualMacUI": "latest_bf18d30_full_pipeline_passed",
+    "actualPublicQAUI": "latest_bf18d30_full_pipeline_passed",
+    "MacCompanyMetadata": "actual_Go_single_import_FFmpeg_three_frames_authenticated_JPEG_reads_passed",
+    "ciInitialRuns": [
+      {
+        "id": 38583867733,
+        "conclusion": "failure"
+      },
+      {
+        "id": 38584181952,
+        "conclusion": "failure"
+      }
+    ],
+    "independentGLMCodeReview": "not_run",
+    "independentGLMBrowserExperience": "not_run",
+    "productionMigration": "not_run_not_authorized",
+    "ciResizeRepair": {
+      "deterministicRed": "same_width_unchanged_after_ordinary_scroll",
+      "twoActualTargetedGreenSeconds": [
+        12.7,
+        12.6
+      ],
+      "allOriginalAssertionsRetained": true,
+      "heightAndIdentityAssertionsAdded": true
+    },
+    "latestNeutralCopy": {
+      "unit": 102,
+      "responsiveChromium": 30,
+      "typecheck": 0,
+      "lint": 0,
+      "build": 0,
+      "actualTargetedWorkflows": 2,
+      "CIIntegration": "P2_responsive_file_added_to_actual_browser_run_list"
+    },
+    "helpAndRealONNX": {
+      "testedSource": "9e671124c538f03ea3bd9c37abdd906ca8602894",
+      "bothHelpHTTPStatus": 200,
+      "bothONNXJobStatus": "completed",
+      "candidatesOnSyntheticImages": 0,
+      "latestBackendSourceByteEquivalent": true,
+      "paidCallsNotRepeatedAfterCopyChange": true
+    },
+    "currentCI": {
+      "id": 38596604334,
+      "headSHA": "1dc91857f39e548aa53bf916261fe5e5493e3b80",
+      "status": "completed",
+      "conclusion": "success",
+      "allFourJobs": true,
+      "duplicatePushRun": false
+    },
+    "pollingFixLocal": {
+      "unit": 106,
+      "component": 8,
+      "browserCombined": 32,
+      "actualCloudBaselineRed": "93_of_720_frames_flicker_on_750ms_delayed_real_GET",
+      "newVersionCI": "success"
+    },
+    "pollingFixActual": {
+      "Mac": "passed_720_samples_zero_flicker",
+      "publicQA": "passed_721_samples_zero_flicker"
+    },
+    "companyVideoAnnotationExport": "not_run_user_walkthrough_only",
+    "personnelWording": {
+      "frontendSHA": "384a926a9ea47dcfd4d8a627ff10baaed16bbc07",
+      "typecheck": 0,
+      "build": 0,
+      "bothFrontendDeployed": true,
+      "fullCI": "not_repeated_copy_only_skip_ci"
+    }
+  },
+  "boundaries": {
+    "companyMediaDownloaded": true,
+    "companyCredentialInRepository": false,
+    "privateMediaSentToReviewModels": false,
+    "p0ImageAndMountsUnchanged": true,
+    "originalQAMediaHashesVerified": 79,
+    "schema": 8,
+    "tunnelRestored": false,
+    "presentationMaterials": "local_only_excluded_from_GitHub",
+    "companyMediaScope": "one_video_Mac_only"
+  },
+  "evidenceFiles": [
+    {
+      "externalRelativePath": "evidence/candidate-build-checks.json",
+      "sha256": "4443d6c0d37286f5325e89f3c022d6e03bc1226ce50fc66130269489bb4e07a4",
+      "bytes": 982
+    },
+    {
+      "externalRelativePath": "evidence/candidate-frontend-unit.log",
+      "sha256": "86c30e2d15dd6e0dcd13c546a3c51afb99876eabbf8ee19c316e5b2f7428c23b",
+      "bytes": 549
+    },
+    {
+      "externalRelativePath": "evidence/candidate-go-tests.log",
+      "sha256": "37470cf930d6f94d966f8ad8ddeb216ddbfade3b9e31d8d24245fb35b1660142",
+      "bytes": 299
+    },
+    {
+      "externalRelativePath": "evidence/responsive/final-green3.log",
+      "sha256": "f9a46acb0659f9bd8d2f7a85c2cf3a042c4095cb375a3f390694a877b8def07b",
+      "bytes": 5469
+    },
+    {
+      "externalRelativePath": "evidence/real-ui/result.json",
+      "sha256": "531d76f1c9a0e9e34d926d798f93179fa3f0d3fa39aa1e677b6ba00c296f78b6",
+      "bytes": 6978
+    },
+    {
+      "externalRelativePath": "evidence/cloud-ui/result.json",
+      "sha256": "d1568b788c58689dc6ec480738221bf885697a646eb959778d5cbdd8d1015b40",
+      "bytes": 7128
+    },
+    {
+      "externalRelativePath": "evidence/unified-source-equivalence.json",
+      "sha256": "7a43cafc29e2eec6e68ba75df2bbc54574be6146246ca1ecccda3c1df952032a",
+      "bytes": 1058
+    },
+    {
+      "externalRelativePath": "evidence/unified-dual-device.json",
+      "sha256": "1b8bff380d1934f2d5940f19e92cbcca5e94bdc8ead8ae98424906e18316d372",
+      "bytes": 7609
+    },
+    {
+      "externalRelativePath": "evidence/unified-images.json",
+      "sha256": "004c917bd8505d012e32778713043a82ee0496705d9795f062be3438b8f8aaa8",
+      "bytes": 571
+    },
+    {
+      "externalRelativePath": "evidence/unified-cloud-deploy.json",
+      "sha256": "6884673965c6e7ce275da8d4edc893526fd828ad01b6bad1628f8d1a48139bcf",
+      "bytes": 696
+    },
+    {
+      "externalRelativePath": "evidence/unified-cloud-backup.json",
+      "sha256": "52a6c49d79323d7fdaa0c1ef0a81b2e65cb1bfad2ad3434c0044c8dd27dada33",
+      "bytes": 434
+    },
+    {
+      "externalRelativePath": "evidence/mac-final-inventory.json",
+      "sha256": "d004ca04ddae19e662e5059f27f44f653f92755ad76002fd94e0233a6d0299e3",
+      "bytes": 1092
+    },
+    {
+      "externalRelativePath": "evidence/cloud-final-inventory.json",
+      "sha256": "010f49555f61ee99997399a7313203a3290e26949025dca4668443978868a2b2",
+      "bytes": 14173
+    },
+    {
+      "externalRelativePath": "evidence/company-api-metadata.json",
+      "sha256": "9c08fe1790dc95896e63bfa3a562e6d9df370ba4af9111fb8ec3774bf813174a",
+      "bytes": 744
+    },
+    {
+      "externalRelativePath": "evidence/company-api-Go-attempt1.json",
+      "sha256": "7569d4cba732ba037ef1ff533bd9499e729512e883a698fc267c64ee169429a2",
+      "bytes": 285
+    },
+    {
+      "externalRelativePath": "evidence/company-api-Go.json",
+      "sha256": "7a57b09e39fb5731804ed5c8920ecb043e695e219ce48b4028a825ae46b8df03",
+      "bytes": 244
+    },
+    {
+      "externalRelativePath": "evidence/company-container-dns.json",
+      "sha256": "f7b63438bdf8214cd87350186e6eced422541da73d2473ae5656f59e0f3042e7",
+      "bytes": 425
+    },
+    {
+      "externalRelativePath": "evidence/ci-38583867733-failed.log",
+      "sha256": "3550f8f9262fba844a374bd63086f79ea29e32ac4df18ebc3443d0fb3283357e",
+      "bytes": 56367
+    },
+    {
+      "externalRelativePath": "evidence/ci-38584181952-failed.log",
+      "sha256": "efe1d7c5eaf7b46a76ecc5cf1ed80367256b46570eb8776a53a934c1fec16ca0",
+      "bytes": 56368
+    },
+    {
+      "externalRelativePath": "evidence/ci-resize/repair-evidence.json",
+      "sha256": "5b640d5e79414dea2fad6edb28e7b6abc839b3ed85371376d92ac231a80822d8",
+      "bytes": 3090
+    },
+    {
+      "externalRelativePath": "evidence/neutral-copy-checks.json",
+      "sha256": "e0e1356f063f8d0f093b39ede3e21faaf3f83d6d792f79fbd8f8aacb07c3d8c7",
+      "bytes": 441
+    },
+    {
+      "externalRelativePath": "evidence/neutral-copy-unit.log",
+      "sha256": "d27cef254f0d535c65e42a26d51b56f44e025eec73432b7ecd78188344e126a8",
+      "bytes": 466
+    },
+    {
+      "externalRelativePath": "evidence/responsive/neutral-copy-green.log",
+      "sha256": "4a09836417a839a1043ee06706b9d8a68867c7a5ef4d92fef0b11440e23d179a",
+      "bytes": 5290
+    },
+    {
+      "externalRelativePath": "evidence/local-only-history-audit.json",
+      "sha256": "a0bc675ba368ba089d1e39f79077a011b13bc4f5f20379581d9ee82195ab4d21",
+      "bytes": 219
+    },
+    {
+      "externalRelativePath": "evidence/final-source-build.json",
+      "sha256": "606212995b1bc8e6ea4d50da5864590d549deb153259a7e551e6402b71d21483",
+      "bytes": 1046
+    },
+    {
+      "externalRelativePath": "evidence/final-images.json",
+      "sha256": "75384b3fc27d8cf9ed61b2df85f88a0113eec3b5ac0fc784990b1e30f58ac44c",
+      "bytes": 571
+    },
+    {
+      "externalRelativePath": "evidence/final-cloud-backup.json",
+      "sha256": "4043afac6beabf5185213ceed19dc21659e5f30841cb65e53610478fa9303bcb",
+      "bytes": 434
+    },
+    {
+      "externalRelativePath": "evidence/final-cloud-deploy.json",
+      "sha256": "023b1c4166c0e9aed545f8f25aab674fb70950906db06a080a4ec0fd209bb07c",
+      "bytes": 696
+    },
+    {
+      "externalRelativePath": "evidence/final-mac-ui/result.json",
+      "sha256": "51f44a2e6ac0e3e106a6b77924ecc7667dc7c5de456d40cbe8aba76202fa9acd",
+      "bytes": 6978
+    },
+    {
+      "externalRelativePath": "evidence/final-cloud-ui/result.json",
+      "sha256": "5186fb54a45e45bacc041437b96742c9751d563f24c6aef3a59e5f784772f668",
+      "bytes": 7128
+    },
+    {
+      "externalRelativePath": "evidence/formal-cloud-final-inventory.json",
+      "sha256": "1a4fa0caea3f8e5fc5c20e290a4e419126894491608242168d8040d23513ac24",
+      "bytes": 14173
+    },
+    {
+      "externalRelativePath": "evidence/formal-mac-final-inventory.json",
+      "sha256": "d608100bb1402cd23059a2523b8ea6a1f55be1ca67b8f9394387975e266e3bdb",
+      "bytes": 1092
+    },
+    {
+      "externalRelativePath": "evidence/formal-company-Go.json",
+      "sha256": "a9ba0a8eeddbf4f93a7c4c9433c39ecb25c78f3680b5409691e0988cf3f30d90",
+      "bytes": 244
+    },
+    {
+      "externalRelativePath": "evidence/formal-cloud-company-isolation.json",
+      "sha256": "b227749a11d494dd431f3b3c9469bca874f3c89098a6c9e2b3a94a7dd9f3dc5e",
+      "bytes": 86
+    },
+    {
+      "externalRelativePath": "evidence/ci-source-provenance.json",
+      "sha256": "8c3af93ac5b81a38d407b6b2cce7e52c071a2117682c85022bd159dba700f73f",
+      "bytes": 378
+    },
+    {
+      "externalRelativePath": "evidence/remote-local-only-path-check.json",
+      "sha256": "e0c4f2171d30156556a3575397de9b68e1b3948fcf6f69b459c5eecaaaedd9c8",
+      "bytes": 162
+    },
+    {
+      "externalRelativePath": "evidence/test-process-cleanup.json",
+      "sha256": "0e15d96ceb7ec0ce0d14d913586710e3eeb6a1e95c07fd943282f72f40fcba83",
+      "bytes": 273
+    },
+    {
+      "externalRelativePath": "evidence/ci-38588562501-final.json",
+      "sha256": "28e22ac4363b1fbfdd94dfc66cd015b4e78b874177104dc6dd952db104e631fe",
+      "bytes": 10044
+    },
+    {
+      "externalRelativePath": "evidence/polling-flicker/component-evidence.json",
+      "sha256": "ae9f5a0ebb60121dd83ffbaeebc1b6b30e35b8529a67cf7a6604acf5fb38ae0a",
+      "bytes": 3030
+    },
+    {
+      "externalRelativePath": "evidence/polling-flicker/red-cloud.json",
+      "sha256": "61cb736b93f026bad3bd2fece2140fe41a1ef111bb35fad86ba87dbbbebc5385",
+      "bytes": 2681
+    },
+    {
+      "externalRelativePath": "evidence/polling-flicker/browser-red.log",
+      "sha256": "e385ae85961d56e2d06fa85337ff2dbb7302ac8606dc1302a7c29b2efa0fd5ea",
+      "bytes": 5881
+    },
+    {
+      "externalRelativePath": "evidence/polling-flicker/browser-green.log",
+      "sha256": "2ce81e0d93cab0c55b61c7f10916e6412c328ab7bb6ce39af364209e67b63be5",
+      "bytes": 5617
+    },
+    {
+      "externalRelativePath": "evidence/company-walkthrough-prepared.json",
+      "sha256": "86b5b2108d894b593ee14f10a35d941ae60ba287ed090e8512f14cb1e91af579",
+      "bytes": 483
+    },
+    {
+      "externalRelativePath": "evidence/company-certificate-chain.json",
+      "sha256": "bcfb8e35ad0fd4beb752d694941638ee7a4142498aae018e5a1b0f0401f51f28",
+      "bytes": 415
+    },
+    {
+      "externalRelativePath": "evidence/ci-38596604334-direct.json",
+      "sha256": "8089e2ed93ee202cc9d57bed957a593263a34fb1754f1db9a0cfaf0bcaae1142",
+      "bytes": 9886
+    },
+    {
+      "externalRelativePath": "evidence/polling-flicker/green2-mac.json",
+      "sha256": "dd7e6a6c29231c5b7670760b598e42bfd5daf9e4c7c498250c0fd01ca5177c7f",
+      "bytes": 640
+    },
+    {
+      "externalRelativePath": "evidence/polling-flicker/green2-cloud.json",
+      "sha256": "17284a872b09789176460737884b4296a166bbc723ed25c3069c6ead52155bb8",
+      "bytes": 642
+    },
+    {
+      "externalRelativePath": "evidence/polling-flicker/observer-network-disposition.json",
+      "sha256": "e0d563db03609d46c40e0a999cda8c9a5de258205985f689ab2c393d90c5de0d",
+      "bytes": 185
+    },
+    {
+      "externalRelativePath": "evidence/wording-checks.json",
+      "sha256": "8d88245100a2a533af7a8ea320e43a3a7c9cf040bf4e7f1b3165198ab0d56cf5",
+      "bytes": 105
+    },
+    {
+      "externalRelativePath": "evidence/wording-mac-deploy.json",
+      "sha256": "ea0ab158bf556893ec85db7094c74e52e0e2a64d65c824cccdd1b492846b4eed",
+      "bytes": 235
+    },
+    {
+      "externalRelativePath": "evidence/wording-cloud-deploy.json",
+      "sha256": "ed8299e9a7f0013d36da53605915e92ddf91a52fef13a8ea623dd3933f6bfde0",
+      "bytes": 228
+    }
+  ],
+  "closure": {
+    "reason": "user_time_limit",
+    "remaining": "deferred_not_formally_complete",
+    "report": "docs/audit/reports/report-20261015T091308+0800.md"
+  }
+}

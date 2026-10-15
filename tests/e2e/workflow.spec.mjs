@@ -20,6 +20,27 @@ async function persisted(request, id, predicate) {
   return result;
 }
 
+async function canvasGeometry(page, canvas) {
+  // Server persistence can precede the UI removing its draft notice. Toolbar
+  // clicks can also scroll the document, so measure after both have settled.
+  await expect(page.getByTestId('save-state')).toHaveText('已保存');
+  await canvas.scrollIntoViewIfNeeded();
+  let previous;
+  let bounds;
+  await expect.poll(async () => {
+    bounds = await canvas.boundingBox();
+    const stable = bounds && previous && ['x', 'y', 'width', 'height'].every(
+      key => Math.abs(bounds[key] - previous[key]) < 0.1,
+    );
+    previous = bounds;
+    return !!stable && bounds.width > 0 && bounds.height > 0;
+  }).toBe(true);
+  return {
+    bounds,
+    point: (x, y) => ({ x: bounds.x + bounds.width * x, y: bounds.y + bounds.height * y }),
+  };
+}
+
 test('P0-E2E-001 browser upload/extract/draw/move/resize/delete/autosave/refresh/complete/export', async ({ page, request }, testInfo) => {
   await page.goto('/');
   await page.getByRole('tab', { name: '本地上传', exact: true }).click();
@@ -31,6 +52,7 @@ test('P0-E2E-001 browser upload/extract/draw/move/resize/delete/autosave/refresh
   const video = await videoResponse.json();
   await page.getByTestId('video-select').selectOption(video.id);
   await page.getByTestId('interval-seconds').fill('1');
+  await page.getByText('指定抽帧范围（可选）', { exact: true }).click();
   await page.getByTestId('start-seconds').fill('0');
   await page.getByTestId('end-seconds').fill('3');
   const extracted = page.waitForResponse(response => response.url().endsWith('/extractions') && response.request().method() === 'POST');
@@ -51,28 +73,34 @@ test('P0-E2E-001 browser upload/extract/draw/move/resize/delete/autosave/refresh
   await page.getByTestId(`frame-item-${frame.id}`).click();
   const canvas = page.getByTestId('annotation-canvas').locator('.konvajs-content');
   await expect(canvas).toBeVisible();
-  const bounds = await canvas.boundingBox();
-  expect(bounds).toBeTruthy();
-  const point = (x, y) => ({ x: bounds.x + bounds.width * x, y: bounds.y + bounds.height * y });
   await page.getByTestId('draw-mode').click();
+  let { bounds, point } = await canvasGeometry(page, canvas);
   await drag(page, point(0.15, 0.15), point(0.35, 0.35));
   const created = await persisted(request, frame.id, state => state.annotations.length === 1);
   const original = created.annotations[0].bbox;
   await page.getByTestId('select-mode').click();
+  ({ bounds, point } = await canvasGeometry(page, canvas));
   await drag(page, point(0.25, 0.25), point(0.35, 0.30));
   const moved = await persisted(request, frame.id, state => state.revision > created.revision);
   expect(moved.annotations[0].id).toBe(created.annotations[0].id);
   expect(moved.annotations[0].bbox[0]).toBeGreaterThan(original[0]);
   expect(moved.annotations[0].bbox[2]).toBeCloseTo(original[2], 0);
   const box = moved.annotations[0].bbox;
+  // Exercise the normal page scrolling that invalidated the cached CI corner.
+  await page.evaluate(() => window.scrollBy(0, -24));
+  ({ bounds, point } = await canvasGeometry(page, canvas));
   const corner = point((box[0] + box[2]) / frame.width, (box[1] + box[3]) / frame.height);
   await drag(page, corner, { x: corner.x + bounds.width * 0.08, y: corner.y + bounds.height * 0.08 });
   const resized = await persisted(request, frame.id, state => state.revision > moved.revision);
+  expect(resized.annotations[0].id).toBe(moved.annotations[0].id);
   expect(resized.annotations[0].bbox[2]).toBeGreaterThan(box[2]);
+  expect(resized.annotations[0].bbox[3]).toBeGreaterThan(box[3]);
   await page.getByTestId('draw-mode').click();
+  ({ point } = await canvasGeometry(page, canvas));
   await drag(page, point(0.65, 0.15), point(0.80, 0.30));
   const two = await persisted(request, frame.id, state => state.annotations.length === 2);
   await page.getByTestId('select-mode').click();
+  ({ point } = await canvasGeometry(page, canvas));
   await page.mouse.click(point(0.70, 0.20).x, point(0.70, 0.20).y);
   await page.keyboard.press('Delete');
   const one = await persisted(request, frame.id, state => state.annotations.length === 1 && state.revision > two.revision);

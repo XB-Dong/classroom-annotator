@@ -174,7 +174,7 @@ await acceptance(async () => {
     if (process.argv.includes('--e2e')) {
       // Preserve the real IP authentication limiter between independent suites.
       await delay(61_000);
-      await run(['test', 'e2e/workflow.spec.mjs', 'e2e/public-samples.spec.mjs', 'e2e/p1-workflow.spec.mjs', 'e2e/p1-conflict.spec.mjs', '--project=chromium'], {
+      await run(['test', 'e2e/workflow.spec.mjs', 'e2e/public-samples.spec.mjs', 'e2e/p1-workflow.spec.mjs', 'e2e/p1-conflict.spec.mjs', 'e2e/p2-responsive.spec.mjs', 'e2e/p2-polling.spec.mjs', '--project=chromium'], {
         P0_TEST_OUTPUT: path.join(root, 'browser-results'), P0_REPORT_OUTPUT: path.join(root, 'browser-report') });
     }
     await python.stop();

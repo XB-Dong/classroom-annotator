@@ -20,7 +20,7 @@ R8 静态审核通过，未发现新的已证实缺陷。P1 整体仍是待验�
 
 模块TDD按原交接保留：AI坐标/HTTP/tiling等真实Red→Green及30项历史通过；auth stub/security seam的真实Red→Green；frontend账号、草稿、review、退出、local来源等行为Red→Green。依赖、格式、收集和fixture算术错误不当产品Red。当前提交没有独立运行Green，不将历史模块通过复制为当前强制门槛通过。
 
-真实模型的8张JPEG来自同一授权视频的相关帧（PNG在内存转JPEG），不是8个独立课堂样本。历史实测候选及明显漏检观察保留；没有独立precision/recall、跨课堂准确率或省时比例。CI合成JPEG模型运行与这份真实图观察单列。此次未查看/复制私有像素或overlay。
+真实模型的8张JPEG来自同一受限视频的相关帧（PNG在内存转JPEG），不是8个独立课堂样本。历史实测候选及明显漏检观察保留；没有独立precision/recall、跨课堂准确率或省时比例。CI合成JPEG模型运行与这份真实图观察单列。此次未查看/复制私有像素或overlay。
 
 实际GLM代码审核为 OpenCode/company-glm/glm-4.7-flash，R1/R2/R3/R4均有逐项处置；它们不等于真实公开隔离实例的注册登录/预标注/风险/保存/导出浏览器体验，该项not_run。供应商单题直连HTTP200/10.75秒也不等于实际Go产品API的3操作问题+1文档外问题，后者not_run。
 
