@@ -154,6 +154,13 @@ it('saves a pending manual edit before the candidate decision and uses its ackno
   await screen.findByText('学生人头 1');
 });
 it('requires overlap rejection with ALREADY_LABELED and disallows accepting that candidate', async () => {
+  server = {
+    ...server,
+    annotations: [{ id: 'already-accepted', bbox: [20, 20, 8, 8], source: 'ai' }],
+    candidates: candidates.map((candidate) =>
+      candidate.id === 'overlap' ? { ...candidate, riskReasons: [] } : candidate,
+    ),
+  };
   open();
   await screen.findByText('AI 复核');
   fireEvent.click(screen.getByTestId('candidate-overlap'));

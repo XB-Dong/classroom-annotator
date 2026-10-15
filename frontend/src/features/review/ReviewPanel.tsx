@@ -11,6 +11,21 @@ export const riskLabels: Record<string, string> = {
   NO_DETECTIONS: 'AI 未检出候选，请人工检查整图',
   AI_FAILED: 'AI 失败，请转人工检查整图',
 };
+function overlapsExisting(box: Box, annotations: ReviewSnapshot['annotations']) {
+  return annotations.some(({ bbox }) => {
+    const width = Math.max(
+      0,
+      Math.min(box[0] + box[2], bbox[0] + bbox[2]) - Math.max(box[0], bbox[0]),
+    );
+    const height = Math.max(
+      0,
+      Math.min(box[1] + box[3], bbox[1] + bbox[3]) - Math.max(box[1], bbox[1]),
+    );
+    const intersection = width * height;
+    const union = box[2] * box[3] + bbox[2] * bbox[3] - intersection;
+    return union > 0 && intersection / union >= 0.35;
+  });
+}
 const runLabels = {
   queued: '排队中',
   running: '推理中',
@@ -41,7 +56,13 @@ export function ReviewPanel({
   generate: () => void;
 }) {
   const [filter, setFilter] = useState<'pending' | 'risk' | 'all'>('pending');
-  const candidates = review?.candidates ?? [];
+  const candidates = (review?.candidates ?? []).map((candidate) =>
+    candidate.reviewState === 'pending' &&
+    !candidate.riskReasons.includes('OVERLAP_EXISTING') &&
+    overlapsExisting(candidate.bbox, review?.annotations ?? [])
+      ? { ...candidate, riskReasons: [...candidate.riskReasons, 'OVERLAP_EXISTING'] }
+      : candidate,
+  );
   const pending = candidates.filter((c) => c.reviewState === 'pending');
   const safe = pending.filter((c) => c.riskReasons.length === 0);
   const current = pending.find((c) => c.id === selected);
