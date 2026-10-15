@@ -1,30 +1,89 @@
 # Classroom Annotator
 
-教室人员标注平台：视频导入、抽帧、人头标注、人工审核与数据导出。
+面向课堂视频的学生人头标注平台，提供视频导入、定时抽帧、人工框选、AI 辅助复核和 COCO 数据集导出，支持多人在同一工作区协作。
 
-当前：P0.1已按用户要求收束为partial，通过CI的候选尚未切换公网。P1正在准备审核，重点为手绘工作台、真实AI预标注/高风险复核、注册与多用户冲突、整文档增强使用指南、无隧道同机部署；截止已确认2026-10-14 08:30，但尚未授权执行。现行入口见 [P1计划](P1-PLAN.md)、[规格与验收](specs/p1/acceptance.md)、[P0.1收束报告](docs/audit/reports/report-20261013T205401+0800.md)。下文P0说明属于历史已发布基线。
+[使用手册](docs/product/ANNOTATOR-GUIDE.zh.md) · [部署说明](docs/deployment/P1-RUNBOOK.zh.md) · [接口文档](specs/contracts/api.md)
 
-P0 已交付人工标注闭环，并完成当前本地/合成材料范围的 14 项门槛。查看 [P0 交付报告](docs/audit/reports/report-20261013T032912+0800.md)、[执行状态](docs/waves/P0/state.json) 与 [验收清单](docs/waves/P0/acceptance.json)。模型配置偏差和 GLM 在核心操作结束后超时均如实记录。真实公司 API 尚未联调；材料驱动的合成 API 导入已验证。
+## 核心功能
 
-- [项目宪法](CONSTITUTION.md)
-- [P0计划](P0-PLAN.md)
-- [P0.1计划：已收束的历史波次](P0.1-PLAN.md)
-- [P1计划：手绘工作台、AI复核与多人协作（待审核）](P1-PLAN.md)
-- [公共示例与四类素材存储边界](specs/p0.1/sources-and-samples.md)
-- [后续波次前瞻：P1/P2](NEXT-WAVES.md)
-- [14项确认记录](docs/decisions/0001-confirmed-choices.md)
-- [Agent 角色、极高推理与负载安排](docs/decisions/0003-lean-agent-roles.md)
-- [P0 本地材料验收范围](docs/decisions/0004-local-materials-acceptance.md)
-- [交付后真实样本云端许可与密码门禁](docs/decisions/0006-authorized-cloud-demo.md)
-- [追加密码保护的公网演示入口](docs/decisions/0007-public-demo-entry.md)
-- [最新排查与真实课堂云端展示报告](docs/audit/reports/report-20261013T090951+0800.md)
-- [Agent 执行规则](AGENTS.md)
-- [时间戳报告](docs/audit/reports/)
+- **视频导入**：支持本地上传、预置公开示例、部署主机上的授权素材目录，以及按需配置的公司数据集接口。
+- **定时抽帧**：按固定时间间隔提取图片，可指定起止范围；每次抽帧生成独立批次，保留已有图片和标注。
+- **人工标注**：支持新增、移动、缩放、删除人头框，以及撤销、重做、自动保存和浏览器草稿恢复。框坐标按原始图像像素存储。
+- **AI 辅助复核**：支持单张或批量生成候选框，标记低置信度、裁切与重叠等复核线索，由人工接受、调整或拒绝。AI 服务不可用时仍可继续人工标注。
+- **多人协作**：提供邀请码注册、登录和共享工作区；同一图片发生并发修改时提示版本冲突，保留本地草稿供处理。
+- **数据集导出**：导出已完成图片的原始 JPEG 与 COCO JSON，包含人工确认的零人头图片；未审核候选不会成为训练标签。
+- **操作指南**：提供内置使用手册和可选的文档问答助手。问答服务不可用时，静态手册仍可查阅。
 
-单仓库保留三模块边界：P0 实现 React/TypeScript 前端与 Go 业务后端，Python 推理模块由后续波次实现。实现状态以报告和验证证据为准。
+## 使用流程
 
-现有功能包括本地上传、固定间隔抽帧与独立批次、画框/移动/调整/删除、撤销重做、串行自动保存、草稿恢复与 revision 冲突、显式完成和进度、完成帧 COCO/JPEG ZIP 导出。AI 预标注属于 P1。
+1. 使用邀请码注册账号并登录工作区。
+2. 导入视频，设置抽帧间隔和可选的时间范围，创建抽帧批次。
+3. 选择图片进行人工标注，或生成 AI 候选后逐项复核、补充漏框。
+4. 确认保存成功并处理待审核项，将图片标记为完成。
+5. 选择视频和批次，下载包含已完成图片及标注的 COCO ZIP。
 
-前后端分别见 [frontend](frontend/README.md) 和 [backend](backend/README.md)。[统一验收说明](tests/README.md)、[部署说明](deploy/README.md) 和 [云端验收/恢复步骤](deploy/ACCEPTANCE.md) 说明如何复做检查。统一入口为 `scripts/verify.ps1`（Windows）或 `bash scripts/verify.sh`（Linux）；源码外配置 FFmpeg、缓存和测试数据目录。
+AI 候选需要人工审核。标注对象为学生可见人头，部分遮挡时框选可见部分；模型置信度不等同于准确率。详细操作与冲突处理见[使用手册](docs/product/ANNOTATOR-GUIDE.zh.md)。
 
-演示应用原通过授权 SSH 转发访问；用户追加公网入口要求后，当前云端已新增带密码的 HTTP 80。具体主机地址与密码在仓库外，不在源码硬编码；普通 Chrome/Edge 使用账号 demo 登录。Windows SSH 入口 `http://127.0.0.1:8180` 仍保留，Prometheus/Grafana 仍绑定 loopback，转发端口为 `:9090`、`:3000`。Grafana 密码独立配置。P0 原验收云端使用合成视频；当前云端已导入 `channel4-20s-redacted.mp4` 真实脱敏样本。外部 GLM 仍只获准代码/独立合成数据审核，不能访问真实媒体实例。见 [展示与门禁规格](specs/cloud-demo-access.md)。
+## 系统架构
+
+| 模块 | 技术 | 职责 |
+| --- | --- | --- |
+| 前端 | React、TypeScript、Konva | 视频与批次管理、标注画布、复核和导出交互 |
+| 业务后端 | Go、Gin、PostgreSQL 17、FFmpeg | 账号会话、媒体处理、任务调度、标注保存和数据导出 |
+| 推理服务 | Python、FastAPI、ONNX Runtime CPU | 人头检测与候选生成 |
+| 运行环境 | Docker Compose、Nginx | 服务编排与统一 Web 入口 |
+| 监控 | Prometheus、Grafana | 服务指标与运行状态 |
+
+后端是业务和媒体访问的统一入口。数据库、媒体文件与推理服务部署在同一主机，推理服务仅供后端调用；模型权重和运行数据独立于源码存放。
+
+## 部署与运行
+
+### 环境准备
+
+- 在部署主机安装 Docker Engine 和 Docker Compose，选择与主机架构匹配的镜像和构建产物。
+- 准备 PostgreSQL 17、独立的数据库与媒体持久卷，以及对应版本的前后端镜像。
+- 启用 AI 时，按[模型清单](ai-service/model-manifest.json)准备 ONNX 权重、推理镜像与内部访问令牌。
+- 将[配置模板](.env.example)复制到仓库外，配置数据库连接、邀请码、浏览器访问地址、镜像版本及所需目录。密码、令牌和 API 密钥保存在受限文件中。
+- 首次使用前，执行数据库迁移并通过 `bootstrap-user` 创建管理员；应用数据库账号使用业务读写权限。初始化与构建步骤见[部署说明](docs/deployment/P1-RUNBOOK.zh.md)。
+
+### 启动服务
+
+在仓库根目录执行以下命令，将 `/path/to/app.env` 替换为已准备好的外部配置文件。镜像、持久卷、数据库初始化和模型配置应先完成。
+
+```sh
+docker compose --env-file /path/to/app.env \
+  -f docker-compose.yml \
+  -f deploy/compose.postgres.yml \
+  -f deploy/compose.sources.yml \
+  --profile ai config --quiet
+
+docker compose --env-file /path/to/app.env \
+  -f docker-compose.yml \
+  -f deploy/compose.postgres.yml \
+  -f deploy/compose.sources.yml \
+  --profile ai up -d
+```
+
+本机默认入口为 `http://127.0.0.1:8180/`，可通过 `APP_PORT` 调整端口。使用 HTTP 本机入口时，需设置对应的 `APP_AUTH_TRUSTED_ORIGINS` 和 `APP_AUTH_COOKIE_SECURE=false`；局域网或公网访问应配置 HTTPS、准确的访问来源与安全会话 Cookie。
+
+文档问答和公司数据集接口按需启用。问答密钥仅由 Go 后端读取；公司接口需要部署主机具备对应网络访问权限。
+
+## 数据与维护
+
+- 视频、抽帧图片、标注数据库、模型权重和访问凭证均不随源码分发；导入素材前应确认使用权限。
+- 备份应同时覆盖 PostgreSQL 和对应媒体文件；升级前保留可恢复的备份与原镜像。
+- 导出使用已保存的一致快照。图片缺失、内容变化或复核未完成时，按界面提示处理后再导出。
+
+## 文档与源码
+
+| 内容 | 入口 |
+| --- | --- |
+| 标注操作与常见问题 | [使用手册](docs/product/ANNOTATOR-GUIDE.zh.md) |
+| 服务配置、初始化与恢复 | [部署说明](docs/deployment/P1-RUNBOOK.zh.md) |
+| HTTP 接口与数据约定 | [接口文档](specs/contracts/api.md) |
+| 前端运行与构建 | [frontend](frontend/README.md) |
+| 后端配置与运行 | [backend](backend/README.md) |
+| 推理服务与模型要求 | [ai-service](ai-service/README.md) |
+| 测试环境与验证命令 | [tests](tests/README.md) |
+
+开发环境的统一检查入口为 `bash scripts/verify.sh`，Windows 使用 `scripts/verify.ps1`。数据库相关测试应使用独立测试库。
