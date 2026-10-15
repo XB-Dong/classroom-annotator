@@ -1,25 +1,89 @@
 # Classroom Annotator
 
-课堂视频的人头标注平台。三模块：React/TypeScript/Konva 前端、Go/Gin/PostgreSQL17 业务后端、Python/FastAPI/ONNX CPU 推理服务。同机媒体卷，人工标注可在 AI 故障时继续。
+面向课堂视频的学生人头标注平台，提供视频导入、定时抽帧、人工框选、AI 辅助复核和 COCO 数据集导出，支持多人在同一工作区协作。
 
-当前 **P2 已获用户授权启动**，重点是窗口伸缩布局、扩展前端测试、按需展开的进阶操作、导出前可疑框提醒、文档维护和约20分钟答辩材料。具体能力状态以 [P2状态](docs/waves/P2/state.json) 和时间戳报告为准，不把计划当实测。智能抽帧与跨帧传播本轮只做设计评估。
+[使用手册](docs/product/ANNOTATOR-GUIDE.zh.md) · [部署说明](docs/deployment/P1-RUNBOOK.zh.md) · [接口文档](specs/contracts/api.md)
 
-P1 最终状态仍为 `partial_closed_fast_path`，详见 [快速收束报告](docs/audit/reports/report-20261014T151947+0800.md)。公开素材 QA、Mac 本机验证和生产发布分别记录。未进行生产数据切换，准确率/召回率/节时比例没有真值测量。
+## 核心功能
 
-## 阅读入口
+- **视频导入**：支持本地上传、预置公开示例、部署主机上的授权素材目录，以及按需配置的公司数据集接口。
+- **定时抽帧**：按固定时间间隔提取图片，可指定起止范围；每次抽帧生成独立批次，保留已有图片和标注。
+- **人工标注**：支持新增、移动、缩放、删除人头框，以及撤销、重做、自动保存和浏览器草稿恢复。框坐标按原始图像像素存储。
+- **AI 辅助复核**：支持单张或批量生成候选框，标记低置信度、裁切与重叠等复核线索，由人工接受、调整或拒绝。AI 服务不可用时仍可继续人工标注。
+- **多人协作**：提供邀请码注册、登录和共享工作区；同一图片发生并发修改时提示版本冲突，保留本地草稿供处理。
+- **数据集导出**：导出已完成图片的原始 JPEG 与 COCO JSON，包含人工确认的零人头图片；未审核候选不会成为训练标签。
+- **操作指南**：提供内置使用手册和可选的文档问答助手。问答服务不可用时，静态手册仍可查阅。
 
-- [P2计划](docs/plans/P2-PLAN.md) · [规格与验收](specs/p2/acceptance.md) · [任务包](docs/waves/P2/TASK-PACKET.md)
-- [全部文档导航](docs/README.md) · [项目宪法](CONSTITUTION.md) · [Agent规则](AGENTS.md)
-- [用户手册](docs/product/ANNOTATOR-GUIDE.zh.md) · [当前架构](specs/architecture.md) · [API](specs/contracts/api.md)
-- [部署运行手册](docs/deployment/P1-RUNBOOK.zh.md) · [统一测试](tests/README.md) · [审计报告](docs/audit/reports)
-- [P0历史计划](docs/plans/archive/P0-PLAN.md) · [P0.1历史计划](docs/plans/archive/P0.1-PLAN.md) · [P1历史计划](docs/plans/archive/P1-PLAN.md)
+## 使用流程
 
-## 功能与运行边界
+1. 使用邀请码注册账号并登录工作区。
+2. 导入视频，设置抽帧间隔和可选的时间范围，创建抽帧批次。
+3. 选择图片进行人工标注，或生成 AI 候选后逐项复核、补充漏框。
+4. 确认保存成功并处理待审核项，将图片标记为完成。
+5. 选择视频和批次，下载包含已完成图片及标注的 COCO ZIP。
 
-已有视频上传/公开示例/同机来源/可配置公司API、固定间隔抽帧与独立批次、人头框编辑/撤销重做、revision保存与冲突、注册登录、ONNX候选/风险复核、完成帧COCO/JPEG ZIP导出及整文档问答。具体环境配置与实际验证见报告；功能存在不等于公司真实API已联调或生产验收完成。
+AI 候选需要人工审核。标注对象为学生可见人头，部分遮挡时框选可见部分；模型置信度不等同于准确率。详细操作与冲突处理见[使用手册](docs/product/ANNOTATOR-GUIDE.zh.md)。
 
-部署使用 Docker Compose、Nginx、FFmpeg、PostgreSQL17。配置、权重、素材、数据库、日志和构建缓存均置于仓库外。问答密钥只给 Go，浏览器/Python不接触。Mac的容器/代理/arm64实际前提见对应部署记录，不能照抄历史Windows代理或amd64工件。
+## 系统架构
 
-统一验证入口：`bash scripts/verify.sh` 或 Windows `scripts/verify.ps1`。完整验证必须准备独立测试数据库、FFmpeg和外部运行目录，不能在生产库执行。各模块说明见 [frontend](frontend/README.md)、[backend](backend/README.md)、[ai-service](ai-service/README.md)。
+| 模块 | 技术 | 职责 |
+| --- | --- | --- |
+| 前端 | React、TypeScript、Konva | 视频与批次管理、标注画布、复核和导出交互 |
+| 业务后端 | Go、Gin、PostgreSQL 17、FFmpeg | 账号会话、媒体处理、任务调度、标注保存和数据导出 |
+| 推理服务 | Python、FastAPI、ONNX Runtime CPU | 人头检测与候选生成 |
+| 运行环境 | Docker Compose、Nginx | 服务编排与统一 Web 入口 |
+| 监控 | Prometheus、Grafana | 服务指标与运行状态 |
 
-此Mac现已使用用户在GitHub CLI授权的XB-Dong身份完成真实克隆并取回完整Git历史，核对远端main仍为033de6c。当前P2分支以该真实main为基线；此前临时快照提交保留为本地审计引用，原工作树与失败证据不丢失。推送/CI结果以P2报告记录为准。
+后端是业务和媒体访问的统一入口。数据库、媒体文件与推理服务部署在同一主机，推理服务仅供后端调用；模型权重和运行数据独立于源码存放。
+
+## 部署与运行
+
+### 环境准备
+
+- 在部署主机安装 Docker Engine 和 Docker Compose，选择与主机架构匹配的镜像和构建产物。
+- 准备 PostgreSQL 17、独立的数据库与媒体持久卷，以及对应版本的前后端镜像。
+- 启用 AI 时，按[模型清单](ai-service/model-manifest.json)准备 ONNX 权重、推理镜像与内部访问令牌。
+- 将[配置模板](.env.example)复制到仓库外，配置数据库连接、邀请码、浏览器访问地址、镜像版本及所需目录。密码、令牌和 API 密钥保存在受限文件中。
+- 首次使用前，执行数据库迁移并通过 `bootstrap-user` 创建管理员；应用数据库账号使用业务读写权限。初始化与构建步骤见[部署说明](docs/deployment/P1-RUNBOOK.zh.md)。
+
+### 启动服务
+
+在仓库根目录执行以下命令，将 `/path/to/app.env` 替换为已准备好的外部配置文件。镜像、持久卷、数据库初始化和模型配置应先完成。
+
+```sh
+docker compose --env-file /path/to/app.env \
+  -f docker-compose.yml \
+  -f deploy/compose.postgres.yml \
+  -f deploy/compose.sources.yml \
+  --profile ai config --quiet
+
+docker compose --env-file /path/to/app.env \
+  -f docker-compose.yml \
+  -f deploy/compose.postgres.yml \
+  -f deploy/compose.sources.yml \
+  --profile ai up -d
+```
+
+本机默认入口为 `http://127.0.0.1:8180/`，可通过 `APP_PORT` 调整端口。使用 HTTP 本机入口时，需设置对应的 `APP_AUTH_TRUSTED_ORIGINS` 和 `APP_AUTH_COOKIE_SECURE=false`；局域网或公网访问应配置 HTTPS、准确的访问来源与安全会话 Cookie。
+
+文档问答和公司数据集接口按需启用。问答密钥仅由 Go 后端读取；公司接口需要部署主机具备对应网络访问权限。
+
+## 数据与维护
+
+- 视频、抽帧图片、标注数据库、模型权重和访问凭证均不随源码分发；导入素材前应确认使用权限。
+- 备份应同时覆盖 PostgreSQL 和对应媒体文件；升级前保留可恢复的备份与原镜像。
+- 导出使用已保存的一致快照。图片缺失、内容变化或复核未完成时，按界面提示处理后再导出。
+
+## 文档与源码
+
+| 内容 | 入口 |
+| --- | --- |
+| 标注操作与常见问题 | [使用手册](docs/product/ANNOTATOR-GUIDE.zh.md) |
+| 服务配置、初始化与恢复 | [部署说明](docs/deployment/P1-RUNBOOK.zh.md) |
+| HTTP 接口与数据约定 | [接口文档](specs/contracts/api.md) |
+| 前端运行与构建 | [frontend](frontend/README.md) |
+| 后端配置与运行 | [backend](backend/README.md) |
+| 推理服务与模型要求 | [ai-service](ai-service/README.md) |
+| 测试环境与验证命令 | [tests](tests/README.md) |
+
+开发环境的统一检查入口为 `bash scripts/verify.sh`，Windows 使用 `scripts/verify.ps1`。数据库相关测试应使用独立测试库。
